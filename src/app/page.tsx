@@ -11,13 +11,13 @@ export default function Home() {
         <div className="bg-blue-50 p-6 rounded-lg">
           <h2 className="text-2xl font-semibold mb-4">For Swimmers</h2>
           <p className="mb-4">
-            Declare which events you want to swim in for upcoming meets.
+            Register for events in the active meet. Select which events you want to swim and enter your seed times.
           </p>
           <Link 
             href="/events" 
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block"
           >
-            Select Events
+            Register for Events
           </Link>
         </div>
         
