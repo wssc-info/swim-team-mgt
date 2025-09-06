@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Meet, addMeet, updateMeet } from '@/lib/swimmers';
+import { Meet } from '@/lib/swimmers';
+import { createMeet, updateMeetApi } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent } from '@/lib/events';
 
 interface MeetFormProps {
@@ -76,9 +77,9 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
     try {
       if (meet) {
-        await updateMeet(meet.id, formData);
+        await updateMeetApi(meet.id, formData);
       } else {
-        await addMeet(formData);
+        await createMeet(formData);
       }
       onClose();
     } catch (error) {

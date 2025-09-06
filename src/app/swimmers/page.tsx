@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Swimmer, getSwimmers, deleteSwimmer } from '@/lib/swimmers';
+import { Swimmer } from '@/lib/swimmers';
+import { fetchSwimmers, deleteSwimmerApi } from '@/lib/api';
 import SwimmerForm from '@/components/SwimmerForm';
 
 export default function SwimmersPage() {
@@ -11,8 +12,12 @@ export default function SwimmersPage() {
 
   useEffect(() => {
     const loadSwimmers = async () => {
-      const swimmerData = await getSwimmers();
-      setSwimmers(swimmerData);
+      try {
+        const swimmerData = await fetchSwimmers();
+        setSwimmers(swimmerData);
+      } catch (error) {
+        console.error('Error loading swimmers:', error);
+      }
     };
     loadSwimmers();
   }, []);
@@ -29,17 +34,25 @@ export default function SwimmersPage() {
 
   const handleDeleteSwimmer = async (id: string) => {
     if (confirm('Are you sure you want to delete this swimmer?')) {
-      await deleteSwimmer(id);
-      const updatedSwimmers = await getSwimmers();
-      setSwimmers(updatedSwimmers);
+      try {
+        await deleteSwimmerApi(id);
+        const updatedSwimmers = await fetchSwimmers();
+        setSwimmers(updatedSwimmers);
+      } catch (error) {
+        console.error('Error deleting swimmer:', error);
+      }
     }
   };
 
   const handleFormClose = async () => {
     setShowForm(false);
     setEditingSwimmer(null);
-    const updatedSwimmers = await getSwimmers();
-    setSwimmers(updatedSwimmers);
+    try {
+      const updatedSwimmers = await fetchSwimmers();
+      setSwimmers(updatedSwimmers);
+    } catch (error) {
+      console.error('Error loading swimmers:', error);
+    }
   };
 
   const groupedSwimmers = swimmers.reduce((groups, swimmer) => {

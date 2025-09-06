@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Swimmer, addSwimmer, updateSwimmer, calculateAgeGroup } from '@/lib/swimmers';
+import { Swimmer, calculateAgeGroup } from '@/lib/swimmers';
+import { createSwimmer, updateSwimmerApi } from '@/lib/api';
 
 interface SwimmerFormProps {
   swimmer?: Swimmer | null;
@@ -67,9 +68,9 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
 
     try {
       if (swimmer) {
-        await updateSwimmer(swimmer.id, formData);
+        await updateSwimmerApi(swimmer.id, formData);
       } else {
-        await addSwimmer(formData);
+        await createSwimmer(formData);
       }
       onClose();
     } catch (error) {

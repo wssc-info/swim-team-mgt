@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Meet, getMeets, deleteMeet, setActiveMeet } from '@/lib/swimmers';
+import { Meet } from '@/lib/swimmers';
+import { fetchMeets, deleteMeetApi, activateMeet } from '@/lib/api';
 import { USA_SWIMMING_EVENTS } from '@/lib/events';
 import MeetForm from '@/components/MeetForm';
 
@@ -12,8 +13,12 @@ export default function MeetsPage() {
 
   useEffect(() => {
     const loadMeets = async () => {
-      const meetData = await getMeets();
-      setMeets(meetData);
+      try {
+        const meetData = await fetchMeets();
+        setMeets(meetData);
+      } catch (error) {
+        console.error('Error loading meets:', error);
+      }
     };
     loadMeets();
   }, []);
@@ -30,23 +35,35 @@ export default function MeetsPage() {
 
   const handleDeleteMeet = async (id: string) => {
     if (confirm('Are you sure you want to delete this meet?')) {
-      await deleteMeet(id);
-      const updatedMeets = await getMeets();
-      setMeets(updatedMeets);
+      try {
+        await deleteMeetApi(id);
+        const updatedMeets = await fetchMeets();
+        setMeets(updatedMeets);
+      } catch (error) {
+        console.error('Error deleting meet:', error);
+      }
     }
   };
 
   const handleSetActive = async (id: string) => {
-    await setActiveMeet(id);
-    const updatedMeets = await getMeets();
-    setMeets(updatedMeets);
+    try {
+      await activateMeet(id);
+      const updatedMeets = await fetchMeets();
+      setMeets(updatedMeets);
+    } catch (error) {
+      console.error('Error setting active meet:', error);
+    }
   };
 
   const handleFormClose = async () => {
     setShowForm(false);
     setEditingMeet(null);
-    const updatedMeets = await getMeets();
-    setMeets(updatedMeets);
+    try {
+      const updatedMeets = await fetchMeets();
+      setMeets(updatedMeets);
+    } catch (error) {
+      console.error('Error loading meets:', error);
+    }
   };
 
   const activeMeet = meets.find(m => m.isActive);
