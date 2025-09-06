@@ -14,46 +14,103 @@ export interface MeetManagerRelay {
   swimmers: Swimmer[];
 }
 
+// Convert time string (MM:SS.ss) to centiseconds for SDIF format
+function timeToSdifFormat(timeString: string): string {
+  if (!timeString || timeString === 'NT') return '9999999';
+  
+  const parts = timeString.split(':');
+  if (parts.length !== 2) return '9999999';
+  
+  const minutes = parseInt(parts[0]) || 0;
+  const secondsParts = parts[1].split('.');
+  const seconds = parseInt(secondsParts[0]) || 0;
+  const centiseconds = parseInt((secondsParts[1] || '00').padEnd(2, '0').substring(0, 2)) || 0;
+  
+  const totalCentiseconds = (minutes * 60 * 100) + (seconds * 100) + centiseconds;
+  return totalCentiseconds.toString().padStart(7, '0');
+}
+
+// Get SDIF event code for swimming events
+function getEventCode(event: SwimEvent): string {
+  const strokeCodes: Record<string, string> = {
+    'freestyle': '1',
+    'backstroke': '2',
+    'breaststroke': '3',
+    'butterfly': '4',
+    'individual-medley': '5'
+  };
+  
+  const stroke = strokeCodes[event.stroke] || '1';
+  const distance = event.distance.toString().padStart(4, '0');
+  const course = event.course === 'SCY' ? '1' : event.course === 'LCM' ? '2' : '3';
+  
+  return `${stroke}${distance}${course}${event.isRelay ? '1' : '0'}`;
+}
+
 export function generateMeetManagerFile(): void {
   const swimmers = getSwimmers();
   const relayTeams = getRelayTeams();
   
   let content = '';
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
   
-  // Header
-  content += '#Meet Manager Export\n';
-  content += '#Generated on ' + new Date().toISOString() + '\n\n';
+  // File Header (A0 record)
+  content += 'A01V3                   Swim Team Management    ' + dateStr + '        \n';
   
-  // Individual Entries
-  content += '#Individual Entries\n';
+  // Meet Header (B1 record)
+  content += 'B1001Team Meet          ' + dateStr + dateStr + '    1N              \n';
+  
+  // Team record (C1 record)
+  content += 'C1TEAM    Team Name                      Team Name                      TEAM    \n';
+  
+  // Individual Entries (D0 records)
   swimmers.forEach(swimmer => {
     swimmer.selectedEvents.forEach(eventId => {
       const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
       if (event && !event.isRelay) {
-        const seedTime = swimmer.seedTimes[eventId] || 'NT';
-        content += `${swimmer.lastName}, ${swimmer.firstName}\t${swimmer.gender}\t${swimmer.ageGroup}\t${event.name}\t${seedTime}\n`;
+        const seedTime = timeToSdifFormat(swimmer.seedTimes[eventId] || 'NT');
+        const eventCode = getEventCode(event);
+        const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
+        const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
+        const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
+        
+        content += `D0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}TEAM    ${eventCode}${seedTime}    L         \n`;
       }
     });
   });
   
-  content += '\n#Relay Entries\n';
+  // Relay Entries (F0 records)
   relayTeams.forEach(team => {
     const event = USA_SWIMMING_EVENTS.find(e => e.id === team.eventId);
     if (event) {
-      content += `${team.name}\t${team.gender}\t${team.ageGroup}\t${event.name}\n`;
+      const eventCode = getEventCode(event);
+      const teamName = team.name.padEnd(20, ' ').substring(0, 20);
+      
+      content += `F0${team.gender}${team.id.substring(0, 12).padEnd(12, ' ')}${teamName}                    ${team.ageGroup.padEnd(2, ' ')}        TEAM    ${eventCode}9999999    L         \n`;
+      
+      // Relay swimmers (G0 records)
       team.swimmers.forEach((swimmerId, index) => {
         const swimmer = swimmers.find(s => s.id === swimmerId);
         if (swimmer) {
-          content += `  ${index + 1}. ${swimmer.lastName}, ${swimmer.firstName}\n`;
+          const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
+          const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
+          const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
+          const legOrder = (index + 1).toString();
+          
+          content += `G0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}TEAM    ${legOrder}9999999    \n`;
         }
       });
-      content += '\n';
     }
   });
   
+  // File trailer (Z0 record)
+  const totalRecords = content.split('\n').length - 1;
+  content += `Z0${totalRecords.toString().padStart(6, '0')}                                                                  \n`;
+  
   // Create and download file
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  saveAs(blob, `swim-meet-entries-${new Date().toISOString().split('T')[0]}.txt`);
+  saveAs(blob, `swim-meet-entries-${dateStr}.sd3`);
 }
 
 export function getMeetEntries(): { individual: MeetManagerEntry[], relays: MeetManagerRelay[] } {
