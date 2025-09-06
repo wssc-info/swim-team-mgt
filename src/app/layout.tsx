@@ -27,7 +27,30 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <nav className="bg-blue-600 text-white p-4">
+          <div className="container mx-auto flex justify-between items-center">
+            <Link href="/" className="text-xl font-bold">
+              Swim Team Management
+            </Link>
+            <div className="space-x-4">
+              <Link href="/swimmers" className="hover:underline">
+                Swimmers
+              </Link>
+              <Link href="/events" className="hover:underline">
+                Events
+              </Link>
+              <Link href="/relays" className="hover:underline">
+                Relays
+              </Link>
+              <Link href="/export" className="hover:underline">
+                Export
+              </Link>
+            </div>
+          </div>
+        </nav>
+        <main className="container mx-auto p-4">
+          {children}
+        </main>
       </body>
     </html>
   );
