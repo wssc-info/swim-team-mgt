@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    await generateMeetManagerFile(selectedMeet);
+    await generateMeetManagerFile(selectedMeet || undefined);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error generating export:', error);
