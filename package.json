@@ -11,7 +11,9 @@
   "dependencies": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.2"
+    "next": "15.5.2",
+    "uuid": "^10.0.0",
+    "file-saver": "^2.0.5"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -22,6 +24,8 @@
     "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
-    "@eslint/eslintrc": "^3"
+    "@eslint/eslintrc": "^3",
+    "@types/uuid": "^10.0.0",
+    "@types/file-saver": "^2.0.7"
   }
 }
