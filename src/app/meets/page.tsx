@@ -11,7 +11,11 @@ export default function MeetsPage() {
   const [editingMeet, setEditingMeet] = useState<Meet | null>(null);
 
   useEffect(() => {
-    setMeets(getMeets());
+    const loadMeets = async () => {
+      const meetData = await getMeets();
+      setMeets(meetData);
+    };
+    loadMeets();
   }, []);
 
   const handleAddMeet = () => {
@@ -24,22 +28,25 @@ export default function MeetsPage() {
     setShowForm(true);
   };
 
-  const handleDeleteMeet = (id: string) => {
+  const handleDeleteMeet = async (id: string) => {
     if (confirm('Are you sure you want to delete this meet?')) {
-      deleteMeet(id);
-      setMeets(getMeets());
+      await deleteMeet(id);
+      const updatedMeets = await getMeets();
+      setMeets(updatedMeets);
     }
   };
 
-  const handleSetActive = (id: string) => {
-    setActiveMeet(id);
-    setMeets(getMeets());
+  const handleSetActive = async (id: string) => {
+    await setActiveMeet(id);
+    const updatedMeets = await getMeets();
+    setMeets(updatedMeets);
   };
 
-  const handleFormClose = () => {
+  const handleFormClose = async () => {
     setShowForm(false);
     setEditingMeet(null);
-    setMeets(getMeets());
+    const updatedMeets = await getMeets();
+    setMeets(updatedMeets);
   };
 
   const activeMeet = meets.find(m => m.isActive);

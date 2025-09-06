@@ -58,7 +58,7 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -67,9 +67,9 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
 
     try {
       if (swimmer) {
-        updateSwimmer(swimmer.id, formData);
+        await updateSwimmer(swimmer.id, formData);
       } else {
-        addSwimmer(formData);
+        await addSwimmer(formData);
       }
       onClose();
     } catch (error) {

@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { SwimmerModel, MeetModel, RelayTeamModel, initializeDatabase } from './database';
 
 export interface Swimmer {
   id: string;
@@ -30,6 +31,15 @@ export interface Meet {
   createdAt: string;
 }
 
+// Initialize database on module load
+let dbInitialized = false;
+async function ensureDbInitialized() {
+  if (!dbInitialized) {
+    await initializeDatabase();
+    dbInitialized = true;
+  }
+}
+
 // Calculate age group based on birth date
 export function calculateAgeGroup(dateOfBirth: string): string {
   const birthDate = new Date(dateOfBirth);
@@ -48,150 +58,268 @@ export function calculateAgeGroup(dateOfBirth: string): string {
   return '15-18';
 }
 
-// Local storage helpers
-export function getSwimmers(): Swimmer[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('swimmers');
-  return stored ? JSON.parse(stored) : [];
+// Database helpers for swimmers
+export async function getSwimmers(): Promise<Swimmer[]> {
+  await ensureDbInitialized();
+  try {
+    const swimmers = await SwimmerModel.findAll();
+    return swimmers.map(swimmer => ({
+      id: swimmer.id,
+      firstName: swimmer.firstName,
+      lastName: swimmer.lastName,
+      dateOfBirth: swimmer.dateOfBirth,
+      gender: swimmer.gender,
+      ageGroup: swimmer.ageGroup,
+      selectedEvents: JSON.parse(swimmer.selectedEvents),
+      seedTimes: JSON.parse(swimmer.seedTimes),
+    }));
+  } catch (error) {
+    console.error('Error fetching swimmers:', error);
+    return [];
+  }
 }
 
-export function saveSwimmers(swimmers: Swimmer[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('swimmers', JSON.stringify(swimmers));
-}
-
-export function addSwimmer(swimmer: Omit<Swimmer, 'id' | 'ageGroup'>): Swimmer {
+export async function addSwimmer(swimmer: Omit<Swimmer, 'id' | 'ageGroup'>): Promise<Swimmer> {
+  await ensureDbInitialized();
   const newSwimmer: Swimmer = {
     ...swimmer,
     id: uuidv4(),
     ageGroup: calculateAgeGroup(swimmer.dateOfBirth),
   };
   
-  const swimmers = getSwimmers();
-  swimmers.push(newSwimmer);
-  saveSwimmers(swimmers);
-  
-  return newSwimmer;
-}
-
-export function updateSwimmer(id: string, updates: Partial<Swimmer>): void {
-  const swimmers = getSwimmers();
-  const index = swimmers.findIndex(s => s.id === id);
-  if (index !== -1) {
-    swimmers[index] = { ...swimmers[index], ...updates };
-    if (updates.dateOfBirth) {
-      swimmers[index].ageGroup = calculateAgeGroup(updates.dateOfBirth);
-    }
-    saveSwimmers(swimmers);
+  try {
+    await SwimmerModel.create({
+      id: newSwimmer.id,
+      firstName: newSwimmer.firstName,
+      lastName: newSwimmer.lastName,
+      dateOfBirth: newSwimmer.dateOfBirth,
+      gender: newSwimmer.gender,
+      ageGroup: newSwimmer.ageGroup,
+      selectedEvents: JSON.stringify(newSwimmer.selectedEvents),
+      seedTimes: JSON.stringify(newSwimmer.seedTimes),
+    });
+    
+    return newSwimmer;
+  } catch (error) {
+    console.error('Error adding swimmer:', error);
+    throw error;
   }
 }
 
-export function deleteSwimmer(id: string): void {
-  const swimmers = getSwimmers();
-  const filtered = swimmers.filter(s => s.id !== id);
-  saveSwimmers(filtered);
+export async function updateSwimmer(id: string, updates: Partial<Swimmer>): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    const updateData: any = { ...updates };
+    
+    if (updates.dateOfBirth) {
+      updateData.ageGroup = calculateAgeGroup(updates.dateOfBirth);
+    }
+    
+    if (updates.selectedEvents) {
+      updateData.selectedEvents = JSON.stringify(updates.selectedEvents);
+    }
+    
+    if (updates.seedTimes) {
+      updateData.seedTimes = JSON.stringify(updates.seedTimes);
+    }
+    
+    await SwimmerModel.update(updateData, { where: { id } });
+  } catch (error) {
+    console.error('Error updating swimmer:', error);
+    throw error;
+  }
 }
 
-export function getRelayTeams(): RelayTeam[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('relayTeams');
-  return stored ? JSON.parse(stored) : [];
+export async function deleteSwimmer(id: string): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    await SwimmerModel.destroy({ where: { id } });
+  } catch (error) {
+    console.error('Error deleting swimmer:', error);
+    throw error;
+  }
 }
 
-export function saveRelayTeams(teams: RelayTeam[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('relayTeams', JSON.stringify(teams));
+// Database helpers for relay teams
+export async function getRelayTeams(): Promise<RelayTeam[]> {
+  await ensureDbInitialized();
+  try {
+    const teams = await RelayTeamModel.findAll();
+    return teams.map(team => ({
+      id: team.id,
+      eventId: team.eventId,
+      name: team.name,
+      swimmers: JSON.parse(team.swimmers),
+      ageGroup: team.ageGroup,
+      gender: team.gender,
+    }));
+  } catch (error) {
+    console.error('Error fetching relay teams:', error);
+    return [];
+  }
 }
 
-export function addRelayTeam(team: Omit<RelayTeam, 'id'>): RelayTeam {
+export async function addRelayTeam(team: Omit<RelayTeam, 'id'>): Promise<RelayTeam> {
+  await ensureDbInitialized();
   const newTeam: RelayTeam = {
     ...team,
     id: uuidv4(),
   };
   
-  const teams = getRelayTeams();
-  teams.push(newTeam);
-  saveRelayTeams(teams);
-  
-  return newTeam;
-}
-
-export function updateRelayTeam(id: string, updates: Partial<RelayTeam>): void {
-  const teams = getRelayTeams();
-  const index = teams.findIndex(t => t.id === id);
-  if (index !== -1) {
-    teams[index] = { ...teams[index], ...updates };
-    saveRelayTeams(teams);
+  try {
+    await RelayTeamModel.create({
+      id: newTeam.id,
+      eventId: newTeam.eventId,
+      name: newTeam.name,
+      swimmers: JSON.stringify(newTeam.swimmers),
+      ageGroup: newTeam.ageGroup,
+      gender: newTeam.gender,
+    });
+    
+    return newTeam;
+  } catch (error) {
+    console.error('Error adding relay team:', error);
+    throw error;
   }
 }
 
-export function deleteRelayTeam(id: string): void {
-  const teams = getRelayTeams();
-  const filtered = teams.filter(t => t.id !== id);
-  saveRelayTeams(filtered);
+export async function updateRelayTeam(id: string, updates: Partial<RelayTeam>): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    const updateData: any = { ...updates };
+    
+    if (updates.swimmers) {
+      updateData.swimmers = JSON.stringify(updates.swimmers);
+    }
+    
+    await RelayTeamModel.update(updateData, { where: { id } });
+  } catch (error) {
+    console.error('Error updating relay team:', error);
+    throw error;
+  }
 }
 
-// Meet management functions
-export function getMeets(): Meet[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('meets');
-  return stored ? JSON.parse(stored) : [];
+export async function deleteRelayTeam(id: string): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    await RelayTeamModel.destroy({ where: { id } });
+  } catch (error) {
+    console.error('Error deleting relay team:', error);
+    throw error;
+  }
 }
 
-export function saveMeets(meets: Meet[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('meets', JSON.stringify(meets));
+// Database helpers for meets
+export async function getMeets(): Promise<Meet[]> {
+  await ensureDbInitialized();
+  try {
+    const meets = await MeetModel.findAll();
+    return meets.map(meet => ({
+      id: meet.id,
+      name: meet.name,
+      date: meet.date,
+      location: meet.location,
+      availableEvents: JSON.parse(meet.availableEvents),
+      isActive: meet.isActive,
+      createdAt: meet.createdAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error('Error fetching meets:', error);
+    return [];
+  }
 }
 
-export function addMeet(meet: Omit<Meet, 'id' | 'createdAt'>): Meet {
+export async function addMeet(meet: Omit<Meet, 'id' | 'createdAt'>): Promise<Meet> {
+  await ensureDbInitialized();
   const newMeet: Meet = {
     ...meet,
     id: uuidv4(),
     createdAt: new Date().toISOString(),
   };
   
-  const meets = getMeets();
-  
-  // If this meet is being set as active, deactivate all others
-  if (newMeet.isActive) {
-    meets.forEach(m => m.isActive = false);
-  }
-  
-  meets.push(newMeet);
-  saveMeets(meets);
-  
-  return newMeet;
-}
-
-export function updateMeet(id: string, updates: Partial<Meet>): void {
-  const meets = getMeets();
-  const index = meets.findIndex(m => m.id === id);
-  if (index !== -1) {
-    // If setting this meet as active, deactivate all others
-    if (updates.isActive) {
-      meets.forEach(m => m.isActive = false);
+  try {
+    // If this meet is being set as active, deactivate all others
+    if (newMeet.isActive) {
+      await MeetModel.update({ isActive: false }, { where: {} });
     }
     
-    meets[index] = { ...meets[index], ...updates };
-    saveMeets(meets);
+    await MeetModel.create({
+      id: newMeet.id,
+      name: newMeet.name,
+      date: newMeet.date,
+      location: newMeet.location,
+      availableEvents: JSON.stringify(newMeet.availableEvents),
+      isActive: newMeet.isActive,
+    });
+    
+    return newMeet;
+  } catch (error) {
+    console.error('Error adding meet:', error);
+    throw error;
   }
 }
 
-export function deleteMeet(id: string): void {
-  const meets = getMeets();
-  const filtered = meets.filter(m => m.id !== id);
-  saveMeets(filtered);
+export async function updateMeet(id: string, updates: Partial<Meet>): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    // If setting this meet as active, deactivate all others
+    if (updates.isActive) {
+      await MeetModel.update({ isActive: false }, { where: {} });
+    }
+    
+    const updateData: any = { ...updates };
+    
+    if (updates.availableEvents) {
+      updateData.availableEvents = JSON.stringify(updates.availableEvents);
+    }
+    
+    await MeetModel.update(updateData, { where: { id } });
+  } catch (error) {
+    console.error('Error updating meet:', error);
+    throw error;
+  }
 }
 
-export function getActiveMeet(): Meet | null {
-  const meets = getMeets();
-  return meets.find(m => m.isActive) || null;
+export async function deleteMeet(id: string): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    await MeetModel.destroy({ where: { id } });
+  } catch (error) {
+    console.error('Error deleting meet:', error);
+    throw error;
+  }
 }
 
-export function setActiveMeet(id: string): void {
-  const meets = getMeets();
-  meets.forEach(m => {
-    m.isActive = m.id === id;
-  });
-  saveMeets(meets);
+export async function getActiveMeet(): Promise<Meet | null> {
+  await ensureDbInitialized();
+  try {
+    const meet = await MeetModel.findOne({ where: { isActive: true } });
+    if (!meet) return null;
+    
+    return {
+      id: meet.id,
+      name: meet.name,
+      date: meet.date,
+      location: meet.location,
+      availableEvents: JSON.parse(meet.availableEvents),
+      isActive: meet.isActive,
+      createdAt: meet.createdAt.toISOString(),
+    };
+  } catch (error) {
+    console.error('Error fetching active meet:', error);
+    return null;
+  }
+}
+
+export async function setActiveMeet(id: string): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    // Deactivate all meets first
+    await MeetModel.update({ isActive: false }, { where: {} });
+    // Then activate the specified meet
+    await MeetModel.update({ isActive: true }, { where: { id } });
+  } catch (error) {
+    console.error('Error setting active meet:', error);
+    throw error;
+  }
 }

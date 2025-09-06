@@ -47,9 +47,9 @@ function getEventCode(event: SwimEvent): string {
   return `${stroke}${distance}${course}${event.isRelay ? '1' : '0'}`;
 }
 
-export function generateMeetManagerFile(): void {
-  const swimmers = getSwimmers();
-  const relayTeams = getRelayTeams();
+export async function generateMeetManagerFile(): Promise<void> {
+  const swimmers = await getSwimmers();
+  const relayTeams = await getRelayTeams();
   
   let content = '';
   const today = new Date();
@@ -113,9 +113,9 @@ export function generateMeetManagerFile(): void {
   saveAs(blob, `swim-meet-entries-${dateStr}.sd3`);
 }
 
-export function getMeetEntries(): { individual: MeetManagerEntry[], relays: MeetManagerRelay[] } {
-  const swimmers = getSwimmers();
-  const relayTeams = getRelayTeams();
+export async function getMeetEntries(): Promise<{ individual: MeetManagerEntry[], relays: MeetManagerRelay[] }> {
+  const swimmers = await getSwimmers();
+  const relayTeams = await getRelayTeams();
   
   const individual: MeetManagerEntry[] = [];
   const relays: MeetManagerRelay[] = [];

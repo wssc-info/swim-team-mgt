@@ -10,7 +10,11 @@ export default function SwimmersPage() {
   const [editingSwimmer, setEditingSwimmer] = useState<Swimmer | null>(null);
 
   useEffect(() => {
-    setSwimmers(getSwimmers());
+    const loadSwimmers = async () => {
+      const swimmerData = await getSwimmers();
+      setSwimmers(swimmerData);
+    };
+    loadSwimmers();
   }, []);
 
   const handleAddSwimmer = () => {
@@ -23,17 +27,19 @@ export default function SwimmersPage() {
     setShowForm(true);
   };
 
-  const handleDeleteSwimmer = (id: string) => {
+  const handleDeleteSwimmer = async (id: string) => {
     if (confirm('Are you sure you want to delete this swimmer?')) {
-      deleteSwimmer(id);
-      setSwimmers(getSwimmers());
+      await deleteSwimmer(id);
+      const updatedSwimmers = await getSwimmers();
+      setSwimmers(updatedSwimmers);
     }
   };
 
-  const handleFormClose = () => {
+  const handleFormClose = async () => {
     setShowForm(false);
     setEditingSwimmer(null);
-    setSwimmers(getSwimmers());
+    const updatedSwimmers = await getSwimmers();
+    setSwimmers(updatedSwimmers);
   };
 
   const groupedSwimmers = swimmers.reduce((groups, swimmer) => {

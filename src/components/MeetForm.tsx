@@ -67,7 +67,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -76,9 +76,9 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
     try {
       if (meet) {
-        updateMeet(meet.id, formData);
+        await updateMeet(meet.id, formData);
       } else {
-        addMeet(formData);
+        await addMeet(formData);
       }
       onClose();
     } catch (error) {
