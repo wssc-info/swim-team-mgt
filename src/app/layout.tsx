@@ -34,6 +34,9 @@ export default function RootLayout({
               Swim Team Management
             </Link>
             <div className="space-x-4">
+              <Link href="/meets" className="hover:underline">
+                Meets
+              </Link>
               <Link href="/swimmers" className="hover:underline">
                 Swimmers
               </Link>

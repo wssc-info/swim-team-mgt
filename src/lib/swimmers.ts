@@ -20,6 +20,16 @@ export interface RelayTeam {
   gender: 'M' | 'F' | 'Mixed';
 }
 
+export interface Meet {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  availableEvents: string[]; // Event IDs that swimmers can participate in
+  isActive: boolean; // Only one meet can be active at a time
+  createdAt: string;
+}
+
 // Calculate age group based on birth date
 export function calculateAgeGroup(dateOfBirth: string): string {
   const birthDate = new Date(dateOfBirth);
@@ -119,4 +129,69 @@ export function deleteRelayTeam(id: string): void {
   const teams = getRelayTeams();
   const filtered = teams.filter(t => t.id !== id);
   saveRelayTeams(filtered);
+}
+
+// Meet management functions
+export function getMeets(): Meet[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem('meets');
+  return stored ? JSON.parse(stored) : [];
+}
+
+export function saveMeets(meets: Meet[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('meets', JSON.stringify(meets));
+}
+
+export function addMeet(meet: Omit<Meet, 'id' | 'createdAt'>): Meet {
+  const newMeet: Meet = {
+    ...meet,
+    id: uuidv4(),
+    createdAt: new Date().toISOString(),
+  };
+  
+  const meets = getMeets();
+  
+  // If this meet is being set as active, deactivate all others
+  if (newMeet.isActive) {
+    meets.forEach(m => m.isActive = false);
+  }
+  
+  meets.push(newMeet);
+  saveMeets(meets);
+  
+  return newMeet;
+}
+
+export function updateMeet(id: string, updates: Partial<Meet>): void {
+  const meets = getMeets();
+  const index = meets.findIndex(m => m.id === id);
+  if (index !== -1) {
+    // If setting this meet as active, deactivate all others
+    if (updates.isActive) {
+      meets.forEach(m => m.isActive = false);
+    }
+    
+    meets[index] = { ...meets[index], ...updates };
+    saveMeets(meets);
+  }
+}
+
+export function deleteMeet(id: string): void {
+  const meets = getMeets();
+  const filtered = meets.filter(m => m.id !== id);
+  saveMeets(filtered);
+}
+
+export function getActiveMeet(): Meet | null {
+  const meets = getMeets();
+  return meets.find(m => m.isActive) || null;
+}
+
+export function setActiveMeet(id: string): void {
+  const meets = getMeets();
+  meets.forEach(m => {
+    m.isActive = m.id === id;
+  });
+  saveMeets(meets);
 }

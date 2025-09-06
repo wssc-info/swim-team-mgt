@@ -24,18 +24,24 @@ export default function Home() {
         <div className="bg-green-50 p-6 rounded-lg">
           <h2 className="text-2xl font-semibold mb-4">For Coaches</h2>
           <p className="mb-4">
-            Manage swimmers, create relay teams, and export meet files.
+            Create meets, manage swimmers, create relay teams, and export meet files.
           </p>
-          <div className="space-x-2">
+          <div className="space-x-2 space-y-2">
+            <Link 
+              href="/meets" 
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 inline-block"
+            >
+              Manage Meets
+            </Link>
             <Link 
               href="/swimmers" 
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 inline-block"
             >
               Manage Swimmers
             </Link>
             <Link 
               href="/relays" 
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 inline-block"
             >
               Create Relays
             </Link>
