@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { Swimmer, RelayTeam, getSwimmers, getRelayTeams } from './swimmers';
+import { Swimmer, RelayTeam, Meet, getSwimmers, getRelayTeams } from './swimmers';
 import { USA_SWIMMING_EVENTS, SwimEvent } from './events';
 
 export interface MeetManagerEntry {
@@ -47,60 +47,75 @@ function getEventCode(event: SwimEvent): string {
   return `${stroke}${distance}${course}${event.isRelay ? '1' : '0'}`;
 }
 
-export async function generateMeetManagerFile(): Promise<void> {
+export async function generateMeetManagerFile(selectedMeet?: Meet): Promise<void> {
   const swimmers = await getSwimmers();
   const relayTeams = await getRelayTeams();
+  const meets = selectedMeet ? [selectedMeet] : [];
+  
+  // Get active meet if no specific meet selected
+  const targetMeet = selectedMeet || meets.find(m => m.isActive);
+  if (!targetMeet) {
+    throw new Error('No meet selected for export');
+  }
   
   let content = '';
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+  const meetDate = targetMeet.date.replace(/-/g, '');
   
   // File Header (A0 record)
   content += 'A01V3                   Swim Team Management    ' + dateStr + '        \n';
   
-  // Meet Header (B1 record)
-  content += 'B1001Team Meet          ' + dateStr + dateStr + '    1N              \n';
+  // Meet Header (B1 record) - use actual meet name and date
+  const meetName = targetMeet.name.padEnd(20, ' ').substring(0, 20);
+  content += `B1001${meetName}${meetDate}${meetDate}    1N              \n`;
   
   // Team record (C1 record)
   content += 'C1TEAM    Team Name                      Team Name                      TEAM    \n';
   
-  // Individual Entries (D0 records)
+  // Individual Entries (D0 records) - only for selected meet events
   swimmers.forEach(swimmer => {
     swimmer.selectedEvents.forEach(eventId => {
-      const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
-      if (event && !event.isRelay) {
-        const seedTime = timeToSdifFormat(swimmer.seedTimes[eventId] || 'NT');
-        const eventCode = getEventCode(event);
-        const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
-        const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
-        const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
-        
-        content += `D0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}TEAM    ${eventCode}${seedTime}    L         \n`;
+      // Only include events that are available in the target meet
+      if (targetMeet.availableEvents.includes(eventId)) {
+        const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+        if (event && !event.isRelay) {
+          const seedTime = timeToSdifFormat(swimmer.seedTimes[eventId] || 'NT');
+          const eventCode = getEventCode(event);
+          const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
+          const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
+          const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
+          
+          content += `D0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}TEAM    ${eventCode}${seedTime}    L         \n`;
+        }
       }
     });
   });
   
-  // Relay Entries (F0 records)
+  // Relay Entries (F0 records) - only for selected meet events
   relayTeams.forEach(team => {
-    const event = USA_SWIMMING_EVENTS.find(e => e.id === team.eventId);
-    if (event) {
-      const eventCode = getEventCode(event);
-      const teamName = team.name.padEnd(20, ' ').substring(0, 20);
-      
-      content += `F0${team.gender}${team.id.substring(0, 12).padEnd(12, ' ')}${teamName}                    ${team.ageGroup.padEnd(2, ' ')}        TEAM    ${eventCode}9999999    L         \n`;
-      
-      // Relay swimmers (G0 records)
-      team.swimmers.forEach((swimmerId, index) => {
-        const swimmer = swimmers.find(s => s.id === swimmerId);
-        if (swimmer) {
-          const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
-          const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
-          const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
-          const legOrder = (index + 1).toString();
-          
-          content += `G0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}TEAM    ${legOrder}9999999    \n`;
-        }
-      });
+    // Only include relay teams for events available in the target meet
+    if (targetMeet.availableEvents.includes(team.eventId)) {
+      const event = USA_SWIMMING_EVENTS.find(e => e.id === team.eventId);
+      if (event) {
+        const eventCode = getEventCode(event);
+        const teamName = team.name.padEnd(20, ' ').substring(0, 20);
+        
+        content += `F0${team.gender}${team.id.substring(0, 12).padEnd(12, ' ')}${teamName}                    ${team.ageGroup.padEnd(2, ' ')}        TEAM    ${eventCode}9999999    L         \n`;
+        
+        // Relay swimmers (G0 records)
+        team.swimmers.forEach((swimmerId, index) => {
+          const swimmer = swimmers.find(s => s.id === swimmerId);
+          if (swimmer) {
+            const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
+            const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
+            const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
+            const legOrder = (index + 1).toString();
+            
+            content += `G0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}TEAM    ${legOrder}9999999    \n`;
+          }
+        });
+      }
     }
   });
   
@@ -110,7 +125,8 @@ export async function generateMeetManagerFile(): Promise<void> {
   
   // Create and download file
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  saveAs(blob, `swim-meet-entries-${dateStr}.sd3`);
+  const fileName = `${targetMeet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${meetDate}.sd3`;
+  saveAs(blob, fileName);
 }
 
 export async function getMeetEntries(): Promise<{ individual: MeetManagerEntry[], relays: MeetManagerRelay[] }> {

@@ -98,3 +98,17 @@ export async function activateMeet(id: string): Promise<void> {
     throw new Error('Failed to activate meet');
   }
 }
+
+// Export API
+export async function exportMeetData(meetId?: string): Promise<void> {
+  const response = await fetch('/api/export', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ meetId }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to export meet data');
+  }
+}
