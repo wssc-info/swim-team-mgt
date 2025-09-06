@@ -70,8 +70,8 @@ export async function getSwimmers(): Promise<Swimmer[]> {
       dateOfBirth: swimmer.dateOfBirth,
       gender: swimmer.gender,
       ageGroup: swimmer.ageGroup,
-      selectedEvents: JSON.parse(swimmer.selectedEvents),
-      seedTimes: JSON.parse(swimmer.seedTimes),
+      selectedEvents: JSON.parse(swimmer.selectedEvents || '[]'),
+      seedTimes: JSON.parse(swimmer.seedTimes || '{}'),
     }));
   } catch (error) {
     console.error('Error fetching swimmers:', error);
@@ -149,7 +149,7 @@ export async function getRelayTeams(): Promise<RelayTeam[]> {
       id: team.id,
       eventId: team.eventId,
       name: team.name,
-      swimmers: JSON.parse(team.swimmers),
+      swimmers: JSON.parse(team.swimmers || '[]'),
       ageGroup: team.ageGroup,
       gender: team.gender,
     }));
@@ -219,7 +219,7 @@ export async function getMeets(): Promise<Meet[]> {
       name: meet.name,
       date: meet.date,
       location: meet.location,
-      availableEvents: JSON.parse(meet.availableEvents),
+      availableEvents: JSON.parse(meet.availableEvents || '[]'),
       isActive: meet.isActive,
       createdAt: meet.createdAt.toISOString(),
     }));
@@ -301,7 +301,7 @@ export async function getActiveMeet(): Promise<Meet | null> {
       name: meet.name,
       date: meet.date,
       location: meet.location,
-      availableEvents: JSON.parse(meet.availableEvents),
+      availableEvents: JSON.parse(meet.availableEvents || '[]'),
       isActive: meet.isActive,
       createdAt: meet.createdAt.toISOString(),
     };
