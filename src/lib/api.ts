@@ -129,7 +129,7 @@ export async function activateMeet(id: string): Promise<void> {
 }
 
 // Export API
-export async function exportMeetData(meetId?: string): Promise<void> {
+export async function exportMeetData(meetId?: string): Promise<{ content: string; fileName: string }> {
   const response = await fetch('/api/export', {
     method: 'POST',
     headers: {
@@ -140,4 +140,6 @@ export async function exportMeetData(meetId?: string): Promise<void> {
   if (!response.ok) {
     throw new Error('Failed to export meet data');
   }
+  const data = await response.json();
+  return { content: data.content, fileName: data.fileName };
 }

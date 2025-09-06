@@ -47,7 +47,7 @@ function getEventCode(event: SwimEvent): string {
   return `${stroke}${distance}${course}${event.isRelay ? '1' : '0'}`;
 }
 
-export async function generateMeetManagerFile(selectedMeet?: Meet): Promise<void> {
+export async function generateMeetManagerFile(selectedMeet?: Meet): Promise<string> {
   const swimmers = await getSwimmers();
   const relayTeams = await getRelayTeams();
   const meets = selectedMeet ? [selectedMeet] : [];
@@ -123,10 +123,8 @@ export async function generateMeetManagerFile(selectedMeet?: Meet): Promise<void
   const totalRecords = content.split('\n').length - 1;
   content += `Z0${totalRecords.toString().padStart(6, '0')}                                                                  \n`;
   
-  // Create and download file
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const fileName = `${targetMeet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${meetDate}.sd3`;
-  saveAs(blob, fileName);
+  // Return the content instead of downloading
+  return content;
 }
 
 export async function getMeetEntries(): Promise<{ individual: MeetManagerEntry[], relays: MeetManagerRelay[] }> {

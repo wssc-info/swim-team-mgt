@@ -16,8 +16,16 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    await generateMeetManagerFile(selectedMeet || undefined);
-    return NextResponse.json({ success: true });
+    const content = await generateMeetManagerFile(selectedMeet || undefined);
+    const fileName = selectedMeet 
+      ? `${selectedMeet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${selectedMeet.date.replace(/-/g, '')}.sd3`
+      : `swim-meet-entries-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.sd3`;
+    
+    return NextResponse.json({ 
+      success: true, 
+      content,
+      fileName 
+    });
   } catch (error) {
     console.error('Error generating export:', error);
     return NextResponse.json({ error: 'Failed to generate export' }, { status: 500 });
