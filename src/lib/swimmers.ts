@@ -221,7 +221,7 @@ export async function getMeets(): Promise<Meet[]> {
       location: meet.location,
       availableEvents: JSON.parse(meet.availableEvents || '[]'),
       isActive: meet.isActive,
-      createdAt: meet.createdAt.toISOString(),
+      createdAt: (meet.createdAt || new Date()).toISOString(),
     }));
   } catch (error) {
     console.error('Error fetching meets:', error);
