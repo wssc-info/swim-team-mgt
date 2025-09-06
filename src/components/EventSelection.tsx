@@ -1,9 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Swimmer } from '@/lib/swimmers';
 import { SwimEvent } from '@/lib/events';
 import { updateSwimmerApi } from '@/lib/api';
+
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F';
+  ageGroup: string;
+  selectedEvents: string[];
+  seedTimes: Record<string, string>;
+}
 
 interface EventSelectionProps {
   swimmer: Swimmer;

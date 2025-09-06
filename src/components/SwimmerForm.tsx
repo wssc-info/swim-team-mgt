@@ -1,8 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Swimmer, calculateAgeGroup } from '@/lib/swimmers';
 import { createSwimmer, updateSwimmerApi } from '@/lib/api';
+
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F';
+  ageGroup: string;
+  selectedEvents: string[];
+  seedTimes: Record<string, string>;
+}
+
+// Calculate age group based on birth date
+function calculateAgeGroup(dateOfBirth: string): string {
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) 
+    ? age - 1 
+    : age;
+
+  if (actualAge <= 8) return '8&U';
+  if (actualAge <= 10) return '9-10';
+  if (actualAge <= 12) return '11-12';
+  if (actualAge <= 14) return '13-14';
+  return '15-18';
+}
 
 interface SwimmerFormProps {
   swimmer?: Swimmer | null;

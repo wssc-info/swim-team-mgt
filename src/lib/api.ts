@@ -1,4 +1,33 @@
-import { Swimmer, Meet, RelayTeam } from './swimmers';
+// Type definitions
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F';
+  ageGroup: string;
+  selectedEvents: string[];
+  seedTimes: Record<string, string>;
+}
+
+interface Meet {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  availableEvents: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface RelayTeam {
+  id: string;
+  eventId: string;
+  name: string;
+  swimmers: string[];
+  ageGroup: string;
+  gender: 'M' | 'F' | 'Mixed';
+}
 
 // Swimmers API
 export async function fetchSwimmers(): Promise<Swimmer[]> {

@@ -1,11 +1,39 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Meet, Swimmer, RelayTeam } from '@/lib/swimmers';
 import { fetchMeets, fetchSwimmers } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent } from '@/lib/events';
-import { getMeetEntries } from '@/lib/meetmanager';
 import { exportMeetData } from '@/lib/api';
+
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F';
+  ageGroup: string;
+  selectedEvents: string[];
+  seedTimes: Record<string, string>;
+}
+
+interface Meet {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  availableEvents: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface RelayTeam {
+  id: string;
+  eventId: string;
+  name: string;
+  swimmers: string[];
+  ageGroup: string;
+  gender: 'M' | 'F' | 'Mixed';
+}
 
 export default function ExportPage() {
   const [meets, setMeets] = useState<Meet[]>([]);
@@ -46,17 +74,27 @@ export default function ExportPage() {
 
   const loadPreviewData = async (meet: Meet, swimmerData: Swimmer[]) => {
     try {
-      const entries = await getMeetEntries();
+      // Create preview data directly from swimmers and meet data
+      const meetIndividualEntries: any[] = [];
+      const meetRelayEntries: any[] = [];
       
-      // Filter entries for selected meet
-      const meetIndividualEntries = entries.individual.filter(entry =>
-        meet.availableEvents.includes(entry.event.id) &&
-        swimmerData.some(s => s.id === entry.swimmer.id && s.selectedEvents.includes(entry.event.id))
-      );
+      // Individual entries
+      swimmerData.forEach(swimmer => {
+        swimmer.selectedEvents.forEach(eventId => {
+          if (meet.availableEvents.includes(eventId)) {
+            const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+            if (event && !event.isRelay) {
+              meetIndividualEntries.push({
+                swimmer,
+                event,
+                seedTime: swimmer.seedTimes[eventId]
+              });
+            }
+          }
+        });
+      });
       
-      const meetRelayEntries = entries.relays.filter(relay =>
-        meet.availableEvents.includes(relay.event.id)
-      );
+      // Note: Relay entries would need to be fetched from API when relay management is implemented
       
       setPreviewData({
         individual: meetIndividualEntries,

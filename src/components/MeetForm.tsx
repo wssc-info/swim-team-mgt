@@ -1,9 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Meet } from '@/lib/swimmers';
 import { createMeet, updateMeetApi } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent } from '@/lib/events';
+
+interface Meet {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  availableEvents: string[];
+  isActive: boolean;
+  createdAt: string;
+}
 
 interface MeetFormProps {
   meet?: Meet | null;

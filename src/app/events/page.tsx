@@ -1,10 +1,30 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Swimmer, Meet } from '@/lib/swimmers';
 import { fetchSwimmers, fetchMeets, updateSwimmerApi } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent, getEventsByAgeGroup } from '@/lib/events';
 import EventSelection from '@/components/EventSelection';
+
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F';
+  ageGroup: string;
+  selectedEvents: string[];
+  seedTimes: Record<string, string>;
+}
+
+interface Meet {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  availableEvents: string[];
+  isActive: boolean;
+  createdAt: string;
+}
 
 export default function EventsPage() {
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);

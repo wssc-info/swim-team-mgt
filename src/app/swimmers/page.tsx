@@ -1,9 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Swimmer } from '@/lib/swimmers';
 import { fetchSwimmers, deleteSwimmerApi } from '@/lib/api';
 import SwimmerForm from '@/components/SwimmerForm';
+
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F';
+  ageGroup: string;
+  selectedEvents: string[];
+  seedTimes: Record<string, string>;
+}
 
 export default function SwimmersPage() {
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);

@@ -1,10 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Meet } from '@/lib/swimmers';
 import { fetchMeets, deleteMeetApi, activateMeet } from '@/lib/api';
 import { USA_SWIMMING_EVENTS } from '@/lib/events';
 import MeetForm from '@/components/MeetForm';
+
+interface Meet {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  availableEvents: string[];
+  isActive: boolean;
+  createdAt: string;
+}
 
 export default function MeetsPage() {
   const [meets, setMeets] = useState<Meet[]>([]);
