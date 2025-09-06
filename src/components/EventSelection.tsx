@@ -26,7 +26,8 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
   const [seedTimes, setSeedTimes] = useState<Record<string, string>>({});
   const [eventFilter, setEventFilter] = useState({
     stroke: 'all',
-    eventType: 'all' // individual, relay, all
+    eventType: 'all', // individual, relay, all
+    course: 'all' // SCY, SCM, LCM, all
   });
   const [saving, setSaving] = useState(false);
 
@@ -85,6 +86,10 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
         return false;
       }
       
+      if (eventFilter.course !== 'all' && event.course !== eventFilter.course) {
+        return false;
+      }
+      
       return true;
     });
   };
@@ -131,7 +136,21 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
       {/* Event Filters */}
       <div className="mb-4 p-4 bg-gray-50 rounded-lg">
         <h4 className="text-sm font-medium text-gray-700 mb-2">Filter Events:</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Course</label>
+            <select
+              value={eventFilter.course}
+              onChange={(e) => setEventFilter(prev => ({ ...prev, course: e.target.value }))}
+              className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+            >
+              <option value="all">All Courses</option>
+              <option value="SCY">Short Course Yards</option>
+              <option value="SCM">Short Course Meters</option>
+              <option value="LCM">Long Course Meters</option>
+            </select>
+          </div>
+          
           <div>
             <label className="block text-xs text-gray-600 mb-1">Stroke</label>
             <select
