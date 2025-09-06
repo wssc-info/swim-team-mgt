@@ -10,12 +10,13 @@
   },
   "dependencies": {
     "file-saver": "^2.0.5",
+    "fs": "^0.0.1-security",
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "uuid": "^10.0.0",
-    "sequelize": "^6.37.1",
-    "sqlite3": "^5.1.6"
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -24,11 +25,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sequelize": "^4.28.20",
     "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "@types/sequelize": "^4.28.20"
+    "typescript": "^5"
   }
 }
