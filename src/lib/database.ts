@@ -3,7 +3,7 @@ import { Sequelize, DataTypes, Model, Optional } from 'sequelize';
 // Database configuration
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: './swim-team.db',
+  storage: './sqllite.db',
   logging: false, // Set to console.log to see SQL queries
 });
 
