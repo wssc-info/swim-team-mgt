@@ -43,6 +43,9 @@ export default function RootLayout({
               <Link href="/events" className="hover:underline">
                 Events
               </Link>
+              <Link href="/times" className="hover:underline">
+                Times
+              </Link>
               <Link href="/relays" className="hover:underline">
                 Relays
               </Link>

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { SwimmerModel, MeetModel, RelayTeamModel, initializeDatabase } from './database';
+import { SwimmerModel, MeetModel, RelayTeamModel, TimeRecordModel, initializeDatabase } from './database';
 
 export interface Swimmer {
   id: string;
@@ -28,6 +28,17 @@ export interface Meet {
   location: string;
   availableEvents: string[]; // Event IDs that swimmers can participate in
   isActive: boolean; // Only one meet can be active at a time
+  createdAt: string;
+}
+
+export interface TimeRecord {
+  id: string;
+  swimmerId: string;
+  eventId: string;
+  time: string;
+  meetName: string;
+  meetDate: string;
+  isPersonalBest: boolean;
   createdAt: string;
 }
 
@@ -321,5 +332,195 @@ export async function setActiveMeet(id: string): Promise<void> {
   } catch (error) {
     console.error('Error setting active meet:', error);
     throw error;
+  }
+}
+
+// Helper function to convert time string to seconds for comparison
+function timeToSeconds(timeString: string): number {
+  if (!timeString || timeString === 'NT') return Infinity;
+  
+  const parts = timeString.split(':');
+  if (parts.length !== 2) return Infinity;
+  
+  const minutes = parseInt(parts[0]) || 0;
+  const secondsParts = parts[1].split('.');
+  const seconds = parseInt(secondsParts[0]) || 0;
+  const centiseconds = parseInt((secondsParts[1] || '00').padEnd(2, '0').substring(0, 2)) || 0;
+  
+  return (minutes * 60) + seconds + (centiseconds / 100);
+}
+
+// Database helpers for time records
+export async function getTimeRecords(swimmerId?: string): Promise<TimeRecord[]> {
+  await ensureDbInitialized();
+  try {
+    const whereClause = swimmerId ? { swimmerId } : {};
+    const records = await TimeRecordModel.findAll({ 
+      where: whereClause,
+      order: [['meetDate', 'DESC'], ['createdAt', 'DESC']]
+    });
+    return records.map(record => ({
+      id: record.id,
+      swimmerId: record.swimmerId,
+      eventId: record.eventId,
+      time: record.time,
+      meetName: record.meetName,
+      meetDate: record.meetDate,
+      isPersonalBest: record.isPersonalBest,
+      createdAt: record.createdAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error('Error fetching time records:', error);
+    return [];
+  }
+}
+
+export async function addTimeRecord(record: Omit<TimeRecord, 'id' | 'createdAt' | 'isPersonalBest'>): Promise<TimeRecord> {
+  await ensureDbInitialized();
+  const newRecord: TimeRecord = {
+    ...record,
+    id: uuidv4(),
+    isPersonalBest: false,
+    createdAt: new Date().toISOString(),
+  };
+  
+  try {
+    // Check if this is a personal best
+    const existingRecords = await TimeRecordModel.findAll({
+      where: { 
+        swimmerId: record.swimmerId,
+        eventId: record.eventId
+      }
+    });
+    
+    const newTimeSeconds = timeToSeconds(record.time);
+    let isPersonalBest = true;
+    
+    for (const existing of existingRecords) {
+      const existingTimeSeconds = timeToSeconds(existing.time);
+      if (existingTimeSeconds <= newTimeSeconds) {
+        isPersonalBest = false;
+        break;
+      }
+    }
+    
+    newRecord.isPersonalBest = isPersonalBest;
+    
+    // If this is a new personal best, update all other records for this swimmer/event
+    if (isPersonalBest) {
+      await TimeRecordModel.update(
+        { isPersonalBest: false },
+        { 
+          where: { 
+            swimmerId: record.swimmerId,
+            eventId: record.eventId
+          }
+        }
+      );
+    }
+    
+    await TimeRecordModel.create({
+      id: newRecord.id,
+      swimmerId: newRecord.swimmerId,
+      eventId: newRecord.eventId,
+      time: newRecord.time,
+      meetName: newRecord.meetName,
+      meetDate: newRecord.meetDate,
+      isPersonalBest: newRecord.isPersonalBest,
+    });
+    
+    return newRecord;
+  } catch (error) {
+    console.error('Error adding time record:', error);
+    throw error;
+  }
+}
+
+export async function updateTimeRecord(id: string, updates: Partial<TimeRecord>): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    await TimeRecordModel.update(updates, { where: { id } });
+    
+    // If time was updated, recalculate personal bests for this swimmer/event
+    if (updates.time) {
+      const record = await TimeRecordModel.findByPk(id);
+      if (record) {
+        await recalculatePersonalBests(record.swimmerId, record.eventId);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating time record:', error);
+    throw error;
+  }
+}
+
+export async function deleteTimeRecord(id: string): Promise<void> {
+  await ensureDbInitialized();
+  try {
+    const record = await TimeRecordModel.findByPk(id);
+    if (record) {
+      await TimeRecordModel.destroy({ where: { id } });
+      // Recalculate personal bests after deletion
+      await recalculatePersonalBests(record.swimmerId, record.eventId);
+    }
+  } catch (error) {
+    console.error('Error deleting time record:', error);
+    throw error;
+  }
+}
+
+async function recalculatePersonalBests(swimmerId: string, eventId: string): Promise<void> {
+  try {
+    const records = await TimeRecordModel.findAll({
+      where: { swimmerId, eventId },
+      order: [['createdAt', 'ASC']]
+    });
+    
+    if (records.length === 0) return;
+    
+    // Reset all to not personal best
+    await TimeRecordModel.update(
+      { isPersonalBest: false },
+      { where: { swimmerId, eventId } }
+    );
+    
+    // Find the best time
+    let bestTime = Infinity;
+    let bestRecordId = '';
+    
+    for (const record of records) {
+      const timeSeconds = timeToSeconds(record.time);
+      if (timeSeconds < bestTime) {
+        bestTime = timeSeconds;
+        bestRecordId = record.id;
+      }
+    }
+    
+    // Mark the best time as personal best
+    if (bestRecordId) {
+      await TimeRecordModel.update(
+        { isPersonalBest: true },
+        { where: { id: bestRecordId } }
+      );
+    }
+  } catch (error) {
+    console.error('Error recalculating personal bests:', error);
+  }
+}
+
+export async function getBestTimeForEvent(swimmerId: string, eventId: string): Promise<string | null> {
+  await ensureDbInitialized();
+  try {
+    const record = await TimeRecordModel.findOne({
+      where: { 
+        swimmerId,
+        eventId,
+        isPersonalBest: true
+      }
+    });
+    return record ? record.time : null;
+  } catch (error) {
+    console.error('Error fetching best time:', error);
+    return null;
   }
 }

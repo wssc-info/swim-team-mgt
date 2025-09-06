@@ -29,6 +29,17 @@ interface RelayTeam {
   gender: 'M' | 'F' | 'Mixed';
 }
 
+interface TimeRecord {
+  id: string;
+  swimmerId: string;
+  eventId: string;
+  time: string;
+  meetName: string;
+  meetDate: string;
+  isPersonalBest: boolean;
+  createdAt: string;
+}
+
 // Swimmers API
 export async function fetchSwimmers(): Promise<Swimmer[]> {
   const response = await fetch('/api/swimmers');
@@ -142,4 +153,50 @@ export async function exportMeetData(meetId?: string): Promise<{ content: string
   }
   const data = await response.json();
   return { content: data.content, fileName: data.fileName };
+}
+
+// Time Records API
+export async function fetchTimeRecords(swimmerId?: string): Promise<TimeRecord[]> {
+  const url = swimmerId ? `/api/times?swimmerId=${swimmerId}` : '/api/times';
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch time records');
+  }
+  return response.json();
+}
+
+export async function createTimeRecord(record: Omit<TimeRecord, 'id' | 'createdAt' | 'isPersonalBest'>): Promise<TimeRecord> {
+  const response = await fetch('/api/times', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(record),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create time record');
+  }
+  return response.json();
+}
+
+export async function updateTimeRecordApi(id: string, updates: Partial<TimeRecord>): Promise<void> {
+  const response = await fetch(`/api/times/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update time record');
+  }
+}
+
+export async function deleteTimeRecordApi(id: string): Promise<void> {
+  const response = await fetch(`/api/times/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete time record');
+  }
 }

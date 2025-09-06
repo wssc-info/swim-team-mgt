@@ -178,6 +178,33 @@ export class RelayTeamModel extends Model<RelayTeamAttributes, RelayTeamCreation
   declare readonly updatedAt: Date;
 }
 
+// TimeRecord Model
+interface TimeRecordAttributes {
+  id: string;
+  swimmerId: string;
+  eventId: string;
+  time: string;
+  meetName: string;
+  meetDate: string;
+  isPersonalBest: boolean;
+}
+
+interface TimeRecordCreationAttributes extends Optional<TimeRecordAttributes, 'id'> {}
+
+export class TimeRecordModel extends Model<TimeRecordAttributes, TimeRecordCreationAttributes> 
+  implements TimeRecordAttributes {
+  declare id: string;
+  declare swimmerId: string;
+  declare eventId: string;
+  declare time: string;
+  declare meetName: string;
+  declare meetDate: string;
+  declare isPersonalBest: boolean;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
 RelayTeamModel.init(
   {
     id: {
@@ -210,6 +237,45 @@ RelayTeamModel.init(
     sequelize,
     modelName: 'RelayTeam',
     tableName: 'relay_teams',
+  }
+);
+
+TimeRecordModel.init(
+  {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    swimmerId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    eventId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    time: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    meetName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    meetDate: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    isPersonalBest: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'TimeRecord',
+    tableName: 'time_records',
   }
 );
 
