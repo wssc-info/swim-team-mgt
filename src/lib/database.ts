@@ -1,8 +1,10 @@
 import { Sequelize, DataTypes, Model, Optional } from 'sequelize';
-
+import mysql2 from 'mysql2';
 // Database configuration
 const sequelize = new Sequelize({
-  dialect: 'mariadb',
+  dialect: "mysql",
+
+    dialectModule: mysql2,
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306'),
   database: process.env.DB_NAME || 'swim_team_db',
