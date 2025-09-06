@@ -35,17 +35,17 @@ interface SwimmerCreationAttributes extends Optional<SwimmerAttributes, 'id'> {}
 
 export class SwimmerModel extends Model<SwimmerAttributes, SwimmerCreationAttributes> 
   implements SwimmerAttributes {
-  public id!: string;
-  public firstName!: string;
-  public lastName!: string;
-  public dateOfBirth!: string;
-  public gender!: 'M' | 'F';
-  public ageGroup!: string;
-  public selectedEvents!: string;
-  public seedTimes!: string;
+  declare id: string;
+  declare firstName: string;
+  declare lastName: string;
+  declare dateOfBirth: string;
+  declare gender: 'M' | 'F';
+  declare ageGroup: string;
+  declare selectedEvents: string;
+  declare seedTimes: string;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 SwimmerModel.init(
@@ -106,15 +106,15 @@ interface MeetCreationAttributes extends Optional<MeetAttributes, 'id'> {}
 
 export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes> 
   implements MeetAttributes {
-  public id!: string;
-  public name!: string;
-  public date!: string;
-  public location!: string;
-  public availableEvents!: string;
-  public isActive!: boolean;
+  declare id: string;
+  declare name: string;
+  declare date: string;
+  declare location: string;
+  declare availableEvents: string;
+  declare isActive: boolean;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 MeetModel.init(
@@ -167,15 +167,15 @@ interface RelayTeamCreationAttributes extends Optional<RelayTeamAttributes, 'id'
 
 export class RelayTeamModel extends Model<RelayTeamAttributes, RelayTeamCreationAttributes> 
   implements RelayTeamAttributes {
-  public id!: string;
-  public eventId!: string;
-  public name!: string;
-  public swimmers!: string;
-  public ageGroup!: string;
-  public gender!: 'M' | 'F' | 'Mixed';
+  declare id: string;
+  declare eventId: string;
+  declare name: string;
+  declare swimmers: string;
+  declare ageGroup: string;
+  declare gender: 'M' | 'F' | 'Mixed';
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 RelayTeamModel.init(
