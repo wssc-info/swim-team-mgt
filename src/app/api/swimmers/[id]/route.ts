@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateSwimmer, deleteSwimmer } from '@/lib/swimmers';
+import { SwimmerService } from '@/lib/services/swimmer-service';
+
+const swimmerService = SwimmerService.getInstance();
 
 export async function PUT(
   request: NextRequest,
@@ -7,7 +9,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    await updateSwimmer(params.id, body);
+    await swimmerService.updateSwimmer(params.id, body);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating swimmer:', error);
@@ -21,7 +23,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await deleteSwimmer(id);
+    await swimmerService.deleteSwimmer(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting swimmer:', error);

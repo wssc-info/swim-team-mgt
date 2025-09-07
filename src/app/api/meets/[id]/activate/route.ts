@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setActiveMeet } from '@/lib/swimmers';
+import { MeetService } from '@/lib/services/meet-service';
+
+const meetService = MeetService.getInstance();
 
 export async function POST(
   request: NextRequest,
@@ -7,7 +9,7 @@ export async function POST(
 ) {
   try {
     const {id} = await params;
-    await setActiveMeet(id);
+    await meetService.setActiveMeet(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error setting active meet:', error);

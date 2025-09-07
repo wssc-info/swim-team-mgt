@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateTimeRecord, deleteTimeRecord } from '@/lib/swimmers';
+import { TimeRecordService } from '@/lib/services/time-record-service';
+
+const timeRecordService = TimeRecordService.getInstance();
 
 export async function PUT(
   request: NextRequest,
@@ -8,7 +10,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    await updateTimeRecord(id, body);
+    await timeRecordService.updateTimeRecord(id, body);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating time record:', error);
@@ -22,7 +24,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await deleteTimeRecord(id);
+    await timeRecordService.deleteTimeRecord(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting time record:', error);

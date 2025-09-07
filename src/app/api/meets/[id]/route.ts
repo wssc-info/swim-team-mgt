@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateMeet, deleteMeet } from '@/lib/swimmers';
+import { MeetService } from '@/lib/services/meet-service';
+
+const meetService = MeetService.getInstance();
 
 export async function PUT(
   request: NextRequest,
@@ -8,7 +10,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    await updateMeet(id, body);
+    await meetService.updateMeet(id, body);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating meet:', error);
@@ -22,7 +24,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await deleteMeet(id);
+    await meetService.deleteMeet(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting meet:', error);

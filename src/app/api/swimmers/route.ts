@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSwimmers, addSwimmer } from '@/lib/swimmers';
+import { SwimmerService } from '@/lib/services/swimmer-service';
+
+const swimmerService = SwimmerService.getInstance();
 
 export async function GET() {
   try {
-    const swimmers = await getSwimmers();
+    const swimmers = await swimmerService.getSwimmers();
     return NextResponse.json(swimmers);
   } catch (error) {
     console.error('Error fetching swimmers:', error);
@@ -14,7 +16,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const swimmer = await addSwimmer(body);
+    const swimmer = await swimmerService.addSwimmer(body);
     return NextResponse.json(swimmer);
   } catch (error) {
     console.error('Error adding swimmer:', error);
