@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchMeets, fetchSwimmers } from '@/lib/api';
+import { fetchMeets, fetchSwimmers, fetchSwimmerMeetEvents } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent } from '@/lib/events';
 import { exportMeetData } from '@/lib/api';
 
@@ -12,8 +12,6 @@ interface Swimmer {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
-  selectedEvents: string[];
-  seedTimes: Record<string, string>;
 }
 
 interface Meet {
@@ -78,25 +76,31 @@ export default function ExportPage() {
 
   const loadPreviewData = async (meet: Meet, swimmerData: Swimmer[]) => {
     try {
-      // Create preview data directly from swimmers and meet data
+      // Create preview data from swimmers and their meet event selections
       const meetIndividualEntries: any[] = [];
       const meetRelayEntries: any[] = [];
       
-      // Individual entries
-      swimmerData.forEach(swimmer => {
-        swimmer.selectedEvents.forEach(eventId => {
-          if (meet.availableEvents.includes(eventId)) {
-            const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
-            if (event && !event.isRelay) {
-              meetIndividualEntries.push({
-                swimmer,
-                event,
-                seedTime: swimmer.seedTimes[eventId]
-              });
+      // Individual entries - fetch event selections for each swimmer
+      for (const swimmer of swimmerData) {
+        try {
+          const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, meet.id);
+          
+          swimmerMeetEvents.forEach(sme => {
+            if (meet.availableEvents.includes(sme.eventId)) {
+              const event = USA_SWIMMING_EVENTS.find(e => e.id === sme.eventId);
+              if (event && !event.isRelay) {
+                meetIndividualEntries.push({
+                  swimmer,
+                  event,
+                  seedTime: sme.seedTime
+                });
+              }
             }
-          }
-        });
-      });
+          });
+        } catch (error) {
+          console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
+        }
+      }
       
       // Note: Relay entries would need to be fetched from API when relay management is implemented
       
