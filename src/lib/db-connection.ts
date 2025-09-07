@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import mysql2 from 'mysql2';
+import pg from 'pg';
 
 // Singleton database connection
 class DatabaseConnection {
@@ -9,8 +10,10 @@ class DatabaseConnection {
 
   private constructor() {
     this.sequelize = new Sequelize({
-      dialect: "mysql",
-      dialectModule: mysql2,
+      // dialect: 'mysql',
+      // dialectModule: mysql2,
+      dialect: 'postgres',
+      dialectModule: pg,
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '3306'),
       database: process.env.DB_NAME || 'swim_team_db',

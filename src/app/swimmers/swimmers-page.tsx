@@ -135,7 +135,7 @@ export default function SwimmersPage() {
                     }
 
                     // Normalize gender
-                    const normalizedGender = gender === 'm' || gender === 'male' ? 'Male' : 'Female';
+                    const normalizedGender = gender === 'm' || gender === 'male' ? 'M' : 'F';
 
                     // Create swimmer record
                     const swimmerData = {
@@ -144,6 +144,7 @@ export default function SwimmersPage() {
                         dateOfBirth: dateOfBirth.toISOString().split('T')[0],
                         gender: normalizedGender
                     };
+                    console.log('saving swimmer', swimmerData);
 
                     const response = await fetch('/api/swimmers', {
                         method: 'POST',
