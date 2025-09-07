@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "hash-password": "node scripts/hash-password.js"
+  },
+  "bin": {
+    "hash-password": "./scripts/hash-password.js"
   },
   "dependencies": {
     "@types/bcryptjs": "^3.0.0",
