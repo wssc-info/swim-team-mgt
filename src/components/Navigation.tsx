@@ -34,6 +34,9 @@ export default function Navigation() {
               <Link href="/export" className="hover:underline">
                 Export
               </Link>
+              <Link href="/admin" className="hover:underline">
+                Admin
+              </Link>
             </>
           )}
           <Link href="/events" className="hover:underline">
