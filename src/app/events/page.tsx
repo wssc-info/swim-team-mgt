@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { fetchSwimmers, fetchMeets, updateSwimmerApi } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent, getEventsByAgeGroup } from '@/lib/events';
 import EventSelection from '@/components/EventSelection';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface Swimmer {
   id: string;
@@ -26,7 +27,7 @@ interface Meet {
   createdAt: string;
 }
 
-export default function EventsPage() {
+function EventsPage() {
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
@@ -233,5 +234,13 @@ export default function EventsPage() {
           .filter(Boolean)}
       </div>
     </div>
+  );
+}
+
+export default function ProtectedEventsPage() {
+  return (
+    <ProtectedRoute allowedRoles={['coach']}>
+      <EventsPage />
+    </ProtectedRoute>
   );
 }
