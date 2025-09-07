@@ -4,28 +4,7 @@ import { useState, useEffect } from 'react';
 import { fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi } from '@/lib/api';
 import { USA_SWIMMING_EVENTS } from '@/lib/events';
 import TimeRecordForm from '@/components/TimeRecordForm';
-
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-  selectedEvents: string[];
-  seedTimes: Record<string, string>;
-}
-
-interface TimeRecord {
-  id: string;
-  swimmerId: string;
-  eventId: string;
-  time: string;
-  meetName: string;
-  meetDate: string;
-  isPersonalBest: boolean;
-  createdAt: string;
-}
+import { Swimmer, TimeRecord } from '@/lib/types';
 
 export default function TimesPage() {
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
@@ -302,7 +281,7 @@ export default function TimesPage() {
           Your CSV file should have these columns: <code>swimmer, event, time, meet, date</code>
         </p>
         <p className="text-xs text-blue-600">
-          Example: "John Smith, 50 Free, 25.43, Summer Championships, 2024-07-15"
+          Example: &#34;John Smith, 50 Free, 25.43, Summer Championships, 2024-07-15&#34;
         </p>
       </div>
 

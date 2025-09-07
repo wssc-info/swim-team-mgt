@@ -8,9 +8,9 @@ export async function GET(
 ) {
   try {
     await initializeDatabase();
-    
+    const {id} = await params;
     const associations = await FamilySwimmerAssociationModel.findAll({
-      where: { userId: params.id }
+      where: { userId: id }
     });
 
     const swimmerIds = associations.map(assoc => assoc.swimmerId);

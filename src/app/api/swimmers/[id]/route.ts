@@ -7,9 +7,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const {id} = await params;
   try {
     const body = await request.json();
-    await swimmerService.updateSwimmer(params.id, body);
+    await swimmerService.updateSwimmer(id, body);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating swimmer:', error);

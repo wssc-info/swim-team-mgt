@@ -38,13 +38,14 @@ class DatabaseConnection {
   }
 
   public async initialize(): Promise<void> {
-    if (this.isInitialized) {
+    if (this.isInitialized && this.sequelize) {
+      console.log("Database already initialized.");
       return;
     }
 
     try {
       await this.sequelize.authenticate();
-      console.log('Database connection established successfully.');
+      console.log('Database connection established successfully - authDone.');
       
       // Sync all models
       await this.sequelize.sync({ alter: true });

@@ -3,28 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createTimeRecord, updateTimeRecordApi } from '@/lib/api';
 import { USA_SWIMMING_EVENTS } from '@/lib/events';
-
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-  selectedEvents: string[];
-  seedTimes: Record<string, string>;
-}
-
-interface TimeRecord {
-  id: string;
-  swimmerId: string;
-  eventId: string;
-  time: string;
-  meetName: string;
-  meetDate: string;
-  isPersonalBest: boolean;
-  createdAt: string;
-}
+import { Swimmer, TimeRecord } from '@/lib/types';
 
 interface TimeRecordFormProps {
   record?: TimeRecord | null;

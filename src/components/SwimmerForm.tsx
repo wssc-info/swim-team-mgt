@@ -2,18 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createSwimmer, updateSwimmerApi } from '@/lib/api';
-
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-  selectedEvents: string[];
-  seedTimes: Record<string, string>;
-}
-
+import { Swimmer } from '@/lib/types';
 // Calculate age group based on birth date
 function calculateAgeGroup(dateOfBirth: string): string {
   const birthDate = new Date(dateOfBirth);
@@ -43,8 +32,6 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
     lastName: '',
     dateOfBirth: '',
     gender: 'M' as 'M' | 'F',
-    selectedEvents: [] as string[],
-    seedTimes: {} as Record<string, string>
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,9 +42,7 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
         firstName: swimmer.firstName,
         lastName: swimmer.lastName,
         dateOfBirth: swimmer.dateOfBirth,
-        gender: swimmer.gender,
-        selectedEvents: swimmer.selectedEvents,
-        seedTimes: swimmer.seedTimes
+        gender: swimmer.gender
       });
     }
   }, [swimmer]);
