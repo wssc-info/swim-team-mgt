@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { SwimEvent } from '@/lib/events';
 import { updateSwimmerApi } from '@/lib/api';
+import { TimeRecordService } from '@/lib/services/time-record-service';
 
 interface Swimmer {
   id: string;
@@ -30,10 +31,27 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
     course: 'all' // SCY, SCM, LCM, all
   });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setSelectedEvents(swimmer.selectedEvents || []);
-    setSeedTimes(swimmer.seedTimes || {});
+    const loadSwimmerData = async () => {
+      setLoading(true);
+      try {
+        setSelectedEvents(swimmer.selectedEvents || []);
+        
+        // Load best times from time records
+        const timeRecordService = TimeRecordService.getInstance();
+        const bestTimes = await timeRecordService.getBestTimesForSwimmer(swimmer.id);
+        setSeedTimes(bestTimes);
+      } catch (error) {
+        console.error('Error loading swimmer data:', error);
+        setSeedTimes({});
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSwimmerData();
   }, [swimmer]);
 
   const handleEventToggle = (eventId: string) => {
@@ -44,19 +62,12 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
     );
   };
 
-  const handleSeedTimeChange = (eventId: string, time: string) => {
-    setSeedTimes(prev => ({
-      ...prev,
-      [eventId]: time
-    }));
-  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await updateSwimmerApi(swimmer.id, {
-        selectedEvents,
-        seedTimes
+        selectedEvents
       });
       onClose();
     } catch (error) {
@@ -194,7 +205,11 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
 
       {/* Events List */}
       <div className="max-h-96 overflow-y-auto border border-gray-300 rounded-md">
-        {filteredEvents.length === 0 ? (
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">
+            Loading swimmer data...
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             No events available for the selected filters and age group.
           </div>
@@ -202,7 +217,7 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
           <div className="divide-y divide-gray-200">
             {filteredEvents.map((event) => {
               const isSelected = selectedEvents.includes(event.id);
-              const seedTime = seedTimes[event.id] || '';
+              const seedTime = seedTimes[event.id];
 
               return (
                 <div key={event.id} className="p-4 hover:bg-gray-50">
@@ -212,6 +227,7 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
                       checked={isSelected}
                       onChange={() => handleEventToggle(event.id)}
                       className="mt-1 rounded"
+                      disabled={loading}
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
@@ -224,18 +240,14 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
                             {event.isRelay && ' • Relay Event'}
                           </p>
                         </div>
-                        {isSelected && !event.isRelay && (
+                        {!event.isRelay && (
                           <div className="ml-4">
                             <label className="block text-xs text-gray-600 mb-1">
-                              Seed Time (MM:SS.ss)
+                              Best Time
                             </label>
-                            <input
-                              type="text"
-                              value={seedTime}
-                              onChange={(e) => handleSeedTimeChange(event.id, e.target.value)}
-                              placeholder="NT"
-                              className="w-24 px-2 py-1 text-sm border border-gray-300 rounded"
-                            />
+                            <div className="w-24 px-2 py-1 text-sm bg-gray-50 border border-gray-200 rounded text-center">
+                              {seedTime || 'NT'}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -270,7 +282,8 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
       <div className="mt-4 p-3 bg-blue-50 rounded-lg">
         <p className="text-sm text-blue-700">
           <strong>Tips:</strong> Select the events you want to swim in this meet. 
-          For individual events, you can enter your seed time (best previous time) or leave it as "NT" (No Time). 
+          Your best times from previous meets are automatically shown as seed times. 
+          "NT" means No Time (no previous record for this event). 
           Relay events will be organized by your coach.
         </p>
       </div>

@@ -157,6 +157,28 @@ export class TimeRecordService {
     }
   }
 
+  public async getBestTimesForSwimmer(swimmerId: string): Promise<Record<string, string>> {
+    await this.ensureInitialized();
+    try {
+      const records = await TimeRecordModel.findAll({
+        where: { 
+          swimmerId,
+          isPersonalBest: true
+        }
+      });
+      
+      const bestTimes: Record<string, string> = {};
+      records.forEach(record => {
+        bestTimes[record.eventId] = record.time;
+      });
+      
+      return bestTimes;
+    } catch (error) {
+      console.error('Error fetching best times for swimmer:', error);
+      return {};
+    }
+  }
+
   private timeToSeconds(timeString: string): number {
     if (!timeString || timeString === 'NT') return Infinity;
     
