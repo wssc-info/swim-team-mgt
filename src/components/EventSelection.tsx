@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SwimEvent } from '@/lib/events';
-import { updateSwimmerApi } from '@/lib/api';
+import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets } from '@/lib/api';
 
 interface Swimmer {
   id: string;
@@ -11,8 +11,15 @@ interface Swimmer {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
-  selectedEvents: string[];
-  seedTimes: Record<string, string>;
+}
+
+interface SwimmerMeetEvent {
+  id: string;
+  swimmerId: string;
+  meetId: string;
+  eventId: string;
+  seedTime?: string;
+  createdAt: string;
 }
 
 interface EventSelectionProps {
@@ -24,6 +31,7 @@ interface EventSelectionProps {
 export default function EventSelection({ swimmer, availableEvents, onClose }: EventSelectionProps) {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [seedTimes, setSeedTimes] = useState<Record<string, string>>({});
+  const [activeMeetId, setActiveMeetId] = useState<string | null>(null);
   const [eventFilter, setEventFilter] = useState({
     stroke: 'all',
     eventType: 'all', // individual, relay, all
@@ -36,16 +44,39 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
     const loadSwimmerData = async () => {
       setLoading(true);
       try {
-        setSelectedEvents(swimmer.selectedEvents || []);
+        // Get the active meet
+        const meets = await fetchMeets();
+        const activeMeet = meets.find(m => m.isActive);
         
-        // Load best times from API
+        if (!activeMeet) {
+          console.error('No active meet found');
+          setLoading(false);
+          return;
+        }
+        
+        setActiveMeetId(activeMeet.id);
+        
+        // Load swimmer's event selections for this meet
+        const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, activeMeet.id);
+        const eventIds = swimmerMeetEvents.map(sme => sme.eventId);
+        const seedTimesMap = swimmerMeetEvents.reduce((acc, sme) => {
+          if (sme.seedTime) {
+            acc[sme.eventId] = sme.seedTime;
+          }
+          return acc;
+        }, {} as Record<string, string>);
+        
+        setSelectedEvents(eventIds);
+        
+        // Load best times from API for events not already selected
         const response = await fetch(`/api/swimmers/${swimmer.id}/best-times`);
         if (response.ok) {
           const bestTimes = await response.json();
-          setSeedTimes(bestTimes);
+          // Merge best times with existing seed times, preferring existing seed times
+          setSeedTimes({ ...bestTimes, ...seedTimesMap });
         } else {
           console.error('Failed to fetch best times');
-          setSeedTimes({});
+          setSeedTimes(seedTimesMap);
         }
       } catch (error) {
         console.error('Error loading swimmer data:', error);
@@ -68,11 +99,20 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
 
 
   const handleSave = async () => {
+    if (!activeMeetId) {
+      alert('No active meet found. Cannot save event selections.');
+      return;
+    }
+
     setSaving(true);
     try {
-      await updateSwimmerApi(swimmer.id, {
-        selectedEvents
-      });
+      // Prepare event selections with seed times
+      const eventSelections = selectedEvents.map(eventId => ({
+        eventId,
+        seedTime: seedTimes[eventId] || undefined
+      }));
+
+      await updateSwimmerMeetEvents(swimmer.id, activeMeetId, eventSelections);
       onClose();
     } catch (error) {
       console.error('Error saving event selections:', error);
@@ -247,11 +287,19 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
                         {!event.isRelay && (
                           <div className="ml-4">
                             <label className="block text-xs text-gray-600 mb-1">
-                              Best Time
+                              Seed Time
                             </label>
-                            <div className="w-24 px-2 py-1 text-sm bg-gray-50 border border-gray-200 rounded text-center">
-                              {seedTime || 'NT'}
-                            </div>
+                            <input
+                              type="text"
+                              value={seedTime || ''}
+                              onChange={(e) => setSeedTimes(prev => ({
+                                ...prev,
+                                [event.id]: e.target.value
+                              }))}
+                              placeholder="MM:SS.ss or NT"
+                              className="w-24 px-2 py-1 text-sm border border-gray-300 rounded text-center"
+                              disabled={!isSelected}
+                            />
                           </div>
                         )}
                       </div>

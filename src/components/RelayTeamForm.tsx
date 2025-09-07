@@ -11,8 +11,6 @@ interface Swimmer {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
-  selectedEvents: string[];
-  seedTimes: Record<string, string>;
 }
 
 interface RelayTeam {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchSwimmers, fetchMeets, updateSwimmerApi, fetchAssociatedSwimmers } from '@/lib/api';
+import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent, getEventsByAgeGroup } from '@/lib/events';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -14,8 +14,10 @@ interface Swimmer {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
+}
+
+interface SwimmerWithEvents extends Swimmer {
   selectedEvents: string[];
-  seedTimes: Record<string, string>;
 }
 
 interface Meet {
@@ -30,7 +32,7 @@ interface Meet {
 
 export function EventsPage() {
   const { user } = useAuth();
-  const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
+  const [swimmers, setSwimmers] = useState<SwimmerWithEvents[]>([]);
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,25 @@ export function EventsPage() {
           swimmerData = await fetchSwimmers();
         }
         
-        setSwimmers(swimmerData);
+        // If we have an active meet, load event selections for each swimmer
+        if (active) {
+          const swimmersWithEvents = await Promise.all(
+            swimmerData.map(async (swimmer) => {
+              try {
+                const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, active.id);
+                const selectedEvents = swimmerMeetEvents.map(sme => sme.eventId);
+                return { ...swimmer, selectedEvents };
+              } catch (error) {
+                console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
+                return { ...swimmer, selectedEvents: [] };
+              }
+            })
+          );
+          setSwimmers(swimmersWithEvents);
+        } else {
+          // No active meet, so no selected events
+          setSwimmers(swimmerData.map(swimmer => ({ ...swimmer, selectedEvents: [] })));
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -72,14 +92,30 @@ export function EventsPage() {
   const handleEventSelectionClose = async () => {
     setSelectedSwimmer(null);
     // Refresh swimmers data to show updated selections
+    if (!activeMeet) return;
+    
     try {
-      let updatedSwimmers: Swimmer[];
+      let swimmerData: Swimmer[];
       if (user?.role === 'family' && user?.id) {
-        updatedSwimmers = await fetchAssociatedSwimmers(user.id);
+        swimmerData = await fetchAssociatedSwimmers(user.id);
       } else {
-        updatedSwimmers = await fetchSwimmers();
+        swimmerData = await fetchSwimmers();
       }
-      setSwimmers(updatedSwimmers);
+      
+      // Load event selections for each swimmer
+      const swimmersWithEvents = await Promise.all(
+        swimmerData.map(async (swimmer) => {
+          try {
+            const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, activeMeet.id);
+            const selectedEvents = swimmerMeetEvents.map(sme => sme.eventId);
+            return { ...swimmer, selectedEvents };
+          } catch (error) {
+            console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
+            return { ...swimmer, selectedEvents: [] };
+          }
+        })
+      );
+      setSwimmers(swimmersWithEvents);
     } catch (error) {
       console.error('Error refreshing swimmers:', error);
     }
