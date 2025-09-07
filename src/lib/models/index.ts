@@ -14,7 +14,7 @@ interface SwimmerAttributes {
   ageGroup: string;
 }
 
-interface SwimmerCreationAttributes extends Optional<SwimmerAttributes, 'id'> {}
+type SwimmerCreationAttributes = Optional<SwimmerAttributes, 'id'>
 
 export class SwimmerModel extends Model<SwimmerAttributes, SwimmerCreationAttributes> 
   implements SwimmerAttributes {
@@ -73,7 +73,7 @@ interface MeetAttributes {
   isActive: boolean;
 }
 
-interface MeetCreationAttributes extends Optional<MeetAttributes, 'id'> {}
+type MeetCreationAttributes = Optional<MeetAttributes, 'id'>
 
 export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes> 
   implements MeetAttributes {
@@ -135,7 +135,7 @@ interface RelayTeamAttributes {
   gender: 'M' | 'F' | 'Mixed';
 }
 
-interface RelayTeamCreationAttributes extends Optional<RelayTeamAttributes, 'id'> {}
+type RelayTeamCreationAttributes = Optional<RelayTeamAttributes, 'id'>
 
 export class RelayTeamModel extends Model<RelayTeamAttributes, RelayTeamCreationAttributes> 
   implements RelayTeamAttributes {
@@ -201,7 +201,7 @@ interface TimeRecordAttributes {
   isPersonalBest: boolean;
 }
 
-interface TimeRecordCreationAttributes extends Optional<TimeRecordAttributes, 'id'> {}
+type TimeRecordCreationAttributes = Optional<TimeRecordAttributes, 'id'>
 
 export class TimeRecordModel extends Model<TimeRecordAttributes, TimeRecordCreationAttributes> 
   implements TimeRecordAttributes {
@@ -266,7 +266,7 @@ interface UserAttributes {
   lastName: string;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id'> {}
+type UserCreationAttributes = Optional<UserAttributes, 'id'>
 
 export class UserModel extends Model<UserAttributes, UserCreationAttributes> 
   implements UserAttributes {
@@ -326,7 +326,7 @@ interface SwimmerMeetEventAttributes {
   seedTime?: string;
 }
 
-interface SwimmerMeetEventCreationAttributes extends Optional<SwimmerMeetEventAttributes, 'id'> {}
+type SwimmerMeetEventCreationAttributes = Optional<SwimmerMeetEventAttributes, 'id'>
 
 export class SwimmerMeetEventModel extends Model<SwimmerMeetEventAttributes, SwimmerMeetEventCreationAttributes> 
   implements SwimmerMeetEventAttributes {
@@ -377,7 +377,7 @@ interface FamilySwimmerAssociationAttributes {
   swimmerId: string;
 }
 
-interface FamilySwimmerAssociationCreationAttributes extends Optional<FamilySwimmerAssociationAttributes, 'id'> {}
+type FamilySwimmerAssociationCreationAttributes = Optional<FamilySwimmerAssociationAttributes, 'id'>
 
 export class FamilySwimmerAssociationModel extends Model<FamilySwimmerAssociationAttributes, FamilySwimmerAssociationCreationAttributes> 
   implements FamilySwimmerAssociationAttributes {
