@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchSwimmers, fetchMeets, updateSwimmerApi } from '@/lib/api';
+import { fetchSwimmers, fetchMeets, updateSwimmerApi, fetchAssociatedSwimmers } from '@/lib/api';
 import { USA_SWIMMING_EVENTS, SwimEvent, getEventsByAgeGroup } from '@/lib/events';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -61,7 +61,12 @@ export function EventsPage() {
     setSelectedSwimmer(null);
     // Refresh swimmers data to show updated selections
     try {
-      const updatedSwimmers = await fetchSwimmers();
+      let updatedSwimmers: Swimmer[];
+      if (user?.role === 'family' && user?.id) {
+        updatedSwimmers = await fetchAssociatedSwimmers(user.id);
+      } else {
+        updatedSwimmers = await fetchSwimmers();
+      }
       setSwimmers(updatedSwimmers);
     } catch (error) {
       console.error('Error refreshing swimmers:', error);

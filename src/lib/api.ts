@@ -200,3 +200,13 @@ export async function deleteTimeRecordApi(id: string): Promise<void> {
     throw new Error('Failed to delete time record');
   }
 }
+
+// Family API
+export async function fetchAssociatedSwimmers(userId: string): Promise<Swimmer[]> {
+  const response = await fetch(`/api/admin/users/${userId}/associations`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch associated swimmers');
+  }
+  const data = await response.json();
+  return data.swimmers || [];
+}
