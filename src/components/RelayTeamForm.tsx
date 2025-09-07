@@ -31,6 +31,7 @@ interface RelayTeamFormProps {
   onClose: () => void;
 }
 
+export default function RelayTeamForm({ team, swimmers, availableEvents, meetId, onClose }: RelayTeamFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     eventId: '',
