@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { SwimEvent } from '@/lib/events';
 import { updateSwimmerApi } from '@/lib/api';
-import { TimeRecordService } from '@/lib/services/time-record-service';
 
 interface Swimmer {
   id: string;
@@ -39,10 +38,15 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
       try {
         setSelectedEvents(swimmer.selectedEvents || []);
         
-        // Load best times from time records
-        const timeRecordService = TimeRecordService.getInstance();
-        const bestTimes = await timeRecordService.getBestTimesForSwimmer(swimmer.id);
-        setSeedTimes(bestTimes);
+        // Load best times from API
+        const response = await fetch(`/api/swimmers/${swimmer.id}/best-times`);
+        if (response.ok) {
+          const bestTimes = await response.json();
+          setSeedTimes(bestTimes);
+        } else {
+          console.error('Failed to fetch best times');
+          setSeedTimes({});
+        }
       } catch (error) {
         console.error('Error loading swimmer data:', error);
         setSeedTimes({});
