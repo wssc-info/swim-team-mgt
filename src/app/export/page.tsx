@@ -26,6 +26,7 @@ interface Meet {
 
 interface RelayTeam {
   id: string;
+  meetId: string;
   eventId: string;
   name: string;
   swimmers: string[];
@@ -52,20 +53,20 @@ export default function ExportPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [meetData, swimmerData, relayData] = await Promise.all([
+        const [meetData, swimmerData] = await Promise.all([
           fetchMeets(),
-          fetchSwimmers(),
-          fetchRelayTeams()
+          fetchSwimmers()
         ]);
         
         setMeets(meetData);
         setSwimmers(swimmerData);
-        setRelayTeams(relayData);
         
         // Auto-select active meet if available
         const activeMeet = meetData.find(m => m.isActive);
         if (activeMeet) {
           setSelectedMeet(activeMeet);
+          const relayData = await fetchRelayTeams(activeMeet.id);
+          setRelayTeams(relayData);
           await loadPreviewData(activeMeet, swimmerData, relayData);
         }
       } catch (error) {

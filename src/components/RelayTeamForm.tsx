@@ -15,6 +15,7 @@ interface Swimmer {
 
 interface RelayTeam {
   id: string;
+  meetId: string;
   eventId: string;
   name: string;
   swimmers: string[];
@@ -26,10 +27,10 @@ interface RelayTeamFormProps {
   team?: RelayTeam | null;
   swimmers: Swimmer[];
   availableEvents: SwimEvent[];
+  meetId: string;
   onClose: () => void;
 }
 
-export default function RelayTeamForm({ team, swimmers, availableEvents, onClose }: RelayTeamFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     eventId: '',
@@ -71,7 +72,7 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, onClose
       if (team) {
         await updateRelayTeamApi(team.id, formData);
       } else {
-        await createRelayTeam(formData);
+        await createRelayTeam({ ...formData, meetId });
       }
       onClose();
     } catch (error) {

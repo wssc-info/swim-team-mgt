@@ -26,6 +26,7 @@ interface Meet {
 
 interface RelayTeam {
   id: string;
+  meetId: string;
   eventId: string;
   name: string;
   swimmers: string[];
@@ -44,16 +45,22 @@ export default function RelaysPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [swimmerData, meetData, relayData] = await Promise.all([
+        const [swimmerData, meetData] = await Promise.all([
           fetchSwimmers(),
-          fetchMeets(),
-          fetchRelayTeams()
+          fetchMeets()
         ]);
         
         setSwimmers(swimmerData);
         const active = meetData.find(m => m.isActive) || null;
         setActiveMeet(active);
-        setRelayTeams(relayData);
+        
+        // Load relay teams for the active meet
+        if (active) {
+          const relayData = await fetchRelayTeams(active.id);
+          setRelayTeams(relayData);
+        } else {
+          setRelayTeams([]);
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -88,12 +95,14 @@ export default function RelaysPage() {
   const handleFormClose = async () => {
     setShowForm(false);
     setSelectedTeam(null);
-    // Refresh relay teams
-    try {
-      const updatedTeams = await fetchRelayTeams();
-      setRelayTeams(updatedTeams);
-    } catch (error) {
-      console.error('Error refreshing relay teams:', error);
+    // Refresh relay teams for the active meet
+    if (activeMeet) {
+      try {
+        const updatedTeams = await fetchRelayTeams(activeMeet.id);
+        setRelayTeams(updatedTeams);
+      } catch (error) {
+        console.error('Error refreshing relay teams:', error);
+      }
     }
   };
 
@@ -181,6 +190,7 @@ export default function RelaysPage() {
               team={selectedTeam}
               swimmers={swimmers}
               availableEvents={relayEvents}
+              meetId={activeMeet.id}
               onClose={handleFormClose}
             />
           </div>

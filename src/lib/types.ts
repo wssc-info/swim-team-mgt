@@ -18,6 +18,7 @@ export interface SwimmerMeetEvent {
 
 export interface RelayTeam {
   id: string;
+  meetId: string;
   eventId: string;
   name: string;
   swimmers: string[]; // Swimmer IDs in order

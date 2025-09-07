@@ -22,12 +22,14 @@ export class RelayTeamService {
     }
   }
 
-  public async getRelayTeams(): Promise<RelayTeam[]> {
+  public async getRelayTeams(meetId?: string): Promise<RelayTeam[]> {
     await this.ensureInitialized();
     try {
-      const relayTeams = await RelayTeamModel.findAll();
+      const whereClause = meetId ? { meetId } : {};
+      const relayTeams = await RelayTeamModel.findAll({ where: whereClause });
       return relayTeams.map(team => ({
         id: team.id,
+        meetId: team.meetId,
         eventId: team.eventId,
         name: team.name,
         swimmers: JSON.parse(team.swimmers || '[]'),
@@ -50,6 +52,7 @@ export class RelayTeamService {
     try {
       await RelayTeamModel.create({
         id: newTeam.id,
+        meetId: newTeam.meetId,
         eventId: newTeam.eventId,
         name: newTeam.name,
         swimmers: JSON.stringify(newTeam.swimmers),

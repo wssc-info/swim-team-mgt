@@ -127,6 +127,7 @@ MeetModel.init(
 // RelayTeam Model
 interface RelayTeamAttributes {
   id: string;
+  meetId: string;
   eventId: string;
   name: string;
   swimmers: string;
@@ -139,6 +140,7 @@ interface RelayTeamCreationAttributes extends Optional<RelayTeamAttributes, 'id'
 export class RelayTeamModel extends Model<RelayTeamAttributes, RelayTeamCreationAttributes> 
   implements RelayTeamAttributes {
   declare id: string;
+  declare meetId: string;
   declare eventId: string;
   declare name: string;
   declare swimmers: string;
@@ -154,6 +156,10 @@ RelayTeamModel.init(
     id: {
       type: DataTypes.STRING,
       primaryKey: true,
+    },
+    meetId: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     eventId: {
       type: DataTypes.STRING,

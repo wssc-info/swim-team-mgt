@@ -3,9 +3,12 @@ import { RelayTeamService } from '@/lib/services/relay-team-service';
 
 const relayTeamService = RelayTeamService.getInstance();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const relayTeams = await relayTeamService.getRelayTeams();
+    const { searchParams } = new URL(request.url);
+    const meetId = searchParams.get('meetId');
+    
+    const relayTeams = await relayTeamService.getRelayTeams(meetId || undefined);
     return NextResponse.json(relayTeams);
   } catch (error) {
     console.error('Error fetching relay teams:', error);

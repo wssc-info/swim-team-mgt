@@ -29,6 +29,7 @@ interface Meet {
 
 interface RelayTeam {
   id: string;
+  meetId: string;
   eventId: string;
   name: string;
   swimmers: string[];
@@ -218,8 +219,9 @@ export async function fetchAssociatedSwimmers(userId: string): Promise<Swimmer[]
 }
 
 // Relay Teams API
-export async function fetchRelayTeams(): Promise<RelayTeam[]> {
-  const response = await fetch('/api/relays');
+export async function fetchRelayTeams(meetId?: string): Promise<RelayTeam[]> {
+  const url = meetId ? `/api/relays?meetId=${meetId}` : '/api/relays';
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error('Failed to fetch relay teams');
   }
