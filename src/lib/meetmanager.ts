@@ -1,6 +1,35 @@
-import { saveAs } from 'file-saver';
-import { Swimmer, RelayTeam, Meet, getSwimmers, getRelayTeams } from './swimmers';
 import { USA_SWIMMING_EVENTS, SwimEvent } from './events';
+
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F';
+  ageGroup: string;
+  selectedEvents: string[];
+  seedTimes: Record<string, string>;
+}
+
+interface RelayTeam {
+  id: string;
+  meetId: string;
+  eventId: string;
+  name: string;
+  swimmers: string[];
+  ageGroup: string;
+  gender: 'M' | 'F' | 'Mixed';
+}
+
+interface Meet {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  availableEvents: string[];
+  isActive: boolean;
+  createdAt: string;
+}
 
 export interface MeetManagerEntry {
   swimmer: Swimmer;
@@ -47,13 +76,9 @@ function getEventCode(event: SwimEvent): string {
   return `${stroke}${distance}${course}${event.isRelay ? '1' : '0'}`;
 }
 
-export async function generateMeetManagerFile(selectedMeet?: Meet): Promise<string> {
-  const swimmers = await getSwimmers();
-  const relayTeams = await getRelayTeams();
-  const meets = selectedMeet ? [selectedMeet] : [];
-  
-  // Get active meet if no specific meet selected
-  const targetMeet = selectedMeet || meets.find(m => m.isActive);
+export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swimmer[] = [], relayTeams: RelayTeam[] = []): Promise<string> {
+  // Get target meet
+  const targetMeet = selectedMeet;
   if (!targetMeet) {
     throw new Error('No meet selected for export');
   }
@@ -127,10 +152,7 @@ export async function generateMeetManagerFile(selectedMeet?: Meet): Promise<stri
   return content;
 }
 
-export async function getMeetEntries(): Promise<{ individual: MeetManagerEntry[], relays: MeetManagerRelay[] }> {
-  const swimmers = await getSwimmers();
-  const relayTeams = await getRelayTeams();
-  
+export async function getMeetEntries(swimmers: Swimmer[] = [], relayTeams: RelayTeam[] = []): Promise<{ individual: MeetManagerEntry[], relays: MeetManagerRelay[] }> {
   const individual: MeetManagerEntry[] = [];
   const relays: MeetManagerRelay[] = [];
   
