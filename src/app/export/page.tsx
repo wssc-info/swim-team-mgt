@@ -136,6 +136,13 @@ export default function ExportPage() {
 
   const handleMeetSelect = async (meet: Meet) => {
     setSelectedMeet(meet);
+    const relayData = await fetchRelayTeams(meet.id);
+    setRelayTeams(relayData);
+    await loadPreviewData(meet, swimmers, relayData);
+  };
+
+  const handleMeetSelect = async (meet: Meet) => {
+    setSelectedMeet(meet);
     await loadPreviewData(meet, swimmers, relayTeams);
   };
 
