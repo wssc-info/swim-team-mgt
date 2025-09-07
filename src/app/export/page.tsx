@@ -141,11 +141,6 @@ export default function ExportPage() {
     await loadPreviewData(meet, swimmers, relayData);
   };
 
-  const handleMeetSelect = async (meet: Meet) => {
-    setSelectedMeet(meet);
-    await loadPreviewData(meet, swimmers, relayTeams);
-  };
-
   const handleExport = async () => {
     if (!selectedMeet) return;
     
