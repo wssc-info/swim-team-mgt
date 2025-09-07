@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { SwimmerModel, initializeDatabase } from '../models';
+import { SwimmerModel, FamilySwimmerAssociationModel, initializeDatabase } from '../models';
 import { Swimmer } from '../types';
 
 export class SwimmerService {
@@ -38,6 +38,44 @@ export class SwimmerService {
       }));
     } catch (error) {
       console.error('Error fetching swimmers:', error);
+      return [];
+    }
+  }
+
+  public async getAssociatedSwimmers(userId: string): Promise<Swimmer[]> {
+    await this.ensureInitialized();
+    try {
+      // Get all associations for this user
+      const associations = await FamilySwimmerAssociationModel.findAll({
+        where: { userId }
+      });
+
+      if (associations.length === 0) {
+        return [];
+      }
+
+      // Get swimmer IDs from associations
+      const swimmerIds = associations.map(assoc => assoc.swimmerId);
+
+      // Fetch the actual swimmer records
+      const swimmers = await SwimmerModel.findAll({
+        where: {
+          id: swimmerIds
+        }
+      });
+
+      return swimmers.map(swimmer => ({
+        id: swimmer.id,
+        firstName: swimmer.firstName,
+        lastName: swimmer.lastName,
+        dateOfBirth: swimmer.dateOfBirth,
+        gender: swimmer.gender,
+        ageGroup: swimmer.ageGroup,
+        selectedEvents: JSON.parse(swimmer.selectedEvents || '[]'),
+        seedTimes: JSON.parse(swimmer.seedTimes || '{}'),
+      }));
+    } catch (error) {
+      console.error('Error fetching associated swimmers:', error);
       return [];
     }
   }
