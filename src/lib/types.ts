@@ -38,3 +38,20 @@ export interface TimeRecord {
   isPersonalBest: boolean;
   createdAt: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  password: string;
+  role: 'coach' | 'family';
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+}
+
+export interface FamilySwimmerAssociation {
+  id: string;
+  userId: string;
+  swimmerId: string;
+  createdAt: string;
+}

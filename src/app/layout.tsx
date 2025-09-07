@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-context";
+import Navigation from "@/components/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,36 +30,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <nav className="bg-blue-600 text-white p-4">
-          <div className="container mx-auto flex justify-between items-center">
-            <Link href="/" className="text-xl font-bold">
-              Swim Team Management
-            </Link>
-            <div className="space-x-4">
-              <Link href="/meets" className="hover:underline">
-                Meets
-              </Link>
-              <Link href="/swimmers" className="hover:underline">
-                Swimmers
-              </Link>
-              <Link href="/events" className="hover:underline">
-                Events
-              </Link>
-              <Link href="/times" className="hover:underline">
-                Times
-              </Link>
-              <Link href="/relays" className="hover:underline">
-                Relays
-              </Link>
-              <Link href="/export" className="hover:underline">
-                Export
-              </Link>
-            </div>
-          </div>
-        </nav>
-        <main className="container mx-auto p-4">
-          {children}
-        </main>
+        <AuthProvider>
+          <Navigation />
+          <main className="container mx-auto p-4">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );

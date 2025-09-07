@@ -264,6 +264,107 @@ TimeRecordModel.init(
   }
 );
 
+// User Model
+interface UserAttributes {
+  id: string;
+  email: string;
+  password: string;
+  role: 'coach' | 'family';
+  firstName: string;
+  lastName: string;
+}
+
+interface UserCreationAttributes extends Optional<UserAttributes, 'id'> {}
+
+export class UserModel extends Model<UserAttributes, UserCreationAttributes> 
+  implements UserAttributes {
+  declare id: string;
+  declare email: string;
+  declare password: string;
+  declare role: 'coach' | 'family';
+  declare firstName: string;
+  declare lastName: string;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+UserModel.init(
+  {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    role: {
+      type: DataTypes.ENUM('coach', 'family'),
+      allowNull: false,
+    },
+    firstName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    lastName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'User',
+    tableName: 'users',
+  }
+);
+
+// FamilySwimmerAssociation Model
+interface FamilySwimmerAssociationAttributes {
+  id: string;
+  userId: string;
+  swimmerId: string;
+}
+
+interface FamilySwimmerAssociationCreationAttributes extends Optional<FamilySwimmerAssociationAttributes, 'id'> {}
+
+export class FamilySwimmerAssociationModel extends Model<FamilySwimmerAssociationAttributes, FamilySwimmerAssociationCreationAttributes> 
+  implements FamilySwimmerAssociationAttributes {
+  declare id: string;
+  declare userId: string;
+  declare swimmerId: string;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+FamilySwimmerAssociationModel.init(
+  {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    swimmerId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'FamilySwimmerAssociation',
+    tableName: 'family_swimmer_associations',
+  }
+);
+
 // Initialize database function
 export async function initializeDatabase() {
   await dbConnection.initialize();
