@@ -19,6 +19,8 @@ export default function AdminPage() {
   const [showAssociationForm, setShowAssociationForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserWithAssociations | null>(null);
   const [selectedFamilyUser, setSelectedFamilyUser] = useState<UserWithAssociations | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResults, setUploadResults] = useState<{success: number, errors: string[]} | null>(null);
 
   useEffect(() => {
     loadData();
@@ -87,6 +89,161 @@ export default function AdminPage() {
     loadData();
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Please select a CSV file');
+      return;
+    }
+
+    setUploading(true);
+    setUploadResults(null);
+
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        alert('CSV file must have at least a header row and one data row');
+        return;
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const requiredHeaders = ['email', 'password', 'firstname', 'lastname', 'role'];
+      
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        alert(`CSV file is missing required columns: ${missingHeaders.join(', ')}\nRequired columns: email, password, firstname, lastname, role\nOptional: swimmers (comma-separated swimmer names)`);
+        return;
+      }
+
+      const results = { success: 0, errors: [] as string[] };
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const row: Record<string, string> = {};
+        
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+
+        try {
+          // Validate required fields
+          if (!row.email || !row.password || !row.firstname || !row.lastname || !row.role) {
+            results.errors.push(`Row ${i}: Missing required fields (email, password, firstname, lastname, role)`);
+            continue;
+          }
+
+          // Validate role
+          const role = row.role.toLowerCase();
+          if (role !== 'coach' && role !== 'family') {
+            results.errors.push(`Row ${i}: Invalid role "${row.role}". Must be "coach" or "family"`);
+            continue;
+          }
+
+          // Validate email format (basic check)
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(row.email)) {
+            results.errors.push(`Row ${i}: Invalid email format "${row.email}"`);
+            continue;
+          }
+
+          // Check if user already exists
+          const existingUser = users.find(u => u.email.toLowerCase() === row.email.toLowerCase());
+          if (existingUser) {
+            results.errors.push(`Row ${i}: User with email "${row.email}" already exists`);
+            continue;
+          }
+
+          // Create user
+          const userData = {
+            email: row.email,
+            password: row.password,
+            firstName: row.firstname,
+            lastName: row.lastname,
+            role: role
+          };
+
+          const userResponse = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+          });
+
+          if (!userResponse.ok) {
+            const error = await userResponse.text();
+            results.errors.push(`Row ${i}: Failed to create user - ${error}`);
+            continue;
+          }
+
+          const newUser = await userResponse.json();
+
+          // Handle swimmer associations for family users
+          if (role === 'family' && row.swimmers) {
+            const swimmerNames = row.swimmers.split(';').map(name => name.trim()).filter(name => name);
+            
+            if (swimmerNames.length > 0) {
+              const swimmerIds: string[] = [];
+              
+              for (const swimmerName of swimmerNames) {
+                // Try to find swimmer by "First Last" or "Last, First" format
+                const swimmer = swimmers.find(s => {
+                  const fullName1 = `${s.firstName} ${s.lastName}`.toLowerCase();
+                  const fullName2 = `${s.lastName}, ${s.firstName}`.toLowerCase();
+                  return fullName1 === swimmerName.toLowerCase() || fullName2 === swimmerName.toLowerCase();
+                });
+
+                if (swimmer) {
+                  swimmerIds.push(swimmer.id);
+                } else {
+                  results.errors.push(`Row ${i}: Swimmer "${swimmerName}" not found for user ${row.email}`);
+                }
+              }
+
+              // Associate swimmers with the user
+              if (swimmerIds.length > 0) {
+                try {
+                  const associationResponse = await fetch(`/api/admin/users/${newUser.id}/associations`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ swimmerIds }),
+                  });
+
+                  if (!associationResponse.ok) {
+                    const error = await associationResponse.text();
+                    results.errors.push(`Row ${i}: Failed to associate swimmers with user ${row.email} - ${error}`);
+                  }
+                } catch (error) {
+                  results.errors.push(`Row ${i}: Error associating swimmers with user ${row.email} - ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+              }
+            }
+          }
+
+          results.success++;
+        } catch (error) {
+          results.errors.push(`Row ${i}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      setUploadResults(results);
+      await loadData();
+    } catch (error) {
+      console.error('Error processing file:', error);
+      alert('Error processing file. Please check the file format.');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
   const getSwimmerNames = (swimmerIds: string[]) => {
     return swimmerIds
       .map(id => {
@@ -109,12 +266,64 @@ export default function AdminPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">User Administration</h1>
-          <button
-            onClick={() => setShowUserForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Add New User
-          </button>
+          <div className="flex space-x-3">
+            <label className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer">
+              {uploading ? 'Uploading...' : 'Import CSV'}
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={() => setShowUserForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Add New User
+            </button>
+          </div>
+        </div>
+
+        {/* Upload Results */}
+        {uploadResults && (
+          <div className="mb-6 bg-white rounded-lg shadow p-4">
+            <h3 className="text-lg font-semibold mb-3">Import Results</h3>
+            <div className="space-y-2">
+              <p className="text-green-600">Successfully imported: {uploadResults.success} users</p>
+              {uploadResults.errors.length > 0 && (
+                <div>
+                  <p className="text-red-600 font-medium">Errors ({uploadResults.errors.length}):</p>
+                  <ul className="text-sm text-red-600 ml-4 max-h-32 overflow-y-auto">
+                    {uploadResults.errors.map((error, index) => (
+                      <li key={index} className="list-disc">{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setUploadResults(null)}
+              className="mt-3 text-sm text-gray-600 hover:text-gray-800"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* CSV Format Help */}
+        <div className="mb-6 bg-blue-50 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-blue-800 mb-2">CSV Import Format</h3>
+          <p className="text-sm text-blue-700 mb-2">
+            Your CSV file should have these columns: <code>email, password, firstname, lastname, role</code>
+          </p>
+          <p className="text-sm text-blue-700 mb-2">
+            Optional column: <code>swimmers</code> (semicolon-separated swimmer names for family users)
+          </p>
+          <p className="text-xs text-blue-600">
+            Example: &#34;john@example.com, password123, John, Smith, family, Jane Smith;Bob Smith&#34;
+          </p>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
