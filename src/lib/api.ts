@@ -208,5 +208,6 @@ export async function fetchAssociatedSwimmers(userId: string): Promise<Swimmer[]
     throw new Error('Failed to fetch associated swimmers');
   }
   const data = await response.json();
+  console.log(data);
   return data.swimmers || [];
 }
