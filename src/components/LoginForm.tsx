@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -77,6 +78,15 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link href="/register" className="text-blue-600 hover:text-blue-500">
+            Create one here
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
