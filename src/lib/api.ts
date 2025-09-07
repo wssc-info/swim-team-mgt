@@ -209,3 +209,48 @@ export async function fetchAssociatedSwimmers(userId: string): Promise<Swimmer[]
   }
   return response.json();
 }
+
+// Relay Teams API
+export async function fetchRelayTeams(): Promise<RelayTeam[]> {
+  const response = await fetch('/api/relays');
+  if (!response.ok) {
+    throw new Error('Failed to fetch relay teams');
+  }
+  return response.json();
+}
+
+export async function createRelayTeam(team: Omit<RelayTeam, 'id'>): Promise<RelayTeam> {
+  const response = await fetch('/api/relays', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(team),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create relay team');
+  }
+  return response.json();
+}
+
+export async function updateRelayTeamApi(id: string, updates: Partial<RelayTeam>): Promise<void> {
+  const response = await fetch(`/api/relays/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update relay team');
+  }
+}
+
+export async function deleteRelayTeamApi(id: string): Promise<void> {
+  const response = await fetch(`/api/relays/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete relay team');
+  }
+}
