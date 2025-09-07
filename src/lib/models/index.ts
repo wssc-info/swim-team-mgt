@@ -12,8 +12,6 @@ interface SwimmerAttributes {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
-  selectedEvents: string;
-  seedTimes: string;
 }
 
 interface SwimmerCreationAttributes extends Optional<SwimmerAttributes, 'id'> {}
@@ -26,8 +24,6 @@ export class SwimmerModel extends Model<SwimmerAttributes, SwimmerCreationAttrib
   declare dateOfBirth: string;
   declare gender: 'M' | 'F';
   declare ageGroup: string;
-  declare selectedEvents: string;
-  declare seedTimes: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -58,16 +54,6 @@ SwimmerModel.init(
     ageGroup: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    selectedEvents: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      defaultValue: '[]',
-    },
-    seedTimes: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      defaultValue: '{}',
     },
   },
   {
@@ -321,6 +307,59 @@ UserModel.init(
     sequelize,
     modelName: 'User',
     tableName: 'users',
+  }
+);
+
+// SwimmerMeetEvent Model
+interface SwimmerMeetEventAttributes {
+  id: string;
+  swimmerId: string;
+  meetId: string;
+  eventId: string;
+  seedTime?: string;
+}
+
+interface SwimmerMeetEventCreationAttributes extends Optional<SwimmerMeetEventAttributes, 'id'> {}
+
+export class SwimmerMeetEventModel extends Model<SwimmerMeetEventAttributes, SwimmerMeetEventCreationAttributes> 
+  implements SwimmerMeetEventAttributes {
+  declare id: string;
+  declare swimmerId: string;
+  declare meetId: string;
+  declare eventId: string;
+  declare seedTime?: string;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+SwimmerMeetEventModel.init(
+  {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    swimmerId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    meetId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    eventId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    seedTime: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'SwimmerMeetEvent',
+    tableName: 'swimmer_meet_events',
   }
 );
 

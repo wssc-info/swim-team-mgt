@@ -5,8 +5,15 @@ export interface Swimmer {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
-  selectedEvents: string[]; // Event IDs
-  seedTimes: Record<string, string>; // Event ID -> time string (MM:SS.ss)
+}
+
+export interface SwimmerMeetEvent {
+  id: string;
+  swimmerId: string;
+  meetId: string;
+  eventId: string;
+  seedTime?: string;
+  createdAt: string;
 }
 
 export interface RelayTeam {
