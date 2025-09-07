@@ -33,8 +33,6 @@ export class SwimmerService {
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         ageGroup: swimmer.ageGroup,
-        selectedEvents: JSON.parse(swimmer.selectedEvents || '[]'),
-        seedTimes: JSON.parse(swimmer.seedTimes || '{}'),
       }));
     } catch (error) {
       console.error('Error fetching swimmers:', error);
@@ -71,8 +69,6 @@ export class SwimmerService {
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         ageGroup: swimmer.ageGroup,
-        selectedEvents: JSON.parse(swimmer.selectedEvents || '[]'),
-        seedTimes: JSON.parse(swimmer.seedTimes || '{}'),
       }));
     } catch (error) {
       console.error('Error fetching associated swimmers:', error);
@@ -96,8 +92,6 @@ export class SwimmerService {
         dateOfBirth: newSwimmer.dateOfBirth,
         gender: newSwimmer.gender,
         ageGroup: newSwimmer.ageGroup,
-        selectedEvents: JSON.stringify(newSwimmer.selectedEvents),
-        seedTimes: JSON.stringify(newSwimmer.seedTimes),
       });
       
       return newSwimmer;
@@ -114,14 +108,6 @@ export class SwimmerService {
       
       if (updates.dateOfBirth) {
         updateData.ageGroup = this.calculateAgeGroup(updates.dateOfBirth);
-      }
-      
-      if (updates.selectedEvents) {
-        updateData.selectedEvents = JSON.stringify(updates.selectedEvents);
-      }
-      
-      if (updates.seedTimes) {
-        updateData.seedTimes = JSON.stringify(updates.seedTimes);
       }
       
       await SwimmerModel.update(updateData, { where: { id } });

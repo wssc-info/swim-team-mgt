@@ -6,8 +6,15 @@ interface Swimmer {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
-  selectedEvents: string[];
-  seedTimes: Record<string, string>;
+}
+
+interface SwimmerMeetEvent {
+  id: string;
+  swimmerId: string;
+  meetId: string;
+  eventId: string;
+  seedTime?: string;
+  createdAt: string;
 }
 
 interface Meet {
@@ -252,5 +259,31 @@ export async function deleteRelayTeamApi(id: string): Promise<void> {
   });
   if (!response.ok) {
     throw new Error('Failed to delete relay team');
+  }
+}
+
+// Swimmer Meet Events API
+export async function fetchSwimmerMeetEvents(swimmerId: string, meetId: string): Promise<SwimmerMeetEvent[]> {
+  const response = await fetch(`/api/swimmer-meet-events?swimmerId=${swimmerId}&meetId=${meetId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch swimmer meet events');
+  }
+  return response.json();
+}
+
+export async function updateSwimmerMeetEvents(
+  swimmerId: string, 
+  meetId: string, 
+  eventSelections: { eventId: string; seedTime?: string }[]
+): Promise<void> {
+  const response = await fetch('/api/swimmer-meet-events', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ swimmerId, meetId, eventSelections }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update swimmer meet events');
   }
 }
