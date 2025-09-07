@@ -5,6 +5,7 @@ import { fetchSwimmers, fetchMeets, updateSwimmerApi, fetchAssociatedSwimmers } 
 import { USA_SWIMMING_EVENTS, SwimEvent, getEventsByAgeGroup } from '@/lib/events';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/lib/auth-context';
 
 interface Swimmer {
   id: string;
@@ -28,6 +29,7 @@ interface Meet {
 }
 
 export function EventsPage() {
+  const { user } = useAuth();
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
@@ -36,22 +38,32 @@ export function EventsPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [swimmerData, meetData] = await Promise.all([
-          fetchSwimmers(),
-          fetchMeets()
-        ]);
-        
-        setSwimmers(swimmerData);
+        const meetData = await fetchMeets();
         const active = meetData.find(m => m.isActive) || null;
         setActiveMeet(active);
+
+        // Fetch swimmers based on user role
+        let swimmerData: Swimmer[];
+        if (user?.role === 'family' && user?.id) {
+          // For family users, only fetch their associated swimmers
+          swimmerData = await fetchAssociatedSwimmers(user.id);
+        } else {
+          // For coaches, fetch all swimmers
+          swimmerData = await fetchSwimmers();
+        }
+        
+        setSwimmers(swimmerData);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
     };
-    loadData();
-  }, []);
+
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const handleSwimmerSelect = (swimmer: Swimmer) => {
     setSelectedSwimmer(swimmer);
@@ -244,7 +256,7 @@ export function EventsPage() {
 
 export default function ProtectedEventsPage() {
   return (
-    <ProtectedRoute allowedRoles={['coach']}>
+    <ProtectedRoute allowedRoles={['coach', 'family']}>
       <EventsPage />
     </ProtectedRoute>
   );
