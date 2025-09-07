@@ -6,7 +6,8 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    await setActiveMeet(params.id);
+    const {id} = await params;
+    await setActiveMeet(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error setting active meet:', error);

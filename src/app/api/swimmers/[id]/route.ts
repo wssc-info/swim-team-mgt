@@ -20,7 +20,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await deleteSwimmer(params.id);
+    const { id } = await params;
+    await deleteSwimmer(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting swimmer:', error);

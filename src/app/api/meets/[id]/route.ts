@@ -6,8 +6,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    await updateMeet(params.id, body);
+    await updateMeet(id, body);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating meet:', error);
@@ -20,7 +21,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await deleteMeet(params.id);
+    const { id } = await params;
+    await deleteMeet(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting meet:', error);
