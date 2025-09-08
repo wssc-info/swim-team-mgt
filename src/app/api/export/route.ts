@@ -4,6 +4,7 @@ import { SwimmerService } from '@/lib/services/swimmer-service';
 import { SwimmerMeetEventService } from '@/lib/services/swimmer-meet-event-service';
 import { RelayTeamService } from '@/lib/services/relay-team-service';
 import { MeetService } from '@/lib/services/meet-service';
+import {RelayTeam} from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Fetch relay teams for this meet
-    let relayTeams = [];
+    let relayTeams: RelayTeam[] = [];
     if (selectedMeet) {
       try {
         relayTeams = await relayTeamService.getRelayTeams(selectedMeet.id);

@@ -237,9 +237,9 @@ export function EventsPage() {
                         const eligibleEvents = ageGroupEvents.filter(event => 
                           event.ageGroups.includes(swimmer.ageGroup)
                         );
-                        const selectedCount = swimmer.selectedEvents.filter(eventId =>
-                          activeMeet.availableEvents.includes(eventId)
-                        ).length;
+                        // const selectedCount = swimmer.selectedEvents.filter(eventId =>
+                        //   activeMeet.availableEvents.includes(eventId)
+                        // ).length;
 
                         return (
                           <div
@@ -259,9 +259,7 @@ export function EventsPage() {
                               </div>
                               <div className="mt-2">
                                 <p className="text-sm text-gray-600">
-                                  Events: {selectedCount > 0 
-                                    ? `${selectedCount} selected for this meet`
-                                    : 'None selected'}
+                                  Events: Not Loaded Data...
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {eligibleEvents.length} events available

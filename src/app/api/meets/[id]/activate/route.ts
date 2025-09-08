@@ -5,7 +5,7 @@ const meetService = MeetService.getInstance();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const {id} = await params;

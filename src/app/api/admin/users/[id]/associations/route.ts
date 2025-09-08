@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{id: string}> }
 ) {
   try {
     await initializeDatabase();
@@ -23,8 +23,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{id: string}>  }
 ) {
+  const {id} = await params;
   try {
     await initializeDatabase();
     
@@ -32,13 +33,13 @@ export async function PUT(
 
     // Delete existing associations
     await FamilySwimmerAssociationModel.destroy({
-      where: { userId: params.id }
+      where: { userId: id }
     });
 
     // Create new associations
     const associations = swimmerIds.map((swimmerId: string) => ({
       id: uuidv4(),
-      userId: params.id,
+      userId: id,
       swimmerId,
     }));
 
