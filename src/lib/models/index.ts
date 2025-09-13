@@ -12,6 +12,7 @@ interface SwimmerAttributes {
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
+  clubId?: string;
 }
 
 type SwimmerCreationAttributes = Optional<SwimmerAttributes, 'id'>
@@ -24,6 +25,7 @@ export class SwimmerModel extends Model<SwimmerAttributes, SwimmerCreationAttrib
   declare dateOfBirth: string;
   declare gender: 'M' | 'F';
   declare ageGroup: string;
+  declare clubId?: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -54,6 +56,14 @@ SwimmerModel.init(
     ageGroup: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    clubId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      references: {
+        model: 'swim_clubs',
+        key: 'id'
+      }
     },
   },
   {
@@ -264,6 +274,7 @@ interface UserAttributes {
   role: 'coach' | 'family';
   firstName: string;
   lastName: string;
+  clubId?: string;
 }
 
 type UserCreationAttributes = Optional<UserAttributes, 'id'>
@@ -276,6 +287,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes>
   declare role: 'coach' | 'family';
   declare firstName: string;
   declare lastName: string;
+  declare clubId?: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -308,6 +320,14 @@ UserModel.init(
     lastName: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    clubId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      references: {
+        model: 'swim_clubs',
+        key: 'id'
+      }
     },
   },
   {
@@ -505,6 +525,9 @@ SwimClubModel.init(
 // Set up associations
 UserModel.belongsTo(SwimClubModel, { foreignKey: 'clubId', as: 'club' });
 SwimClubModel.hasMany(UserModel, { foreignKey: 'clubId', as: 'users' });
+
+SwimmerModel.belongsTo(SwimClubModel, { foreignKey: 'clubId', as: 'club' });
+SwimClubModel.hasMany(SwimmerModel, { foreignKey: 'clubId', as: 'swimmers' });
 
 // Initialize database function
 export async function initializeDatabase() {

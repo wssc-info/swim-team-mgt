@@ -48,6 +48,7 @@ export class AuthService {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
+          clubId: user.clubId,
           createdAt: user.createdAt.toISOString(),
         },
         token
@@ -77,6 +78,7 @@ export class AuthService {
         role: newUser.role,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
+        clubId: userData.clubId,
       });
       
       return {
@@ -85,6 +87,7 @@ export class AuthService {
         role: newUser.role,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
+        clubId: userData.clubId,
         createdAt: newUser.createdAt,
       };
     } catch (error) {

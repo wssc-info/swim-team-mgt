@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/services/auth-service';
-import { UserModel, FamilySwimmerAssociationModel, initializeDatabase } from '@/lib/models';
+import { UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase } from '@/lib/models';
 import DbConnection from "@/lib/db-connection";
 
 export async function GET(request: NextRequest) {
@@ -19,12 +19,24 @@ export async function GET(request: NextRequest) {
           where: { userId: user.id }
         });
 
+        // Get club info if user has a clubId
+        let club = null;
+        if (user.clubId) {
+          club = await SwimClubModel.findByPk(user.clubId);
+        }
+
         return {
           id: user.id,
           email: user.email,
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
+          clubId: user.clubId,
+          club: club ? {
+            id: club.id,
+            name: club.name,
+            abbreviation: club.abbreviation
+          } : null,
           createdAt: user.createdAt.toISOString(),
           associatedSwimmers: associations.map(assoc => assoc.swimmerId),
         };
@@ -42,7 +54,7 @@ export async function POST(request: NextRequest) {
   try {
     const userData = await request.json();
     
-    const { email, password, role, firstName, lastName } = userData;
+    const { email, password, role, firstName, lastName, clubId } = userData;
     
     if (!email || !password || !role || !firstName || !lastName) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
@@ -52,8 +64,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
+    // Validate club exists if clubId is provided
+    if (clubId) {
+      const club = await SwimClubModel.findByPk(clubId);
+      if (!club) {
+        return NextResponse.json({ error: 'Invalid club selected' }, { status: 400 });
+      }
+    }
+
     const authService = AuthService.getInstance();
-    const user = await authService.register(userData);
+    const user = await authService.register({ ...userData, clubId });
     
     return NextResponse.json(user);
   } catch (error) {
