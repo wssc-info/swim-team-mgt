@@ -33,6 +33,7 @@ export class SwimmerService {
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         ageGroup: swimmer.ageGroup,
+        clubId: swimmer.clubId,
       }));
     } catch (error) {
       console.error('Error fetching swimmers:', error);
@@ -69,6 +70,7 @@ export class SwimmerService {
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         ageGroup: swimmer.ageGroup,
+        clubId: swimmer.clubId,
       }));
     } catch (error) {
       console.error('Error fetching associated swimmers:', error);
@@ -92,6 +94,7 @@ export class SwimmerService {
         dateOfBirth: newSwimmer.dateOfBirth,
         gender: newSwimmer.gender,
         ageGroup: newSwimmer.ageGroup,
+        clubId: newSwimmer.clubId,
       });
       
       return newSwimmer;

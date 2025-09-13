@@ -26,6 +26,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const { firstName, lastName, dateOfBirth, gender, clubId } = body;
+    
+    if (!firstName || !lastName || !dateOfBirth || !gender || !clubId) {
+      return NextResponse.json({ error: 'All fields including club are required' }, { status: 400 });
+    }
+    
     const swimmer = await swimmerService.addSwimmer(body);
     return NextResponse.json(swimmer);
   } catch (error) {
