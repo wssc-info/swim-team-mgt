@@ -6,12 +6,14 @@ import UserForm from '@/components/UserForm';
 import FamilyAssociationForm from '@/components/FamilyAssociationForm';
 import { User, Swimmer } from '@/lib/types';
 import { fetchSwimmers } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 
 interface UserWithAssociations extends User {
   associatedSwimmers?: string[];
 }
 
 export default function AdminPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithAssociations[]>([]);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,11 +138,15 @@ export default function AdminPage() {
             continue;
           }
 
-          // Validate role
-          const role = row.role.toLowerCase();
-          if (role !== 'coach' && role !== 'family') {
-            results.errors.push(`Row ${i}: Invalid role "${row.role}". Must be "coach" or "family"`);
+          let role = row.role.toLowerCase();
+          if (!['admin', 'coach', 'family'].includes(role)) {
+            results.errors.push(`Row ${i}: Invalid role "${row.role}". Must be "admin", "coach", or "family"`);
             continue;
+          }
+
+          // Only admins can create admin or coach users via CSV
+          if (currentUser?.role !== 'admin' && (role === 'admin' || role === 'coach')) {
+            role = 'family'; // Force to family role if not admin
           }
 
           // Validate email format (basic check)
@@ -363,7 +369,9 @@ export default function AdminPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.role === 'coach' 
+                      user.role === 'admin'
+                        ? 'bg-red-100 text-red-800'
+                        : user.role === 'coach' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-blue-100 text-blue-800'
                     }`}>
@@ -431,6 +439,8 @@ export default function AdminPage() {
               <UserForm
                 user={editingUser}
                 onClose={handleUserFormClose}
+                currentUserRole={currentUser?.role}
+                currentUserClubId={currentUser?.clubId}
               />
             </div>
           </div>

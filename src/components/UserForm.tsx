@@ -3,22 +3,36 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/lib/types';
 
+interface SwimClub {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
 interface UserFormProps {
   user?: User | null;
   onClose: () => void;
   currentUserRole?: string;
+  currentUserClubId?: string;
 }
 
-export default function UserForm({ user, onClose, currentUserRole }: UserFormProps) {
+export default function UserForm({ user, onClose, currentUserRole, currentUserClubId }: UserFormProps) {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     role: 'family' as 'admin' | 'coach' | 'family',
+    clubId: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [clubs, setClubs] = useState<SwimClub[]>([]);
+  const [loadingClubs, setLoadingClubs] = useState(true);
+
+  useEffect(() => {
+    loadClubs();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -28,9 +42,24 @@ export default function UserForm({ user, onClose, currentUserRole }: UserFormPro
         email: user.email,
         password: '', // Don't populate password for editing
         role: user.role,
+        clubId: user.clubId || '',
       });
     }
   }, [user]);
+
+  const loadClubs = async () => {
+    try {
+      const response = await fetch('/api/admin/clubs');
+      if (response.ok) {
+        const clubsData = await response.json();
+        setClubs(clubsData);
+      }
+    } catch (error) {
+      console.error('Error loading clubs:', error);
+    } finally {
+      setLoadingClubs(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +202,48 @@ export default function UserForm({ user, onClose, currentUserRole }: UserFormPro
           {currentUserRole !== 'admin' && (
             <p className="text-xs text-gray-500 mt-1">
               Only administrators can assign coach or admin roles
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+            Club
+          </label>
+          {loadingClubs ? (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+              Loading clubs...
+            </div>
+          ) : (
+            <select
+              id="clubId"
+              name="clubId"
+              value={formData.clubId}
+              onChange={handleChange}
+              disabled={currentUserRole !== 'admin'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              <option value="">No Club</option>
+              {currentUserRole === 'admin' ? (
+                clubs.map((club) => (
+                  <option key={club.id} value={club.id}>
+                    {club.name} ({club.abbreviation})
+                  </option>
+                ))
+              ) : (
+                clubs
+                  .filter(club => club.id === currentUserClubId)
+                  .map((club) => (
+                    <option key={club.id} value={club.id}>
+                      {club.name} ({club.abbreviation})
+                    </option>
+                  ))
+              )}
+            </select>
+          )}
+          {currentUserRole !== 'admin' && (
+            <p className="text-xs text-gray-500 mt-1">
+              Non-admin users can only assign users to their own club
             </p>
           )}
         </div>

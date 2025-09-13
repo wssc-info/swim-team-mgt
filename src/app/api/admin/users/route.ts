@@ -52,24 +52,56 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userData = await request.json();
+    // Get the current user from the token
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    let currentUser = null;
     
-    const { email, password, role, firstName, lastName, clubId } = userData;
-    
-    if (!email || !password || !role || !firstName || !lastName) {
-      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+        currentUser = await UserModel.findByPk(decoded.userId);
+      } catch (error) {
+        // Token invalid, continue without current user
+      }
     }
 
-    if (!['coach', 'family'].includes(role)) {
+    const userData = await request.json();
+    
+    let { email, password, role, firstName, lastName, clubId } = userData;
+    
+    if (!email || !password || !firstName || !lastName) {
+      return NextResponse.json({ error: 'Email, password, first name, and last name are required' }, { status: 400 });
+    }
+
+    // Role validation and default assignment
+    if (!role) {
+      role = 'family'; // Default role
+    }
+
+    // Only admins can set admin or coach roles
+    if (currentUser?.role !== 'admin' && (role === 'admin' || role === 'coach')) {
+      role = 'family'; // Force to family role if not admin
+    }
+
+    if (!['admin', 'coach', 'family'].includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    // Validate club exists if clubId is provided
+    // Club validation - non-admins can only assign users to their own club
     if (clubId) {
       const club = await SwimClubModel.findByPk(clubId);
       if (!club) {
         return NextResponse.json({ error: 'Invalid club selected' }, { status: 400 });
       }
+
+      // If current user is not admin, they can only assign to their own club
+      if (currentUser?.role !== 'admin' && clubId !== currentUser?.clubId) {
+        return NextResponse.json({ error: 'You can only assign users to your own club' }, { status: 403 });
+      }
+    } else if (currentUser?.role !== 'admin' && currentUser?.clubId) {
+      // If non-admin user doesn't specify a club, default to their club
+      clubId = currentUser.clubId;
     }
 
     const authService = AuthService.getInstance();
