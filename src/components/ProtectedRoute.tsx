@@ -5,7 +5,7 @@ import LoginForm from './LoginForm';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ('coach' | 'family')[];
+  allowedRoles?: ('admin' | 'coach' | 'family')[];
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
