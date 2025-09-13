@@ -6,15 +6,16 @@ import { User } from '@/lib/types';
 interface UserFormProps {
   user?: User | null;
   onClose: () => void;
+  currentUserRole?: string;
 }
 
-export default function UserForm({ user, onClose }: UserFormProps) {
+export default function UserForm({ user, onClose, currentUserRole }: UserFormProps) {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    role: 'family' as 'coach' | 'family',
+    role: 'family' as 'admin' | 'coach' | 'family',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -162,11 +163,18 @@ export default function UserForm({ user, onClose }: UserFormProps) {
             value={formData.role}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={currentUserRole !== 'admin'}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             <option value="family">Family</option>
-            <option value="coach">Coach</option>
+            {currentUserRole === 'admin' && <option value="coach">Coach</option>}
+            {currentUserRole === 'admin' && <option value="admin">Admin</option>}
           </select>
+          {currentUserRole !== 'admin' && (
+            <p className="text-xs text-gray-500 mt-1">
+              Only administrators can assign coach or admin roles
+            </p>
+          )}
         </div>
 
         <div className="flex space-x-3 pt-4">
