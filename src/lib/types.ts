@@ -54,6 +54,7 @@ export interface User {
   role: 'coach' | 'family';
   firstName: string;
   lastName: string;
+  clubId?: string;
   createdAt: string;
 }
 

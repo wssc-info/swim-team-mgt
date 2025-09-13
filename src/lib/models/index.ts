@@ -502,6 +502,10 @@ SwimClubModel.init(
   }
 );
 
+// Set up associations
+UserModel.belongsTo(SwimClubModel, { foreignKey: 'clubId', as: 'club' });
+SwimClubModel.hasMany(UserModel, { foreignKey: 'clubId', as: 'users' });
+
 // Initialize database function
 export async function initializeDatabase() {
   await dbConnection.initialize();
