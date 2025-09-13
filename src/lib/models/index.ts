@@ -411,6 +411,97 @@ FamilySwimmerAssociationModel.init(
   }
 );
 
+// SwimClub Model
+interface SwimClubAttributes {
+  id: string;
+  name: string;
+  abbreviation: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  isActive: boolean;
+}
+
+type SwimClubCreationAttributes = Optional<SwimClubAttributes, 'id'>
+
+export class SwimClubModel extends Model<SwimClubAttributes, SwimClubCreationAttributes> 
+  implements SwimClubAttributes {
+  declare id: string;
+  declare name: string;
+  declare abbreviation: string;
+  declare address: string;
+  declare city: string;
+  declare state: string;
+  declare zipCode: string;
+  declare phone?: string;
+  declare email?: string;
+  declare website?: string;
+  declare isActive: boolean;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+SwimClubModel.init(
+  {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    abbreviation: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    address: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    city: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    state: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    zipCode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    website: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'SwimClub',
+    tableName: 'swim_clubs',
+  }
+);
+
 // Initialize database function
 export async function initializeDatabase() {
   await dbConnection.initialize();
