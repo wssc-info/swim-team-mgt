@@ -7,7 +7,7 @@ function getAuthHeaders(): HeadersInit {
   };
 }
 
-async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+export async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const headers = getAuthHeaders();
   return fetch(url, {
     ...options,
