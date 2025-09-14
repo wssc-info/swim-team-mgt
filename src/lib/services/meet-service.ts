@@ -25,7 +25,9 @@ export class MeetService {
   public async getMeets(): Promise<Meet[]> {
     await this.ensureInitialized();
     try {
-      const meets = await MeetModel.findAll();
+      const meets = await MeetModel.findAll({
+        order: [['date', 'DESC']]
+      });
       return meets.map(meet => ({
         id: meet.id,
         name: meet.name,
@@ -33,6 +35,8 @@ export class MeetService {
         location: meet.location,
         availableEvents: JSON.parse(meet.availableEvents || '[]'),
         isActive: meet.isActive,
+        clubId: meet.clubId,
+        againstClubId: meet.againstClubId,
         createdAt: (meet.createdAt || new Date()).toISOString(),
       }));
     } catch (error) {
@@ -41,30 +45,37 @@ export class MeetService {
     }
   }
 
-  public async addMeet(meet: Omit<Meet, 'id' | 'createdAt'>): Promise<Meet> {
+  public async addMeet(meetData: Omit<Meet, 'id' | 'createdAt'>): Promise<Meet> {
     await this.ensureInitialized();
-    const newMeet: Meet = {
-      ...meet,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
-    };
     
     try {
       // If this meet is being set as active, deactivate all others
-      if (newMeet.isActive) {
+      if (meetData.isActive) {
         await MeetModel.update({ isActive: false }, { where: {} });
       }
       
-      await MeetModel.create({
-        id: newMeet.id,
-        name: newMeet.name,
-        date: newMeet.date,
-        location: newMeet.location,
-        availableEvents: JSON.stringify(newMeet.availableEvents),
-        isActive: newMeet.isActive,
+      const meet = await MeetModel.create({
+        id: uuidv4(),
+        name: meetData.name,
+        date: meetData.date,
+        location: meetData.location,
+        availableEvents: JSON.stringify(meetData.availableEvents),
+        isActive: meetData.isActive,
+        clubId: meetData.clubId,
+        againstClubId: meetData.againstClubId || undefined,
       });
       
-      return newMeet;
+      return {
+        id: meet.id,
+        name: meet.name,
+        date: meet.date,
+        location: meet.location,
+        availableEvents: JSON.parse(meet.availableEvents),
+        isActive: meet.isActive,
+        clubId: meet.clubId,
+        againstClubId: meet.againstClubId,
+        createdAt: meet.createdAt.toISOString(),
+      };
     } catch (error) {
       console.error('Error adding meet:', error);
       throw error;
@@ -123,7 +134,7 @@ export class MeetService {
     }
   }
 
-  public async setActiveMeet(id: string): Promise<void> {
+  public async activateMeet(id: string): Promise<void> {
     await this.ensureInitialized();
     try {
       // Deactivate all meets first
@@ -131,8 +142,12 @@ export class MeetService {
       // Then activate the specified meet
       await MeetModel.update({ isActive: true }, { where: { id } });
     } catch (error) {
-      console.error('Error setting active meet:', error);
+      console.error('Error activating meet:', error);
       throw error;
     }
+  }
+
+  public async setActiveMeet(id: string): Promise<void> {
+    await this.activateMeet(id);
   }
 }

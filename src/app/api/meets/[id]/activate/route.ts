@@ -9,10 +9,10 @@ export async function POST(
 ) {
   try {
     const {id} = await params;
-    await meetService.setActiveMeet(id);
+    await meetService.activateMeet(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error setting active meet:', error);
-    return NextResponse.json({ error: 'Failed to set active meet' }, { status: 500 });
+    console.error('Error activating meet:', error);
+    return NextResponse.json({ error: 'Failed to activate meet' }, { status: 500 });
   }
 }
