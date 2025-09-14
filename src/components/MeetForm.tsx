@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createMeet, updateMeetApi, fetchAllEvents } from '@/lib/api';
-import {SwimEvent} from "@/lib/types";
+import { createMeet, updateMeetApi, fetchAllEvents, fetchClubs } from '@/lib/api';
+import { SwimEvent, SwimClub } from "@/lib/types";
+import { useAuth } from '@/lib/auth-context';
 
 interface Meet {
   id: string;
@@ -11,6 +12,8 @@ interface Meet {
   location: string;
   availableEvents: string[];
   isActive: boolean;
+  clubId: string;
+  againstClubId?: string;
   createdAt: string;
 }
 
@@ -20,12 +23,15 @@ interface MeetFormProps {
 }
 
 export default function MeetForm({ meet, onClose }: MeetFormProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     date: '',
     location: '',
     availableEvents: [] as string[],
-    isActive: false
+    isActive: false,
+    clubId: '',
+    againstClubId: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,22 +42,35 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     course: 'all' // SCY, SCM, LCM, all
   });
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
+  const [allClubs, setAllClubs] = useState<SwimClub[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadEvents = async () => {
+    const loadData = async () => {
       try {
-        const events = await fetchAllEvents();
+        const [events, clubs] = await Promise.all([
+          fetchAllEvents(),
+          fetchClubs()
+        ]);
         setAllEvents(events);
+        setAllClubs(clubs);
+        
+        // If user is not admin, set their club as default
+        if (user && user.role !== 'admin' && user.clubId) {
+          setFormData(prev => ({
+            ...prev,
+            clubId: user.clubId!
+          }));
+        }
       } catch (error) {
-        console.error('Error loading events:', error);
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadEvents();
-  }, []);
+    loadData();
+  }, [user]);
 
   useEffect(() => {
     if (meet) {
@@ -60,7 +79,9 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
         date: meet.date,
         location: meet.location,
         availableEvents: meet.availableEvents,
-        isActive: meet.isActive
+        isActive: meet.isActive,
+        clubId: meet.clubId,
+        againstClubId: meet.againstClubId || ''
       });
     }
   }, [meet]);
@@ -89,6 +110,10 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
     if (formData.availableEvents.length === 0) {
       newErrors.availableEvents = 'At least one event must be selected';
+    }
+
+    if (!formData.clubId) {
+      newErrors.clubId = 'Club is required';
     }
 
     setErrors(newErrors);
@@ -283,6 +308,63 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
           {errors.location && (
             <p className="text-red-500 text-sm mt-1">{errors.location}</p>
           )}
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+              Club (Meet For) *
+            </label>
+            <select
+              id="clubId"
+              name="clubId"
+              value={formData.clubId}
+              onChange={handleInputChange}
+              disabled={user?.role !== 'admin'}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.clubId ? 'border-red-500' : 'border-gray-300'
+              } ${user?.role !== 'admin' ? 'bg-gray-100' : ''}`}
+            >
+              <option value="">Select a club</option>
+              {allClubs
+                .filter(club => user?.role === 'admin' || club.id === user?.clubId)
+                .map((club) => (
+                <option key={club.id} value={club.id}>
+                  {club.name} ({club.abbreviation})
+                </option>
+              ))}
+            </select>
+            {errors.clubId && (
+              <p className="text-red-500 text-sm mt-1">{errors.clubId}</p>
+            )}
+            {user?.role !== 'admin' && (
+              <p className="text-xs text-gray-500 mt-1">
+                Non-admin users can only create meets for their own club
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="againstClubId" className="block text-sm font-medium text-gray-700 mb-1">
+              Against Club (Optional)
+            </label>
+            <select
+              id="againstClubId"
+              name="againstClubId"
+              value={formData.againstClubId}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">No opposing club</option>
+              {allClubs
+                .filter(club => club.id !== formData.clubId)
+                .map((club) => (
+                <option key={club.id} value={club.id}>
+                  {club.name} ({club.abbreviation})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div>

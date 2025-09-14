@@ -34,6 +34,8 @@ export interface Meet {
   location: string;
   availableEvents: string[]; // Event IDs that swimmers can participate in
   isActive: boolean; // Only one meet can be active at a time
+  clubId: string; // The club this meet is for (required)
+  againstClubId?: string; // The club this meet is against (optional)
   createdAt: string;
 }
 
@@ -74,5 +76,19 @@ export interface SwimEvent {
   course: 'SCY' | 'LCM' | 'SCM';
   isRelay: boolean;
   ageGroups: string[];
+  isActive: boolean;
+}
+
+export interface SwimClub {
+  id: string;
+  name: string;
+  abbreviation: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  phone?: string;
+  email?: string;
+  website?: string;
   isActive: boolean;
 }

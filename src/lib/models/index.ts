@@ -81,6 +81,8 @@ interface MeetAttributes {
   location: string;
   availableEvents: string;
   isActive: boolean;
+  clubId: string;
+  againstClubId?: string;
 }
 
 type MeetCreationAttributes = Optional<MeetAttributes, 'id'>
@@ -93,6 +95,8 @@ export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes>
   declare location: string;
   declare availableEvents: string;
   declare isActive: boolean;
+  declare clubId: string;
+  declare againstClubId?: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -125,6 +129,22 @@ MeetModel.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    clubId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: 'swim_clubs',
+        key: 'id'
+      }
+    },
+    againstClubId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      references: {
+        model: 'swim_clubs',
+        key: 'id'
+      }
     },
   },
   {
@@ -602,6 +622,11 @@ SwimClubModel.hasMany(UserModel, { foreignKey: 'clubId', as: 'users' });
 
 SwimmerModel.belongsTo(SwimClubModel, { foreignKey: 'clubId', as: 'club' });
 SwimClubModel.hasMany(SwimmerModel, { foreignKey: 'clubId', as: 'swimmers' });
+
+MeetModel.belongsTo(SwimClubModel, { foreignKey: 'clubId', as: 'club' });
+MeetModel.belongsTo(SwimClubModel, { foreignKey: 'againstClubId', as: 'againstClub' });
+SwimClubModel.hasMany(MeetModel, { foreignKey: 'clubId', as: 'meets' });
+SwimClubModel.hasMany(MeetModel, { foreignKey: 'againstClubId', as: 'awayMeets' });
 
 // Initialize database function
 export async function initializeDatabase() {

@@ -16,6 +16,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    
+    // Validate required fields
+    if (!body.clubId) {
+      return NextResponse.json({ error: 'Club ID is required' }, { status: 400 });
+    }
+    
     const meet = await meetService.addMeet(body);
     return NextResponse.json(meet);
   } catch (error) {

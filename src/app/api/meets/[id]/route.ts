@@ -10,6 +10,12 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    
+    // Validate required fields if they're being updated
+    if (body.clubId !== undefined && !body.clubId) {
+      return NextResponse.json({ error: 'Club ID is required' }, { status: 400 });
+    }
+    
     await meetService.updateMeet(id, body);
     return NextResponse.json({ success: true });
   } catch (error) {

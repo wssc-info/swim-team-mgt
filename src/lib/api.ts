@@ -1,5 +1,5 @@
 // Helper function to make authenticated API calls
-import {SwimEvent} from "@/lib/types";
+import {SwimEvent, SwimClub} from "@/lib/types";
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('auth_token');
@@ -47,6 +47,8 @@ interface Meet {
   location: string;
   availableEvents: string[];
   isActive: boolean;
+  clubId: string;
+  againstClubId?: string;
   createdAt: string;
 }
 
@@ -307,4 +309,13 @@ export async function seedEventsApi(): Promise<void> {
   if (!response.ok) {
     throw new Error('Failed to seed events');
   }
+}
+
+// Clubs API
+export async function fetchClubs(): Promise<SwimClub[]> {
+  const response = await authenticatedFetch('/api/admin/clubs');
+  if (!response.ok) {
+    throw new Error('Failed to fetch clubs');
+  }
+  return response.json();
 }
