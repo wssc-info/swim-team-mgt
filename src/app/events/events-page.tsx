@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents } from '@/lib/api';
-import { USA_SWIMMING_EVENTS, SwimEvent, getEventsByAgeGroup } from '@/lib/events';
+import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents } from '@/lib/api';
+import { SwimEvent } from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
@@ -36,13 +36,19 @@ export function EventsPage() {
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
   const [loading, setLoading] = useState(true);
+  const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const meetData = await fetchMeets();
+        const [meetData, eventsData] = await Promise.all([
+          fetchMeets(),
+          fetchAllEvents()
+        ]);
+        
         const active = meetData.find(m => m.isActive) || null;
         setActiveMeet(active);
+        setAllEvents(eventsData);
 
         // Fetch swimmers based on user role
         let swimmerData: Swimmer[];
@@ -162,7 +168,7 @@ export function EventsPage() {
   }
 
   const availableEvents = activeMeet.availableEvents
-    .map(eventId => USA_SWIMMING_EVENTS.find(e => e.id === eventId))
+    .map(eventId => allEvents.find(e => e.id === eventId))
     .filter(Boolean) as SwimEvent[];
 
   return (
