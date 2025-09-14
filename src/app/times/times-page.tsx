@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi } from '@/lib/api';
-import { USA_SWIMMING_EVENTS } from '@/lib/events';
+import { fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi, fetchAllEvents } from '@/lib/api';
 import TimeRecordForm from '@/components/TimeRecordForm';
-import { Swimmer, TimeRecord } from '@/lib/types';
+import { Swimmer, TimeRecord, SwimEvent } from '@/lib/types';
 
 export default function TimesPage() {
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
@@ -15,16 +14,19 @@ export default function TimesPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadResults, setUploadResults] = useState<{success: number, errors: string[]} | null>(null);
+  const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [swimmerData, recordData] = await Promise.all([
+        const [swimmerData, recordData, eventsData] = await Promise.all([
           fetchSwimmers(),
-          fetchTimeRecords()
+          fetchTimeRecords(),
+          fetchAllEvents()
         ]);
         setSwimmers(swimmerData);
         setTimeRecords(recordData);
+        setAllEvents(eventsData);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -135,7 +137,7 @@ export default function TimesPage() {
 
           // Find event by name
           const eventName = row.event;
-          const event = USA_SWIMMING_EVENTS.find(e => 
+          const event = allEvents.find(e => 
             e.name.toLowerCase().includes(eventName.toLowerCase()) ||
             eventName.toLowerCase().includes(e.name.toLowerCase())
           );
@@ -210,7 +212,7 @@ export default function TimesPage() {
   };
 
   const getEventName = (eventId: string) => {
-    const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+    const event = allEvents.find(e => e.id === eventId);
     return event ? `${event.name} (${event.course})` : 'Unknown Event';
   };
 

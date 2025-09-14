@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchSwimmers, fetchMeets, createRelayTeam, fetchRelayTeams, updateRelayTeamApi, deleteRelayTeamApi } from '@/lib/api';
-import { USA_SWIMMING_EVENTS, SwimEvent } from '@/lib/events';
+import { fetchSwimmers, fetchMeets, createRelayTeam, fetchRelayTeams, updateRelayTeamApi, deleteRelayTeamApi, fetchAllEvents } from '@/lib/api';
+import { SwimEvent } from '@/lib/types';
 import RelayTeamForm from '@/components/RelayTeamForm';
 
 interface Swimmer {
@@ -41,16 +41,19 @@ export default function RelaysPage() {
   const [selectedTeam, setSelectedTeam] = useState<RelayTeam | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [swimmerData, meetData] = await Promise.all([
+        const [swimmerData, meetData, eventsData] = await Promise.all([
           fetchSwimmers(),
-          fetchMeets()
+          fetchMeets(),
+          fetchAllEvents()
         ]);
         
         setSwimmers(swimmerData);
+        setAllEvents(eventsData);
         const active = meetData.find(m => m.isActive) || null;
         setActiveMeet(active);
         
@@ -132,7 +135,7 @@ export default function RelaysPage() {
   }
 
   const availableEvents = activeMeet.availableEvents
-    .map(eventId => USA_SWIMMING_EVENTS.find(e => e.id === eventId))
+    .map(eventId => allEvents.find(e => e.id === eventId))
     .filter(Boolean) as SwimEvent[];
 
   const relayEvents = availableEvents.filter(event => event.isRelay);
@@ -143,7 +146,7 @@ export default function RelaysPage() {
   };
 
   const getEventName = (eventId: string) => {
-    const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+    const event = allEvents.find(e => e.id === eventId);
     return event ? event.name : 'Unknown Event';
   };
 
