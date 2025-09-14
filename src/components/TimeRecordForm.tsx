@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createTimeRecord, updateTimeRecordApi } from '@/lib/api';
-import { USA_SWIMMING_EVENTS } from '@/lib/events';
-import { Swimmer, TimeRecord } from '@/lib/types';
+import { createTimeRecord, updateTimeRecordApi, fetchAllEvents } from '@/lib/api';
+import { Swimmer, TimeRecord, SwimEvent } from '@/lib/types';
 
 interface TimeRecordFormProps {
   record?: TimeRecord | null;
@@ -22,6 +21,23 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const events = await fetchAllEvents();
+        setAllEvents(events);
+      } catch (error) {
+        console.error('Error loading events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
 
   useEffect(() => {
     if (record) {
@@ -115,8 +131,16 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
 
   const selectedSwimmer = swimmers.find(s => s.id === formData.swimmerId);
   const availableEvents = selectedSwimmer 
-    ? USA_SWIMMING_EVENTS.filter(event => event.ageGroups.includes(selectedSwimmer.ageGroup))
-    : USA_SWIMMING_EVENTS;
+    ? allEvents.filter(event => event.ageGroups.includes(selectedSwimmer.ageGroup))
+    : allEvents;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <div className="text-lg">Loading events...</div>
+      </div>
+    );
+  }
 
   return (
     <div>

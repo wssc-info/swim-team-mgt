@@ -1,4 +1,5 @@
-import { USA_SWIMMING_EVENTS, SwimEvent } from './events';
+import { SwimEvent } from './types';
+import { fetchAllEvents } from './api';
 
 interface Swimmer {
   id: string;
@@ -83,6 +84,9 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     throw new Error('No meet selected for export');
   }
   
+  // Fetch all events from database
+  const allEvents = await fetchAllEvents();
+  
   let content = '';
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
@@ -120,7 +124,7 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     swimmer.selectedEvents.forEach(eventId => {
       // Only include events that are available in the target meet
       if (targetMeet.availableEvents.includes(eventId)) {
-        const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+        const event = allEvents.find(e => e.id === eventId);
         if (event && !event.isRelay) {
           const seedTime = timeToSdifFormat(swimmer.seedTimes[eventId] || 'NT');
           const eventCode = getEventCode(event);
@@ -152,7 +156,7 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   relayTeams.forEach(team => {
     // Only include relay teams for events available in the target meet
     if (targetMeet.availableEvents.includes(team.eventId)) {
-      const event = USA_SWIMMING_EVENTS.find(e => e.id === team.eventId);
+      const event = allEvents.find(e => e.id === team.eventId);
       if (event) {
         const eventCode = getEventCode(event);
         const teamName = team.name.padEnd(20, ' ').substring(0, 20);
@@ -215,10 +219,13 @@ export async function getMeetEntries(swimmers: Swimmer[] = [], relayTeams: Relay
   const individual: MeetManagerEntry[] = [];
   const relays: MeetManagerRelay[] = [];
   
+  // Fetch all events from database
+  const allEvents = await fetchAllEvents();
+  
   // Individual entries
   swimmers.forEach(swimmer => {
     swimmer.selectedEvents.forEach(eventId => {
-      const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+      const event = allEvents.find(e => e.id === eventId);
       if (event && !event.isRelay) {
         individual.push({
           swimmer,
@@ -231,7 +238,7 @@ export async function getMeetEntries(swimmers: Swimmer[] = [], relayTeams: Relay
   
   // Relay entries
   relayTeams.forEach(team => {
-    const event = USA_SWIMMING_EVENTS.find(e => e.id === team.eventId);
+    const event = allEvents.find(e => e.id === team.eventId);
     if (event) {
       const teamSwimmers = team.swimmers
         .map(id => swimmers.find(s => s.id === id))
