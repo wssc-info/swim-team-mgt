@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SwimEvent } from '@/lib/events';
+import { SwimEvent } from '@/lib/types';
 import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets } from '@/lib/api';
 
 interface Swimmer {
