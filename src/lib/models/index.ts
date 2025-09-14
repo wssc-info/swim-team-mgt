@@ -522,6 +522,80 @@ SwimClubModel.init(
   }
 );
 
+// SwimEvent Model
+interface SwimEventAttributes {
+  id: string;
+  name: string;
+  distance: number;
+  stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'individual-medley';
+  course: 'SCY' | 'LCM' | 'SCM';
+  isRelay: boolean;
+  ageGroups: string;
+  isActive: boolean;
+}
+
+type SwimEventCreationAttributes = Optional<SwimEventAttributes, 'id'>
+
+export class SwimEventModel extends Model<SwimEventAttributes, SwimEventCreationAttributes> 
+  implements SwimEventAttributes {
+  declare id: string;
+  declare name: string;
+  declare distance: number;
+  declare stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'individual-medley';
+  declare course: 'SCY' | 'LCM' | 'SCM';
+  declare isRelay: boolean;
+  declare ageGroups: string;
+  declare isActive: boolean;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+SwimEventModel.init(
+  {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    distance: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    stroke: {
+      type: DataTypes.ENUM('freestyle', 'backstroke', 'breaststroke', 'butterfly', 'individual-medley'),
+      allowNull: false,
+    },
+    course: {
+      type: DataTypes.ENUM('SCY', 'LCM', 'SCM'),
+      allowNull: false,
+    },
+    isRelay: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    ageGroups: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '[]',
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'SwimEvent',
+    tableName: 'swim_events',
+  }
+);
+
 // Set up associations
 UserModel.belongsTo(SwimClubModel, { foreignKey: 'clubId', as: 'club' });
 SwimClubModel.hasMany(UserModel, { foreignKey: 'clubId', as: 'users' });
