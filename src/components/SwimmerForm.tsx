@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createSwimmer, updateSwimmerApi } from '@/lib/api';
 import { Swimmer } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 // Calculate age group based on birth date
 function calculateAgeGroup(dateOfBirth: string): string {
   const birthDate = new Date(dateOfBirth);
@@ -21,20 +22,34 @@ function calculateAgeGroup(dateOfBirth: string): string {
   return '15-18';
 }
 
+interface SwimClub {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
 interface SwimmerFormProps {
   swimmer?: Swimmer | null;
   onClose: () => void;
 }
 
 export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
+  const { user: currentUser } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     dateOfBirth: '',
     gender: 'M' as 'M' | 'F',
+    clubId: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [clubs, setClubs] = useState<SwimClub[]>([]);
+  const [loadingClubs, setLoadingClubs] = useState(true);
+
+  useEffect(() => {
+    loadClubs();
+  }, []);
 
   useEffect(() => {
     if (swimmer) {
@@ -42,10 +57,31 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
         firstName: swimmer.firstName,
         lastName: swimmer.lastName,
         dateOfBirth: swimmer.dateOfBirth,
-        gender: swimmer.gender
+        gender: swimmer.gender,
+        clubId: swimmer.clubId || '',
       });
+    } else if (currentUser?.clubId && currentUser.role !== 'admin') {
+      // Auto-assign current user's club for non-admin users
+      setFormData(prev => ({
+        ...prev,
+        clubId: currentUser.clubId || '',
+      }));
     }
-  }, [swimmer]);
+  }, [swimmer, currentUser]);
+
+  const loadClubs = async () => {
+    try {
+      const response = await fetch('/api/admin/clubs');
+      if (response.ok) {
+        const clubsData = await response.json();
+        setClubs(clubsData);
+      }
+    } catch (error) {
+      console.error('Error loading clubs:', error);
+    } finally {
+      setLoadingClubs(false);
+    }
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -202,6 +238,48 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
             <option value="M">Male</option>
             <option value="F">Female</option>
           </select>
+        </div>
+
+        <div>
+          <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+            Club
+          </label>
+          {loadingClubs ? (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+              Loading clubs...
+            </div>
+          ) : (
+            <select
+              id="clubId"
+              name="clubId"
+              value={formData.clubId}
+              onChange={handleInputChange}
+              disabled={currentUser?.role !== 'admin'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              <option value="">No Club</option>
+              {currentUser?.role === 'admin' ? (
+                clubs.map((club) => (
+                  <option key={club.id} value={club.id}>
+                    {club.name} ({club.abbreviation})
+                  </option>
+                ))
+              ) : (
+                clubs
+                  .filter(club => club.id === currentUser?.clubId)
+                  .map((club) => (
+                    <option key={club.id} value={club.id}>
+                      {club.name} ({club.abbreviation})
+                    </option>
+                  ))
+              )}
+            </select>
+          )}
+          {currentUser?.role !== 'admin' && (
+            <p className="text-xs text-gray-500 mt-1">
+              Non-admin users can only assign swimmers to their own club
+            </p>
+          )}
         </div>
 
         <div className="flex space-x-3 pt-4">
