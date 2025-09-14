@@ -1,12 +1,13 @@
-import { v4 as uuidv4 } from 'uuid';
-import { SwimmerModel, FamilySwimmerAssociationModel, initializeDatabase } from '../models';
-import { Swimmer } from '../types';
+import {v4 as uuidv4} from 'uuid';
+import {SwimmerModel, FamilySwimmerAssociationModel, initializeDatabase} from '../models';
+import {Swimmer} from '../types';
 
 export class SwimmerService {
   private static instance: SwimmerService;
   private initialized = false;
 
-  private constructor() {}
+  private constructor() {
+  }
 
   public static getInstance(): SwimmerService {
     if (!SwimmerService.instance) {
@@ -22,10 +23,10 @@ export class SwimmerService {
     }
   }
 
-  public async getSwimmers(): Promise<Swimmer[]> {
+  public async getSwimmers(clubId?: string): Promise<Swimmer[]> {
     await this.ensureInitialized();
     try {
-      const swimmers = await SwimmerModel.findAll();
+      const swimmers = await SwimmerModel.findAll(clubId ? {where: {clubId}} : {});
       return swimmers.map(swimmer => ({
         id: swimmer.id,
         firstName: swimmer.firstName,
@@ -46,7 +47,7 @@ export class SwimmerService {
     try {
       // Get all associations for this user
       const associations = await FamilySwimmerAssociationModel.findAll({
-        where: { userId }
+        where: {userId}
       });
 
       if (associations.length === 0) {
@@ -85,7 +86,7 @@ export class SwimmerService {
       id: uuidv4(),
       ageGroup: this.calculateAgeGroup(swimmer.dateOfBirth),
     };
-    
+
     try {
       await SwimmerModel.create({
         id: newSwimmer.id,
@@ -96,7 +97,7 @@ export class SwimmerService {
         ageGroup: newSwimmer.ageGroup,
         clubId: newSwimmer.clubId,
       });
-      
+
       return newSwimmer;
     } catch (error) {
       console.error('Error adding swimmer:', error);
@@ -107,13 +108,13 @@ export class SwimmerService {
   public async updateSwimmer(id: string, updates: Partial<Swimmer>): Promise<void> {
     await this.ensureInitialized();
     try {
-      const updateData: any = { ...updates };
-      
+      const updateData: any = {...updates};
+
       if (updates.dateOfBirth) {
         updateData.ageGroup = this.calculateAgeGroup(updates.dateOfBirth);
       }
-      
-      await SwimmerModel.update(updateData, { where: { id } });
+
+      await SwimmerModel.update(updateData, {where: {id}});
     } catch (error) {
       console.error('Error updating swimmer:', error);
       throw error;
@@ -123,7 +124,7 @@ export class SwimmerService {
   public async deleteSwimmer(id: string): Promise<void> {
     await this.ensureInitialized();
     try {
-      await SwimmerModel.destroy({ where: { id } });
+      await SwimmerModel.destroy({where: {id}});
     } catch (error) {
       console.error('Error deleting swimmer:', error);
       throw error;
@@ -135,9 +136,9 @@ export class SwimmerService {
     const today = new Date();
     const age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) 
-      ? age - 1 
+
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ? age - 1
       : age;
 
     if (actualAge <= 8) return '8&U';

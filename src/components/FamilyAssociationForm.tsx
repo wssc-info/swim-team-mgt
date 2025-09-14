@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { User, Swimmer } from '@/lib/types';
+import {useState, useEffect} from 'react';
+import {User, Swimmer} from '@/lib/types';
+import {fetchSwimmers} from "@/lib/api";
 
 interface FamilyAssociationFormProps {
   user: User;
-  swimmers: Swimmer[];
   onClose: () => void;
 }
 
-export default function FamilyAssociationForm({ user, swimmers, onClose }: FamilyAssociationFormProps) {
+export default function FamilyAssociationForm({user, onClose}: FamilyAssociationFormProps) {
   const [associatedSwimmers, setAssociatedSwimmers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
 
   useEffect(() => {
     loadAssociations();
@@ -22,7 +23,12 @@ export default function FamilyAssociationForm({ user, swimmers, onClose }: Famil
   const loadAssociations = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/users/${user.id}/associations`);
+      const [response, swimmers] = await Promise.all([
+          fetch(`/api/admin/users/${user.id}/associations`),
+          fetchSwimmers(user.clubId),
+        ]
+      );
+      setSwimmers(swimmers);
       if (response.ok) {
         const associations = await response.json();
         setAssociatedSwimmers(associations);
@@ -35,7 +41,7 @@ export default function FamilyAssociationForm({ user, swimmers, onClose }: Famil
   };
 
   const handleSwimmerToggle = (swimmerId: string) => {
-    setAssociatedSwimmers(prev => 
+    setAssociatedSwimmers(prev =>
       prev.includes(swimmerId)
         ? prev.filter(id => id !== swimmerId)
         : [...prev, swimmerId]
@@ -52,7 +58,7 @@ export default function FamilyAssociationForm({ user, swimmers, onClose }: Famil
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ swimmerIds: associatedSwimmers }),
+        body: JSON.stringify({swimmerIds: associatedSwimmers}),
       });
 
       if (response.ok) {
@@ -124,7 +130,8 @@ export default function FamilyAssociationForm({ user, swimmers, onClose }: Famil
                       {swimmer.firstName} {swimmer.lastName}
                     </div>
                     <div className="text-sm text-gray-600">
-                      {swimmer.gender} • Age Group: {swimmer.ageGroup} • Born: {new Date(swimmer.dateOfBirth).toLocaleDateString()}
+                      {swimmer.gender} • Age Group: {swimmer.ageGroup} •
+                      Born: {new Date(swimmer.dateOfBirth).toLocaleDateString()}
                     </div>
                   </div>
                 </label>

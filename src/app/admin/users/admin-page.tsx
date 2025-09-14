@@ -453,7 +453,6 @@ export default function AdminPage() {
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <FamilyAssociationForm
                 user={selectedFamilyUser}
-                swimmers={swimmers}
                 onClose={handleAssociationFormClose}
               />
             </div>

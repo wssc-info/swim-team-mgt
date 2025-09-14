@@ -70,8 +70,8 @@ interface TimeRecord {
 }
 
 // Swimmers API
-export async function fetchSwimmers(): Promise<Swimmer[]> {
-  const response = await authenticatedFetch('/api/swimmers');
+export async function fetchSwimmers(clubId?: string): Promise<Swimmer[]> {
+  const response = await authenticatedFetch('/api/swimmers?' + (clubId ? `clubId=${clubId}` : ''));
   if (!response.ok) {
     throw new Error('Failed to fetch swimmers');
   }
