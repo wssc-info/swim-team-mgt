@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { SwimEvent } from '@/lib/types';
 import EventForm from '@/components/EventForm';
 import { seedEvents } from '@/lib/events';
+import {authenticatedFetch} from "@/lib/api";
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<SwimEvent[]>([]);
@@ -15,11 +16,7 @@ export default function AdminEventsPage() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('/api/admin/events', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      });
+      const response = await authenticatedFetch('/api/admin/events');
 
       if (!response.ok) {
         throw new Error('Failed to fetch events');
