@@ -1,7 +1,6 @@
 'use client';
 
 import {useState, useEffect} from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import UserForm from '@/components/UserForm';
 import FamilyAssociationForm from '@/components/FamilyAssociationForm';
 import {User, Swimmer} from '@/lib/types';

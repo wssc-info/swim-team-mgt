@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchMeets, fetchSwimmers, fetchSwimmerMeetEvents, fetchRelayTeams } from '@/lib/api';
-import { USA_SWIMMING_EVENTS, SwimEvent } from '@/lib/events';
+import {fetchMeets, fetchSwimmers, fetchSwimmerMeetEvents, fetchRelayTeams, fetchAllEvents} from '@/lib/api';
 import { exportMeetData } from '@/lib/api';
 
 interface Swimmer {
@@ -38,7 +37,7 @@ export default function ExportPage() {
   const [meets, setMeets] = useState<Meet[]>([]);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
-  const [relayTeams, setRelayTeams] = useState<RelayTeam[]>([]);
+  // const [relayTeams, setRelayTeams] = useState<RelayTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportData, setExportData] = useState<{
@@ -66,7 +65,7 @@ export default function ExportPage() {
         if (activeMeet) {
           setSelectedMeet(activeMeet);
           const relayData = await fetchRelayTeams(activeMeet.id);
-          setRelayTeams(relayData);
+          // setRelayTeams(relayData);
           await loadPreviewData(activeMeet, swimmerData, relayData);
         }
       } catch (error) {
@@ -83,15 +82,15 @@ export default function ExportPage() {
       // Create preview data from swimmers and their meet event selections
       const meetIndividualEntries: any[] = [];
       const meetRelayEntries: any[] = [];
-      
+
+      const allEvents = await fetchAllEvents();
       // Individual entries - fetch event selections for each swimmer
       for (const swimmer of swimmerData) {
         try {
           const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, meet.id);
-          
           swimmerMeetEvents.forEach(sme => {
             if (meet.availableEvents.includes(sme.eventId)) {
-              const event = USA_SWIMMING_EVENTS.find(e => e.id === sme.eventId);
+              const event = allEvents.find(e => e.id === sme.eventId);
               if (event && !event.isRelay) {
                 meetIndividualEntries.push({
                   swimmer,
@@ -109,7 +108,7 @@ export default function ExportPage() {
       // Relay entries - filter relay teams for events available in this meet
       relayData.forEach(team => {
         if (meet.availableEvents.includes(team.eventId)) {
-          const event = USA_SWIMMING_EVENTS.find(e => e.id === team.eventId);
+          const event = allEvents.find(e => e.id === team.eventId);
           if (event && event.isRelay) {
             const teamSwimmers = team.swimmers.map(swimmerId => 
               swimmerData.find(s => s.id === swimmerId)
@@ -137,7 +136,7 @@ export default function ExportPage() {
   const handleMeetSelect = async (meet: Meet) => {
     setSelectedMeet(meet);
     const relayData = await fetchRelayTeams(meet.id);
-    setRelayTeams(relayData);
+    // setRelayTeams(relayData);
     await loadPreviewData(meet, swimmers, relayData);
   };
 

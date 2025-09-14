@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { fetchMeets, deleteMeetApi, activateMeet } from '@/lib/api';
-import { USA_SWIMMING_EVENTS } from '@/lib/events';
+import {useState, useEffect} from 'react';
+import {fetchMeets, deleteMeetApi, activateMeet, fetchAllEvents} from '@/lib/api';
 import MeetForm from '@/components/MeetForm';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
+import {SwimEvent} from "@/lib/types";
 
 interface Meet {
   id: string;
@@ -21,18 +21,21 @@ export default function MeetsPage() {
   const [meets, setMeets] = useState<Meet[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingMeet, setEditingMeet] = useState<Meet | null>(null);
+  const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
     const loadMeets = async () => {
       try {
         const meetData = await fetchMeets();
-        setMeets(meetData);
-        setLoading(false);
+        return setMeets(meetData);
+
       } catch (error) {
         console.error('Error loading meets:', error);
       }
     };
-    loadMeets();
+    fetchAllEvents().then(allEvents => setAllEvents(allEvents)).then(() => {
+      loadMeets().then(() => setLoading(false));
+    });
   }, []);
 
   const handleAddMeet = () => {
@@ -79,7 +82,7 @@ export default function MeetsPage() {
   };
 
   const activeMeet = meets.find(m => m.isActive);
-  const upcomingMeets = meets.filter(m => !m.isActive).sort((a, b) => 
+  const upcomingMeets = meets.filter(m => !m.isActive).sort((a, b) =>
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
   if (loading) {
@@ -131,7 +134,7 @@ export default function MeetsPage() {
                     </summary>
                     <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
                       {activeMeet.availableEvents.map(eventId => {
-                        const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+                        const event = allEvents.find(e => e.id === eventId);
                         return event ? (
                           <span key={eventId} className="text-xs bg-green-100 px-2 py-1 rounded">
                             {event.name}
@@ -160,7 +163,7 @@ export default function MeetsPage() {
         <h2 className="text-2xl font-semibold mb-4">
           {activeMeet ? 'Upcoming Meets' : 'All Meets'}
         </h2>
-        
+
         {meets.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">No meets created yet.</p>
@@ -204,7 +207,7 @@ export default function MeetsPage() {
                         </summary>
                         <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
                           {meet.availableEvents.map(eventId => {
-                            const event = USA_SWIMMING_EVENTS.find(e => e.id === eventId);
+                            const event = allEvents.find(e => e.id === eventId);
                             return event ? (
                               <span key={eventId} className="text-xs bg-gray-100 px-2 py-1 rounded">
                                 {event.name}
@@ -246,7 +249,8 @@ export default function MeetsPage() {
       {!activeMeet && meets.length > 0 && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-yellow-800">
-            <strong>Note:</strong> No active meet is set. Swimmers won't be able to register for events until you set a meet as active.
+            <strong>Note:</strong> No active meet is set. Swimmers won't be able to register for events until you set a
+            meet as active.
           </p>
         </div>
       )}

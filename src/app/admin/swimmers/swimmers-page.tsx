@@ -6,7 +6,7 @@ import SwimmerForm from '@/components/SwimmerForm';
 import {Swimmer} from '@/lib/types';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {DataTable} from "@/app/admin/swimmers/dataTable";
-import {columns, getColumns} from "@/app/admin/swimmers/columns";
+import {getColumns} from "@/app/admin/swimmers/columns";
 
 export default function SwimmersPage() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -181,12 +181,12 @@ export default function SwimmersPage() {
     }
   };
 
-  const groupedSwimmers = swimmers.reduce((groups, swimmer) => {
-    const group = groups[swimmer.ageGroup] || [];
-    group.push(swimmer);
-    groups[swimmer.ageGroup] = group;
-    return groups;
-  }, {} as Record<string, Swimmer[]>);
+  // const groupedSwimmers = swimmers.reduce((groups, swimmer) => {
+  //   const group = groups[swimmer.ageGroup] || [];
+  //   group.push(swimmer);
+  //   groups[swimmer.ageGroup] = group;
+  //   return groups;
+  // }, {} as Record<string, Swimmer[]>);
 
   if (loading) {
     return <div className={'items-center text-center'}>

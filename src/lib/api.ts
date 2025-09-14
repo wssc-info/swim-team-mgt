@@ -1,4 +1,6 @@
 // Helper function to make authenticated API calls
+import {SwimEvent} from "@/lib/types";
+
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('auth_token');
   return {
@@ -282,7 +284,7 @@ export async function updateSwimmerMeetEvents(
 }
 
 // Events API
-export async function fetchEvents(): Promise<any[]> {
+export async function fetchEvents(): Promise<SwimmerMeetEvent[]> {
   const response = await authenticatedFetch('/api/events');
   if (!response.ok) {
     throw new Error('Failed to fetch events');
@@ -290,7 +292,7 @@ export async function fetchEvents(): Promise<any[]> {
   return response.json();
 }
 
-export async function fetchAllEvents(): Promise<any[]> {
+export async function fetchAllEvents(): Promise<SwimEvent[]> {
   const response = await authenticatedFetch('/api/admin/events');
   if (!response.ok) {
     throw new Error('Failed to fetch all events');

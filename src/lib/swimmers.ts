@@ -33,10 +33,10 @@ export const deleteTimeRecord = (id: string) => timeRecordService.deleteTimeReco
 export const getBestTimeForEvent = (swimmerId: string, eventId: string) => timeRecordService.getBestTimeForEvent(swimmerId, eventId);
 
 // Relay team functions (placeholder - implement RelayTeamService similarly)
-export const getRelayTeams = async () => [];
-export const addRelayTeam = async (team: any) => team;
-export const updateRelayTeam = async (id: string, updates: any) => {};
-export const deleteRelayTeam = async (id: string) => {};
+// export const getRelayTeams = async () => [];
+// export const addRelayTeam = async (team: any) => team;
+// export const updateRelayTeam = async (id: string, updates: any) => {};
+// export const deleteRelayTeam = async (id: string) => {};
 
 // Utility function
 export function calculateAgeGroup(dateOfBirth: string): string {

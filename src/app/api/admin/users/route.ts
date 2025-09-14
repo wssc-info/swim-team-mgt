@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
 
     const userData = await request.json();
 
-    let {email, password, role, firstName, lastName, clubId} = userData;
+    const {email, password, firstName, lastName} = userData;
+    let {role, clubId} = userData;
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json({error: 'Email, password, first name, and last name are required'}, {status: 400});

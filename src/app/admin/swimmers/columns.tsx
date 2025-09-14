@@ -48,7 +48,6 @@ export const getColumns = (editFunction: (swimmer:Swimmer) => void,
     {
       id: "actions",
       cell: ({row}) => {
-        const payment = row.original
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

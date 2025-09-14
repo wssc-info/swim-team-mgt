@@ -16,9 +16,6 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
   const [error, setError] = useState('');
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
 
-  useEffect(() => {
-    loadAssociations();
-  }, [user.id]);
 
   const loadAssociations = async () => {
     setLoading(true);
@@ -39,6 +36,11 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadAssociations();
+  }, [ user.id]);
+
 
   const handleSwimmerToggle = (swimmerId: string) => {
     setAssociatedSwimmers(prev =>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createRelayTeam, updateRelayTeamApi } from '@/lib/api';
-import { SwimEvent } from '@/lib/events';
+import {SwimEvent} from "@/lib/types";
 
 interface Swimmer {
   id: string;
@@ -137,11 +137,12 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
   // Get unique age groups and determine team age group
   const ageGroups = [...new Set(swimmers.map(s => s.ageGroup))].sort();
   const selectedSwimmers = formData.swimmers.map(id => swimmers.find(s => s.id === id)).filter(Boolean);
-  const teamAgeGroups = [...new Set(selectedSwimmers.map(s => s!.ageGroup))];
-  const teamGenders = [...new Set(selectedSwimmers.map(s => s!.gender))];
 
   // Auto-calculate team age group and gender
   useEffect(() => {
+    const teamAgeGroups = [...new Set(selectedSwimmers.map(s => s!.ageGroup))];
+    const teamGenders = [...new Set(selectedSwimmers.map(s => s!.gender))];
+
     if (selectedSwimmers.length > 0) {
       // For age group, use the oldest age group
       const ageGroupOrder = ['8&U', '9-10', '11-12', '13-14', '15-18'];
@@ -158,7 +159,7 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
         gender: calculatedGender
       }));
     }
-  }, [formData.swimmers]);
+  }, [formData.swimmers, selectedSwimmers]);
 
   return (
     <div>

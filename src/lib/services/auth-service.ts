@@ -2,8 +2,8 @@ import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import {UserModel, FamilySwimmerAssociationModel, initializeDatabase} from '../models';
-import {User, FamilySwimmerAssociation} from '../types';
-import {NextRequest, NextResponse} from "next/server";
+import {User} from '../types';
+import {NextRequest} from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'zMtPQTlzLMKg3VlUl5b8i3j1h8phC0';
 
@@ -121,6 +121,7 @@ export class AuthService {
       const decoded = jwt.verify(token, JWT_SECRET) as any;
       return {userId: decoded.userId, email: decoded.email, role: decoded.role};
     } catch (error) {
+      console.log(error);
       return null;
     }
   }

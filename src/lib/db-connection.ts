@@ -1,5 +1,4 @@
 import { Sequelize } from 'sequelize';
-import mysql2 from 'mysql2';
 import pg from 'pg';
 
 // Singleton database connection

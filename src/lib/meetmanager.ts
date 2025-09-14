@@ -120,8 +120,8 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   content += teamRecord;
   
   // Individual Entries (D0 records) - only for selected meet events
-  swimmers.forEach(swimmer => {
-    swimmer.selectedEvents.forEach(eventId => {
+  for (const swimmer of swimmers) {
+    for (const eventId of swimmer.selectedEvents) {
       // Only include events that are available in the target meet
       if (targetMeet.availableEvents.includes(eventId)) {
         const event = allEvents.find(e => e.id === eventId);
@@ -149,18 +149,18 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
           content += `D0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}${clubAbbrev}${eventCode}${seedTime}    L         \n`;
         }
       }
-    });
-  });
+    }
+  }
   
   // Relay Entries (F0 records) - only for selected meet events
-  relayTeams.forEach(team => {
+  for (const team of relayTeams) {
     // Only include relay teams for events available in the target meet
     if (targetMeet.availableEvents.includes(team.eventId)) {
       const event = allEvents.find(e => e.id === team.eventId);
       if (event) {
         const eventCode = getEventCode(event);
         const teamName = team.name.padEnd(20, ' ').substring(0, 20);
-        
+
         // Get club abbreviation for relay records
         let clubAbbrev = 'TEAM    ';
         try {
@@ -174,18 +174,19 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
         } catch (error) {
           console.error('Error fetching club for relay record:', error);
         }
-        
+
         content += `F0${team.gender}${team.id.substring(0, 12).padEnd(12, ' ')}${teamName}                    ${team.ageGroup.padEnd(2, ' ')}        ${clubAbbrev}${eventCode}9999999    L         \n`;
-        
+
         // Relay swimmers (G0 records)
-        team.swimmers.forEach((swimmerId, index) => {
+        for (const swimmerId of team.swimmers) {
+          const index = team.swimmers.indexOf(swimmerId);
           const swimmer = swimmers.find(s => s.id === swimmerId);
           if (swimmer) {
             const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
             const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
             const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
             const legOrder = (index + 1).toString();
-            
+
             // Get club abbreviation for relay swimmer records
             let clubAbbrev = 'TEAM    ';
             try {
@@ -199,14 +200,14 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
             } catch (error) {
               console.error('Error fetching club for relay swimmer record:', error);
             }
-            
+
             content += `G0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}${clubAbbrev}${legOrder}9999999    \n`;
           }
-        });
+        }
       }
     }
-  });
-  
+  }
+
   // File trailer (Z0 record)
   const totalRecords = content.split('\n').length - 1;
   content += `Z0${totalRecords.toString().padStart(6, '0')}                                                                  \n`;
