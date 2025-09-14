@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createMeet, updateMeetApi } from '@/lib/api';
+import { createMeet, updateMeetApi, fetchAllEvents } from '@/lib/api';
 import {SwimEvent} from "@/lib/types";
 
 interface Meet {
@@ -35,6 +35,23 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     eventType: 'all', // individual, relay, all
     course: 'all' // SCY, SCM, LCM, all
   });
+  const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const events = await fetchAllEvents();
+        setAllEvents(events);
+      } catch (error) {
+        console.error('Error loading events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
 
   useEffect(() => {
     if (meet) {
@@ -155,7 +172,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
   };
 
   const getFilteredEvents = (): SwimEvent[] => {
-    return USA_SWIMMING_EVENTS.filter(event => {
+    return allEvents.filter(event => {
       if (eventFilter.stroke !== 'all' && event.stroke !== eventFilter.stroke) {
         return false;
       }
@@ -183,6 +200,14 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
   const filteredEvents = getFilteredEvents();
   const allFilteredSelected = filteredEvents.length > 0 && 
     filteredEvents.every(event => formData.availableEvents.includes(event.id));
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <div className="text-lg">Loading events...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
