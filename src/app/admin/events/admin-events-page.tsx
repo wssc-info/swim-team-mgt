@@ -7,11 +7,17 @@ import { authenticatedFetch, seedEventsApi } from "@/lib/api";
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<SwimEvent[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<SwimEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<SwimEvent | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [filters, setFilters] = useState({
+    course: '',
+    type: '',
+    stroke: ''
+  });
 
   const fetchEvents = async () => {
     try {
@@ -23,6 +29,7 @@ export default function AdminEventsPage() {
 
       const data = await response.json();
       setEvents(data);
+      setFilteredEvents(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -33,6 +40,43 @@ export default function AdminEventsPage() {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    let filtered = events;
+
+    if (filters.course) {
+      filtered = filtered.filter(event => event.course === filters.course);
+    }
+
+    if (filters.type) {
+      if (filters.type === 'individual') {
+        filtered = filtered.filter(event => !event.isRelay);
+      } else if (filters.type === 'relay') {
+        filtered = filtered.filter(event => event.isRelay);
+      }
+    }
+
+    if (filters.stroke) {
+      filtered = filtered.filter(event => event.stroke === filters.stroke);
+    }
+
+    setFilteredEvents(filtered);
+  }, [events, filters]);
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      course: '',
+      type: '',
+      stroke: ''
+    });
+  };
 
   const handleEdit = (event: SwimEvent) => {
     setEditingEvent(event);
@@ -131,6 +175,70 @@ export default function AdminEventsPage() {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Filters</h2>
+          <button
+            onClick={clearFilters}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Clear All
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Course
+            </label>
+            <select
+              value={filters.course}
+              onChange={(e) => handleFilterChange('course', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Courses</option>
+              <option value="SCY">Short Course Yards (SCY)</option>
+              <option value="SCM">Short Course Meters (SCM)</option>
+              <option value="LCM">Long Course Meters (LCM)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Type
+            </label>
+            <select
+              value={filters.type}
+              onChange={(e) => handleFilterChange('type', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Types</option>
+              <option value="individual">Individual</option>
+              <option value="relay">Relay</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Stroke
+            </label>
+            <select
+              value={filters.stroke}
+              onChange={(e) => handleFilterChange('stroke', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Strokes</option>
+              <option value="freestyle">Freestyle</option>
+              <option value="backstroke">Backstroke</option>
+              <option value="breaststroke">Breaststroke</option>
+              <option value="butterfly">Butterfly</option>
+              <option value="individual-medley">Individual Medley</option>
+            </select>
+          </div>
+        </div>
+        <div className="mt-4 text-sm text-gray-600">
+          Showing {filteredEvents.length} of {events.length} events
+        </div>
+      </div>
+
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -175,7 +283,7 @@ export default function AdminEventsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {events.map((event) => (
+              {filteredEvents.map((event) => (
                 <tr key={event.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
@@ -241,6 +349,15 @@ export default function AdminEventsPage() {
             <div className="text-gray-500 text-lg mb-4">No events found</div>
             <p className="text-gray-400 mb-4">
               Get started by adding events or seeding with default USA Swimming events.
+            </p>
+          </div>
+        )}
+
+        {events.length > 0 && filteredEvents.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg mb-4">No events match the current filters</div>
+            <p className="text-gray-400 mb-4">
+              Try adjusting your filters or clearing them to see more events.
             </p>
           </div>
         )}
