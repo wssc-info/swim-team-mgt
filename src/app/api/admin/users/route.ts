@@ -9,8 +9,31 @@ export async function GET(request: NextRequest) {
     await initializeDatabase();
     DbConnection.getInstance();
 
-    // Get all users with their associations
+    // Get the current user from the token
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    let currentUser = null;
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+        currentUser = await UserModel.findByPk(decoded.userId);
+      } catch (error) {
+        // Token invalid, continue without current user
+      }
+    }
+
+    // Build query conditions based on current user's role and club
+    const whereConditions: any = {};
+    
+    // If current user is not admin and has a club, filter by club
+    if (currentUser?.role !== 'admin' && currentUser?.clubId) {
+      whereConditions.clubId = currentUser.clubId;
+    }
+
+    // Get users with their associations
     const users = await UserModel.findAll({
+      where: whereConditions,
       order: [['createdAt', 'DESC']]
     });
 
