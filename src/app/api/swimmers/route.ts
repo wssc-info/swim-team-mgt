@@ -14,13 +14,22 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const clubId = searchParams.get('clubId');
     
     if (userId) {
       // Fetch swimmers associated with the specific user (family)
       const swimmers = await swimmerService.getAssociatedSwimmers(userId);
       return NextResponse.json(swimmers);
+    } else if (clubId) {
+      // Fetch swimmers for a specific club
+      // Only admins can query any club, others can only query their own club
+      if (user.role !== 'admin' && clubId !== user.clubId) {
+        return NextResponse.json({ error: 'You can only access swimmers from your own club' }, { status: 403 });
+      }
+      const swimmers = await swimmerService.getSwimmers(clubId);
+      return NextResponse.json(swimmers);
     } else {
-      // Fetch all swimmers (for coaches)
+      // Fetch all swimmers (for coaches) - defaults to user's club
       const swimmers = await swimmerService.getSwimmers(user.clubId);
       return NextResponse.json(swimmers);
     }
