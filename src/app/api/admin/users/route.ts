@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/services/auth-service';
 import { UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase } from '@/lib/models';
 import DbConnection from "@/lib/db-connection";
+import {useAuth} from "@/lib/auth-context";
 
 export async function GET(request: NextRequest) {
   try {
     await initializeDatabase();
     DbConnection.getInstance();
-    
+
     // Get all users with their associations
     const users = await UserModel.findAll({
       order: [['createdAt', 'DESC']]
