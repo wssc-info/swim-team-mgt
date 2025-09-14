@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createMeet, updateMeetApi } from '@/lib/api';
-import { USA_SWIMMING_EVENTS, SwimEvent } from '@/lib/events';
+import {SwimEvent} from "@/lib/types";
 
 interface Meet {
   id: string;
