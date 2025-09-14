@@ -8,6 +8,7 @@ interface User {
   role: 'coach' | 'family' | 'admin';
   firstName: string;
   lastName: string;
+  clubId?: string;
 }
 
 interface AuthContextType {
@@ -51,8 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: decoded.userId,
           email: decoded.email,
           role: decoded.role,
-          firstName: '',
-          lastName: '',
+          firstName: decoded.firstName || '',
+          lastName: decoded.lastName || '',
+          clubId: decoded.clubId,
         });
         setToken(tokenToVerify);
       } else {

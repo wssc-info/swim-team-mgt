@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/services/auth-service';
 import { UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase } from '@/lib/models';
 import DbConnection from "@/lib/db-connection";
-import {useAuth} from "@/lib/auth-context";
-import { jwt } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,12 +13,10 @@ export async function GET(request: NextRequest) {
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     let currentUser = null;
 
-    console.log(token);
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
         currentUser = await UserModel.findByPk(decoded.userId);
-        console.log(currentUser);
       } catch (error) {
         // Token invalid, continue without current user
       }
@@ -84,7 +81,6 @@ export async function POST(request: NextRequest) {
     
     if (token) {
       try {
-        const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
         currentUser = await UserModel.findByPk(decoded.userId);
       } catch (error) {

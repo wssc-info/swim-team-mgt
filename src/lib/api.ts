@@ -1,3 +1,23 @@
+// Helper function to make authenticated API calls
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('auth_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+  };
+}
+
+async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = getAuthHeaders();
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...headers,
+      ...options.headers,
+    },
+  });
+}
+
 // Type definitions
 interface Swimmer {
   id: string;
@@ -50,7 +70,7 @@ interface TimeRecord {
 
 // Swimmers API
 export async function fetchSwimmers(): Promise<Swimmer[]> {
-  const response = await fetch('/api/swimmers');
+  const response = await authenticatedFetch('/api/swimmers');
   if (!response.ok) {
     throw new Error('Failed to fetch swimmers');
   }
@@ -58,11 +78,8 @@ export async function fetchSwimmers(): Promise<Swimmer[]> {
 }
 
 export async function createSwimmer(swimmer: Omit<Swimmer, 'id' | 'ageGroup'>): Promise<Swimmer> {
-  const response = await fetch('/api/swimmers', {
+  const response = await authenticatedFetch('/api/swimmers', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(swimmer),
   });
   if (!response.ok) {
@@ -72,11 +89,8 @@ export async function createSwimmer(swimmer: Omit<Swimmer, 'id' | 'ageGroup'>): 
 }
 
 export async function updateSwimmerApi(id: string, updates: Partial<Swimmer>): Promise<void> {
-  const response = await fetch(`/api/swimmers/${id}`, {
+  const response = await authenticatedFetch(`/api/swimmers/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(updates),
   });
   if (!response.ok) {
@@ -85,7 +99,7 @@ export async function updateSwimmerApi(id: string, updates: Partial<Swimmer>): P
 }
 
 export async function deleteSwimmerApi(id: string): Promise<void> {
-  const response = await fetch(`/api/swimmers/${id}`, {
+  const response = await authenticatedFetch(`/api/swimmers/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -95,7 +109,7 @@ export async function deleteSwimmerApi(id: string): Promise<void> {
 
 // Meets API
 export async function fetchMeets(): Promise<Meet[]> {
-  const response = await fetch('/api/meets');
+  const response = await authenticatedFetch('/api/meets');
   if (!response.ok) {
     throw new Error('Failed to fetch meets');
   }
@@ -103,11 +117,8 @@ export async function fetchMeets(): Promise<Meet[]> {
 }
 
 export async function createMeet(meet: Omit<Meet, 'id' | 'createdAt'>): Promise<Meet> {
-  const response = await fetch('/api/meets', {
+  const response = await authenticatedFetch('/api/meets', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(meet),
   });
   if (!response.ok) {
@@ -117,11 +128,8 @@ export async function createMeet(meet: Omit<Meet, 'id' | 'createdAt'>): Promise<
 }
 
 export async function updateMeetApi(id: string, updates: Partial<Meet>): Promise<void> {
-  const response = await fetch(`/api/meets/${id}`, {
+  const response = await authenticatedFetch(`/api/meets/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(updates),
   });
   if (!response.ok) {
@@ -130,7 +138,7 @@ export async function updateMeetApi(id: string, updates: Partial<Meet>): Promise
 }
 
 export async function deleteMeetApi(id: string): Promise<void> {
-  const response = await fetch(`/api/meets/${id}`, {
+  const response = await authenticatedFetch(`/api/meets/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -139,7 +147,7 @@ export async function deleteMeetApi(id: string): Promise<void> {
 }
 
 export async function activateMeet(id: string): Promise<void> {
-  const response = await fetch(`/api/meets/${id}/activate`, {
+  const response = await authenticatedFetch(`/api/meets/${id}/activate`, {
     method: 'POST',
   });
   if (!response.ok) {
@@ -149,11 +157,8 @@ export async function activateMeet(id: string): Promise<void> {
 
 // Export API
 export async function exportMeetData(meetId?: string): Promise<{ content: string; fileName: string }> {
-  const response = await fetch('/api/export', {
+  const response = await authenticatedFetch('/api/export', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ meetId }),
   });
   if (!response.ok) {
@@ -166,7 +171,7 @@ export async function exportMeetData(meetId?: string): Promise<{ content: string
 // Time Records API
 export async function fetchTimeRecords(swimmerId?: string): Promise<TimeRecord[]> {
   const url = swimmerId ? `/api/times?swimmerId=${swimmerId}` : '/api/times';
-  const response = await fetch(url);
+  const response = await authenticatedFetch(url);
   if (!response.ok) {
     throw new Error('Failed to fetch time records');
   }
@@ -174,11 +179,8 @@ export async function fetchTimeRecords(swimmerId?: string): Promise<TimeRecord[]
 }
 
 export async function createTimeRecord(record: Omit<TimeRecord, 'id' | 'createdAt' | 'isPersonalBest'>): Promise<TimeRecord> {
-  const response = await fetch('/api/times', {
+  const response = await authenticatedFetch('/api/times', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(record),
   });
   if (!response.ok) {
@@ -188,11 +190,8 @@ export async function createTimeRecord(record: Omit<TimeRecord, 'id' | 'createdA
 }
 
 export async function updateTimeRecordApi(id: string, updates: Partial<TimeRecord>): Promise<void> {
-  const response = await fetch(`/api/times/${id}`, {
+  const response = await authenticatedFetch(`/api/times/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(updates),
   });
   if (!response.ok) {
@@ -201,7 +200,7 @@ export async function updateTimeRecordApi(id: string, updates: Partial<TimeRecor
 }
 
 export async function deleteTimeRecordApi(id: string): Promise<void> {
-  const response = await fetch(`/api/times/${id}`, {
+  const response = await authenticatedFetch(`/api/times/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -211,7 +210,7 @@ export async function deleteTimeRecordApi(id: string): Promise<void> {
 
 // Family API
 export async function fetchAssociatedSwimmers(userId: string): Promise<Swimmer[]> {
-  const response = await fetch(`/api/swimmers?userId=${userId}`);
+  const response = await authenticatedFetch(`/api/swimmers?userId=${userId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch associated swimmers');
   }
@@ -221,7 +220,7 @@ export async function fetchAssociatedSwimmers(userId: string): Promise<Swimmer[]
 // Relay Teams API
 export async function fetchRelayTeams(meetId?: string): Promise<RelayTeam[]> {
   const url = meetId ? `/api/relays?meetId=${meetId}` : '/api/relays';
-  const response = await fetch(url);
+  const response = await authenticatedFetch(url);
   if (!response.ok) {
     throw new Error('Failed to fetch relay teams');
   }
@@ -229,11 +228,8 @@ export async function fetchRelayTeams(meetId?: string): Promise<RelayTeam[]> {
 }
 
 export async function createRelayTeam(team: Omit<RelayTeam, 'id'>): Promise<RelayTeam> {
-  const response = await fetch('/api/relays', {
+  const response = await authenticatedFetch('/api/relays', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(team),
   });
   if (!response.ok) {
@@ -243,11 +239,8 @@ export async function createRelayTeam(team: Omit<RelayTeam, 'id'>): Promise<Rela
 }
 
 export async function updateRelayTeamApi(id: string, updates: Partial<RelayTeam>): Promise<void> {
-  const response = await fetch(`/api/relays/${id}`, {
+  const response = await authenticatedFetch(`/api/relays/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(updates),
   });
   if (!response.ok) {
@@ -256,7 +249,7 @@ export async function updateRelayTeamApi(id: string, updates: Partial<RelayTeam>
 }
 
 export async function deleteRelayTeamApi(id: string): Promise<void> {
-  const response = await fetch(`/api/relays/${id}`, {
+  const response = await authenticatedFetch(`/api/relays/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -266,7 +259,7 @@ export async function deleteRelayTeamApi(id: string): Promise<void> {
 
 // Swimmer Meet Events API
 export async function fetchSwimmerMeetEvents(swimmerId: string, meetId: string): Promise<SwimmerMeetEvent[]> {
-  const response = await fetch(`/api/swimmer-meet-events?swimmerId=${swimmerId}&meetId=${meetId}`);
+  const response = await authenticatedFetch(`/api/swimmer-meet-events?swimmerId=${swimmerId}&meetId=${meetId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch swimmer meet events');
   }
@@ -278,11 +271,8 @@ export async function updateSwimmerMeetEvents(
   meetId: string, 
   eventSelections: { eventId: string; seedTime?: string }[]
 ): Promise<void> {
-  const response = await fetch('/api/swimmer-meet-events', {
+  const response = await authenticatedFetch('/api/swimmer-meet-events', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ swimmerId, meetId, eventSelections }),
   });
   if (!response.ok) {
