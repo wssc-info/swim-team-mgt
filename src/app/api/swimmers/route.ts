@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SwimmerService } from '@/lib/services/swimmer-service';
+import {AuthService} from "@/lib/services/auth-service";
+import {UserModel} from "@/lib/models";
 
 const swimmerService = SwimmerService.getInstance();
 
 export async function GET(request: NextRequest) {
   try {
+    const user: UserModel | null = await AuthService.getInstance().getUser(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Must be logged in.' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     
@@ -14,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(swimmers);
     } else {
       // Fetch all swimmers (for coaches)
-      const swimmers = await swimmerService.getSwimmers();
+      const swimmers = await swimmerService.getSwimmers(user.clubId);
       return NextResponse.json(swimmers);
     }
   } catch (error) {
