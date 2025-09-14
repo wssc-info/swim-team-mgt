@@ -2,7 +2,7 @@ import { SwimEventModel, initializeDatabase } from './models';
 import { SwimEvent } from './types';
 
 // Default USA Swimming events data for seeding
-export const USA_SWIMMING_EVENTS_SEED = [
+export const USA_SWIMMING_EVENTS_SEED : SwimEvent[] = [
   // SCY Individual Freestyle Events
   { id: '50-free-scy', name: '50 Freestyle', distance: 50, stroke: 'freestyle', course: 'SCY', isRelay: false, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '100-free-scy', name: '100 Freestyle', distance: 100, stroke: 'freestyle', course: 'SCY', isRelay: false, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
