@@ -25,10 +25,8 @@ export default function Navigation() {
                     Swim Team Management
                 </Link>
                 <div className="flex items-center space-x-4">
-                    {user.role === 'coach' && (
+                    {(user.role === 'coach' || user.role === 'admin') && (
                         <>
-
-
                             <DropdownMenu>
                                 <DropdownMenuTrigger className={'hover:underline'}>Meet Setup</DropdownMenuTrigger>
                                 <DropdownMenuContent>
@@ -61,13 +59,19 @@ export default function Navigation() {
                                     Functions</DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <DropdownMenuItem>
-                                        <Link href="/admin" className="hover:underline flex-1">
+                                        <Link href="/admin/users" className="hover:underline flex-1">
                                             Admin Users
                                         </Link></DropdownMenuItem>
                                     <DropdownMenuItem>
-                                        <Link href="/swimmers" className="hover:underline flex-1">
+                                        <Link href="/admin/swimmers" className="hover:underline flex-1">
                                             Swimmers
                                         </Link></DropdownMenuItem>
+                                  {user.role === 'admin' && (
+                                    <DropdownMenuItem>
+                                      <Link href="/admin/clubs" className="hover:underline flex-1">
+                                        Clubs
+                                      </Link></DropdownMenuItem>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </>

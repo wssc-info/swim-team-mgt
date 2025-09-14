@@ -11,13 +11,14 @@ export async function PUT(
     await initializeDatabase();
     
     const updates = await request.json();
-    const { firstName, lastName, email, password, role } = updates;
+    const { firstName, lastName, email, password, role, clubId } = updates;
 
     const updateData: any = {
       firstName,
       lastName,
       email,
       role,
+      clubId,
     };
 
     // Only update password if provided

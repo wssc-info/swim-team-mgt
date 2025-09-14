@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/services/auth-service';
-import { UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase } from '@/lib/models';
+import {NextRequest, NextResponse} from 'next/server';
+import {AuthService} from '@/lib/services/auth-service';
+import {UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase} from '@/lib/models';
 import DbConnection from "@/lib/db-connection";
 import jwt from 'jsonwebtoken';
 
@@ -15,16 +15,28 @@ export async function GET(request: NextRequest) {
 
     if (token) {
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
-        currentUser = await UserModel.findByPk(decoded.userId);
+        const decoded =
+          AuthService.getInstance().verifyToken(token);
+        ;
+        if (decoded && typeof decoded !== 'string') {
+          currentUser = await UserModel.findByPk(decoded.userId);
+        }
       } catch (error) {
         // Token invalid, continue without current user
+        return NextResponse.json({error: 'Invalid token'}, {status: 401});
       }
+    }
+    // If no current user, return unauthorized
+    if (!currentUser) {
+      return NextResponse.json({error: 'Unauthorized'}, {status: 401});
     }
 
     // Build query conditions based on current user's role and club
-    const whereConditions: any = {};
-    
+    const whereConditions: any = (currentUser.clubId ? {
+      clubId: currentUser.clubId
+    } : {});
+    console.log(whereConditions)
+
     // If current user is not admin and has a club, filter by club
     if (currentUser?.role !== 'admin' && currentUser?.clubId) {
       whereConditions.clubId = currentUser.clubId;
@@ -39,7 +51,7 @@ export async function GET(request: NextRequest) {
     const usersWithAssociations = await Promise.all(
       users.map(async (user) => {
         const associations = await FamilySwimmerAssociationModel.findAll({
-          where: { userId: user.id }
+          where: {userId: user.id}
         });
 
         // Get club info if user has a clubId
@@ -69,7 +81,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(usersWithAssociations);
   } catch (error) {
     console.error('Error fetching users:', error);
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+    return NextResponse.json({error: 'Failed to fetch users'}, {status: 500});
   }
 }
 
@@ -78,7 +90,7 @@ export async function POST(request: NextRequest) {
     // Get the current user from the token
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     let currentUser = null;
-    
+
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
@@ -89,11 +101,11 @@ export async function POST(request: NextRequest) {
     }
 
     const userData = await request.json();
-    
-    let { email, password, role, firstName, lastName, clubId } = userData;
-    
+
+    let {email, password, role, firstName, lastName, clubId} = userData;
+
     if (!email || !password || !firstName || !lastName) {
-      return NextResponse.json({ error: 'Email, password, first name, and last name are required' }, { status: 400 });
+      return NextResponse.json({error: 'Email, password, first name, and last name are required'}, {status: 400});
     }
 
     // Role validation and default assignment
@@ -107,19 +119,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (!['admin', 'coach', 'family'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+      return NextResponse.json({error: 'Invalid role'}, {status: 400});
     }
 
     // Club validation - non-admins can only assign users to their own club
     if (clubId) {
       const club = await SwimClubModel.findByPk(clubId);
       if (!club) {
-        return NextResponse.json({ error: 'Invalid club selected' }, { status: 400 });
+        return NextResponse.json({error: 'Invalid club selected'}, {status: 400});
       }
 
       // If current user is not admin, they can only assign to their own club
       if (currentUser?.role !== 'admin' && clubId !== currentUser?.clubId) {
-        return NextResponse.json({ error: 'You can only assign users to your own club' }, { status: 403 });
+        return NextResponse.json({error: 'You can only assign users to your own club'}, {status: 403});
       }
     } else if (currentUser?.role !== 'admin' && currentUser?.clubId) {
       // If non-admin user doesn't specify a club, default to their club
@@ -127,11 +139,11 @@ export async function POST(request: NextRequest) {
     }
 
     const authService = AuthService.getInstance();
-    const user = await authService.register({ ...userData, clubId });
-    
+    const user = await authService.register({...userData, clubId});
+
     return NextResponse.json(user);
   } catch (error) {
     console.error('Error creating user:', error);
-    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+    return NextResponse.json({error: 'Failed to create user'}, {status: 500});
   }
 }

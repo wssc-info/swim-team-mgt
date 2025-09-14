@@ -271,7 +271,7 @@ interface UserAttributes {
   id: string;
   email: string;
   password: string;
-  role: 'coach' | 'family';
+  role: 'coach' | 'family' | 'admin';
   firstName: string;
   lastName: string;
   clubId?: string;
@@ -284,7 +284,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes>
   declare id: string;
   declare email: string;
   declare password: string;
-  declare role: 'coach' | 'family';
+  declare role: 'coach' | 'family' | 'admin';
   declare firstName: string;
   declare lastName: string;
   declare clubId?: string;
@@ -310,7 +310,7 @@ UserModel.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM('coach', 'family'),
+      type: DataTypes.ENUM('coach', 'family', 'admin'),
       allowNull: false,
     },
     firstName: {

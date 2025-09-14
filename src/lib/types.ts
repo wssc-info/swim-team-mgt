@@ -52,7 +52,7 @@ export interface User {
   id: string;
   email: string;
   password: string;
-  role: 'coach' | 'family';
+  role: 'coach' | 'family' | 'admin';
   firstName: string;
   lastName: string;
   clubId?: string;

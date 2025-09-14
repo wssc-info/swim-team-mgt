@@ -1,19 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UserForm from '@/components/UserForm';
 import FamilyAssociationForm from '@/components/FamilyAssociationForm';
-import { User, Swimmer } from '@/lib/types';
-import { fetchSwimmers } from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
+import {User, Swimmer} from '@/lib/types';
+import {authenticatedFetch, fetchSwimmers} from '@/lib/api';
+import {useAuth} from '@/lib/auth-context';
 
 interface UserWithAssociations extends User {
   associatedSwimmers?: string[];
 }
 
 export default function AdminPage() {
-  const { user: currentUser } = useAuth();
+  const {user: currentUser} = useAuth();
   const [users, setUsers] = useState<UserWithAssociations[]>([]);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ export default function AdminPage() {
   const [editingUser, setEditingUser] = useState<UserWithAssociations | null>(null);
   const [selectedFamilyUser, setSelectedFamilyUser] = useState<UserWithAssociations | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadResults, setUploadResults] = useState<{success: number, errors: string[]} | null>(null);
+  const [uploadResults, setUploadResults] = useState<{ success: number, errors: string[] } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -32,7 +32,7 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const [usersResponse, swimmersData] = await Promise.all([
-        fetch('/api/admin/users'),
+        authenticatedFetch('/api/admin/users'),
         fetchSwimmers()
       ]);
 
@@ -106,7 +106,7 @@ export default function AdminPage() {
     try {
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim());
-      
+
       if (lines.length < 2) {
         alert('CSV file must have at least a header row and one data row');
         return;
@@ -114,19 +114,19 @@ export default function AdminPage() {
 
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
       const requiredHeaders = ['email', 'password', 'firstname', 'lastname', 'role'];
-      
+
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
       if (missingHeaders.length > 0) {
         alert(`CSV file is missing required columns: ${missingHeaders.join(', ')}\nRequired columns: email, password, firstname, lastname, role\nOptional: swimmers (comma-separated swimmer names)`);
         return;
       }
 
-      const results = { success: 0, errors: [] as string[] };
+      const results = {success: 0, errors: [] as string[]};
 
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         const row: Record<string, string> = {};
-        
+
         headers.forEach((header, index) => {
           row[header] = values[index] || '';
         });
@@ -169,10 +169,11 @@ export default function AdminPage() {
             password: row.password,
             firstName: row.firstname,
             lastName: row.lastname,
-            role: role
+            role: role,
+            clubId: currentUser?.role === 'admin' ? row.clubId || null : currentUser?.clubId || null,
           };
 
-          const userResponse = await fetch('/api/admin/users', {
+          const userResponse = await authenticatedFetch('/api/admin/users', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -191,10 +192,10 @@ export default function AdminPage() {
           // Handle swimmer associations for family users
           if (role === 'family' && row.swimmers) {
             const swimmerNames = row.swimmers.split(';').map(name => name.trim()).filter(name => name);
-            
+
             if (swimmerNames.length > 0) {
               const swimmerIds: string[] = [];
-              
+
               for (const swimmerName of swimmerNames) {
                 // Try to find swimmer by "First Last" or "Last, First" format
                 const swimmer = swimmers.find(s => {
@@ -218,7 +219,7 @@ export default function AdminPage() {
                     headers: {
                       'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ swimmerIds }),
+                    body: JSON.stringify({swimmerIds}),
                   });
 
                   if (!associationResponse.ok) {
@@ -261,9 +262,9 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-        <div className="flex items-center justify-center min-h-64">
-          <div className="text-lg">Loading...</div>
-        </div>
+      <div className="flex items-center justify-center min-h-64">
+        <div className="text-lg">Loading...</div>
+      </div>
     );
   }
 
@@ -335,93 +336,93 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Associated Swimmers
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                User
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Role
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Associated Swimmers
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {user.firstName} {user.lastName}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+            {users.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {user.firstName} {user.lastName}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{user.email}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       user.role === 'admin'
                         ? 'bg-red-100 text-red-800'
-                        : user.role === 'coach' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-blue-100 text-blue-800'
+                        : user.role === 'coach'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-100 text-blue-800'
                     }`}>
                       {user.role}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {user.role === 'family' && user.associatedSwimmers ? (
-                        user.associatedSwimmers.length > 0 ? (
-                          <div className="max-w-xs truncate" title={getSwimmerNames(user.associatedSwimmers)}>
-                            {getSwimmerNames(user.associatedSwimmers)}
-                          </div>
-                        ) : (
-                          <span className="text-gray-500 italic">No swimmers assigned</span>
-                        )
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {user.role === 'family' && user.associatedSwimmers ? (
+                      user.associatedSwimmers.length > 0 ? (
+                        <div className="max-w-xs truncate" title={getSwimmerNames(user.associatedSwimmers)}>
+                          {getSwimmerNames(user.associatedSwimmers)}
+                        </div>
                       ) : (
-                        <span className="text-gray-500">—</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => handleEditUser(user)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Edit
-                    </button>
-                    {user.role === 'family' && (
-                      <button
-                        onClick={() => handleManageAssociations(user)}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        Manage Swimmers
-                      </button>
+                        <span className="text-gray-500 italic">No swimmers assigned</span>
+                      )
+                    ) : (
+                      <span className="text-gray-500">—</span>
                     )}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <button
+                    onClick={() => handleEditUser(user)}
+                    className="text-blue-600 hover:text-blue-900"
+                  >
+                    Edit
+                  </button>
+                  {user.role === 'family' && (
                     <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900"
+                      onClick={() => handleManageAssociations(user)}
+                      className="text-green-600 hover:text-green-900"
                     >
-                      Delete
+                      Manage Swimmers
                     </button>
-                  </td>
-                </tr>
-              ))}
+                  )}
+                  <button
+                    onClick={() => handleDeleteUser(user.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
             </tbody>
           </table>
 

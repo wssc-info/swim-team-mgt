@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { UserModel, FamilySwimmerAssociationModel, initializeDatabase } from '../models';
 import { User, FamilySwimmerAssociation } from '../types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'zMtPQTlzLMKg3VlUl5b8i3j1h8phC0';
 
 export class AuthService {
   private static instance: AuthService;

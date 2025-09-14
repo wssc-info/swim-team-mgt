@@ -17,7 +17,7 @@ interface Swimmer {
 }
 
 interface SwimmerWithEvents extends Swimmer {
-  selectedEvents: string[];
+  selectedEvents?: string[];
 }
 
 interface Meet {
@@ -199,11 +199,11 @@ export function EventsPage() {
       <div className="space-y-6">
         {Object.entries(
           swimmers.reduce((groups, swimmer) => {
-            const group = groups[swimmer.ageGroup] || [];
+            const group: SwimmerWithEvents[] = groups[swimmer.ageGroup] || [];
             group.push(swimmer);
             groups[swimmer.ageGroup] = group;
             return groups;
-          }, {} as Record<string, Swimmer[]>)
+          }, {} as Record<string, SwimmerWithEvents[]>)
         )
           .sort(([a], [b]) => {
             const order = ['8&U', '9-10', '11-12', '13-14', '15-18'];
@@ -259,7 +259,7 @@ export function EventsPage() {
                               </div>
                               <div className="mt-2">
                                 <p className="text-sm text-gray-600">
-                                  Events: Not Loaded Data...
+                                  Events: {swimmer.selectedEvents?.length || 0} selected
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {eligibleEvents.length} events available

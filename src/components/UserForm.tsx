@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User } from '@/lib/types';
+import {authenticatedFetch} from "@/lib/api";
 
 interface SwimClub {
   id: string;
@@ -74,7 +75,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
         ? { ...formData, password: formData.password || undefined } // Only include password if provided
         : formData;
 
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',

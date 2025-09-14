@@ -1,11 +1,11 @@
 'use client';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
-import AdminPage from "@/app/admin/admin-page";
+import AdminPage from "@/app/admin/users/admin-page";
 
 export default function Page() {
     return (
-        <ProtectedRoute allowedRoles={['coach']}>
+        <ProtectedRoute allowedRoles={['coach', 'admin']}>
             <AdminPage/>
         </ProtectedRoute>
     );
