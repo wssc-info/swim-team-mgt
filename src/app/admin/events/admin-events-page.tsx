@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { SwimEvent } from '@/lib/types';
 import EventForm from '@/components/EventForm';
-import { seedEvents } from '@/lib/events';
-import {authenticatedFetch} from "@/lib/api";
+import { authenticatedFetch, seedEventsApi } from "@/lib/api";
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<SwimEvent[]>([]);
@@ -75,7 +74,7 @@ export default function AdminEventsPage() {
   const handleSeedEvents = async () => {
     setSeeding(true);
     try {
-      await seedEvents();
+      await seedEventsApi();
       await fetchEvents();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to seed events');

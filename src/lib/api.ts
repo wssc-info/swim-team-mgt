@@ -280,3 +280,29 @@ export async function updateSwimmerMeetEvents(
     throw new Error('Failed to update swimmer meet events');
   }
 }
+
+// Events API
+export async function fetchEvents(): Promise<any[]> {
+  const response = await authenticatedFetch('/api/events');
+  if (!response.ok) {
+    throw new Error('Failed to fetch events');
+  }
+  return response.json();
+}
+
+export async function fetchAllEvents(): Promise<any[]> {
+  const response = await authenticatedFetch('/api/admin/events');
+  if (!response.ok) {
+    throw new Error('Failed to fetch all events');
+  }
+  return response.json();
+}
+
+export async function seedEventsApi(): Promise<void> {
+  const response = await authenticatedFetch('/api/admin/events/seed', {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to seed events');
+  }
+}
