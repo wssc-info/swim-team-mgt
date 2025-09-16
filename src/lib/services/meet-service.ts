@@ -127,6 +127,7 @@ export class MeetService {
         availableEvents: JSON.parse(meet.availableEvents || '[]'),
         isActive: meet.isActive,
         createdAt: meet.createdAt.toISOString(),
+        clubId: meet.clubId,
       };
     } catch (error) {
       console.error('Error fetching active meet:', error);

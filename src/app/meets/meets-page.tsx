@@ -5,16 +5,7 @@ import {fetchMeets, deleteMeetApi, activateMeet, fetchAllEvents} from '@/lib/api
 import MeetForm from '@/components/MeetForm';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {SwimEvent} from "@/lib/types";
-
-interface Meet {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  availableEvents: string[];
-  isActive: boolean;
-  createdAt: string;
-}
+import {Meet} from "@/lib/types";
 
 export default function MeetsPage() {
   const [loading, setLoading] = useState<boolean>(true);
