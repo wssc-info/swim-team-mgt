@@ -1,5 +1,6 @@
 import { SwimEvent } from './types';
 import { fetchAllEvents } from './api';
+import {SwimEventModel} from "@/lib/models";
 
 interface Swimmer {
   id: string;
@@ -61,7 +62,7 @@ function timeToSdifFormat(timeString: string): string {
 }
 
 // Get SDIF event code for swimming events
-function getEventCode(event: SwimEvent): string {
+function getEventCode(event: SwimEventModel): string {
   const strokeCodes: Record<string, string> = {
     'freestyle': '1',
     'backstroke': '2',
@@ -85,8 +86,9 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   }
   
   // Fetch all events from database
-  const allEvents = await fetchAllEvents();
-  
+  const allEvents = await SwimEventModel.findAll({
+    order: [['course', 'ASC'], ['stroke', 'ASC'], ['distance', 'ASC']]
+  });
   let content = '';
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');

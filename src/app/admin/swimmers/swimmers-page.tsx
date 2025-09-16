@@ -7,6 +7,9 @@ import {Swimmer} from '@/lib/types';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {DataTable} from "@/app/admin/swimmers/dataTable";
 import {getColumns} from "@/app/admin/swimmers/columns";
+import {Input} from "@/components/ui/input";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Table} from "lucide-react";
 
 export default function SwimmersPage() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -194,6 +197,53 @@ export default function SwimmersPage() {
     </div>;
   }
 
+  const createFilters = (table: any) => {
+    return (
+      <>
+        <Input
+          placeholder="Filter Last Name..."
+          value={(table.getColumn("lastName")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("lastName")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
+        <Select value={(table.getColumn("ageGroup")?.getFilterValue() as string) ?? "ALL"}
+                onValueChange={(value) => {
+                  if (value === "ALL") {
+                    table.getColumn("ageGroup")?.setFilterValue(undefined);
+                  } else {
+                    table.getColumn("ageGroup")?.setFilterValue(value);
+                  }
+                }}>
+          <SelectTrigger className="ml-4">
+            <SelectValue placeholder="Filter Age Group..."/>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={"8&U"}>
+              8 & Under
+            </SelectItem>
+            <SelectItem value={"9-10"}>
+              9-10
+            </SelectItem>
+            <SelectItem value={"11-12"}>
+              11-12
+            </SelectItem>
+            <SelectItem value={"13-14"}>
+              13-14
+            </SelectItem>
+            <SelectItem value={"15-18"}>
+              15-18
+            </SelectItem>
+            <SelectItem value={"ALL"}>
+              All Age Groups
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -257,7 +307,7 @@ export default function SwimmersPage() {
         </div>
       )}
 
-      <DataTable columns={getColumns(handleEditSwimmer, handleDeleteSwimmer)} data={swimmers}/>
+      <DataTable columns={getColumns(handleEditSwimmer, handleDeleteSwimmer)} data={swimmers} filters={createFilters}/>
 
 
       {/* CSV Format Help */}

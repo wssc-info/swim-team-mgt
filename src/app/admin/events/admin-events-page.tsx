@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { SwimEvent } from '@/lib/types';
 import EventForm from '@/components/EventForm';
 import { authenticatedFetch, seedEventsApi } from "@/lib/api";
+import {DataTable} from "@/app/admin/swimmers/dataTable";
+import {getColumns} from "@/app/admin/events/columns";
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<SwimEvent[]>([]);
@@ -146,6 +148,72 @@ export default function AdminEventsPage() {
     );
   }
 
+  const createFilters = (table: any) => {
+    return (
+      <div className="flex space-x-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Course
+          </label>
+          <select
+            value={(table.getColumn("course")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("course")?.setFilterValue(event.target.value)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Courses</option>
+            <option value="SCY">Short Course Yards (SCY)</option>
+            <option value="SCM">Short Course Meters (SCM)</option>
+            <option value="LCM">Long Course Meters (LCM)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Type
+          </label>
+          <select
+            value={(table.getColumn("isRelay")?.getFilterValue() as string) ?? ""}
+            onChange={(event) => {
+              let convertedValue: string | boolean = event.target.value;
+              if (convertedValue === 'true') {
+                convertedValue = true;
+              } else if (convertedValue === 'false') {
+                convertedValue = false;
+              }
+              table.getColumn("isRelay")?.setFilterValue(convertedValue)
+            }
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Types</option>
+            <option value="false">Individual</option>
+            <option value="true">Relay</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Stroke
+          </label>
+          <select
+            value={(table.getColumn("stroke")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("stroke")?.setFilterValue(event.target.value)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Strokes</option>
+            <option value="freestyle">Freestyle</option>
+            <option value="backstroke">Backstroke</option>
+            <option value="breaststroke">Breaststroke</option>
+            <option value="butterfly">Butterfly</option>
+            <option value="individual-medley">Individual Medley</option>
+          </select>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -175,70 +243,6 @@ export default function AdminEventsPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Filters</h2>
-          <button
-            onClick={clearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Clear All
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Course
-            </label>
-            <select
-              value={filters.course}
-              onChange={(e) => handleFilterChange('course', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Courses</option>
-              <option value="SCY">Short Course Yards (SCY)</option>
-              <option value="SCM">Short Course Meters (SCM)</option>
-              <option value="LCM">Long Course Meters (LCM)</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Type
-            </label>
-            <select
-              value={filters.type}
-              onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Types</option>
-              <option value="individual">Individual</option>
-              <option value="relay">Relay</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stroke
-            </label>
-            <select
-              value={filters.stroke}
-              onChange={(e) => handleFilterChange('stroke', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Strokes</option>
-              <option value="freestyle">Freestyle</option>
-              <option value="backstroke">Backstroke</option>
-              <option value="breaststroke">Breaststroke</option>
-              <option value="butterfly">Butterfly</option>
-              <option value="individual-medley">Individual Medley</option>
-            </select>
-          </div>
-        </div>
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {filteredEvents.length} of {events.length} events
-        </div>
-      </div>
-
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -251,113 +255,14 @@ export default function AdminEventsPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Event
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Distance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stroke
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Course
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Age Groups
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredEvents.map((event) => (
-                <tr key={event.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {event.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {event.distance}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStrokeColor(event.stroke)}`}>
-                      {event.stroke.replace('-', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {event.course}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      event.isRelay ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {event.isRelay ? 'Relay' : 'Individual'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex flex-wrap gap-1">
-                      {event.ageGroups.map(ageGroup => (
-                        <span key={ageGroup} className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
-                          {ageGroup}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      event.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {event.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => handleEdit(event)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(event.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <DataTable columns={getColumns(handleEdit, handleDelete)} data={events} />
 
+      <div>
         {events.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg mb-4">No events found</div>
             <p className="text-gray-400 mb-4">
               Get started by adding events or seeding with default USA Swimming events.
-            </p>
-          </div>
-        )}
-
-        {events.length > 0 && filteredEvents.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg mb-4">No events match the current filters</div>
-            <p className="text-gray-400 mb-4">
-              Try adjusting your filters or clearing them to see more events.
             </p>
           </div>
         )}

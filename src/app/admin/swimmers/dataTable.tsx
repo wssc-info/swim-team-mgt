@@ -16,18 +16,18 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {Button} from "@/components/ui/button";
-import {useState} from "react";
-import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {ReactElement, useState} from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  filters?: (table: any) => ReactElement
 }
 
 export function DataTable<TData, TValue>({
                                            columns,
                                            data,
+                                           filters
                                          }: DataTableProps<TData, TValue>) {
 
   const [sorting, setSorting] = useState<SortingState>([])
@@ -53,46 +53,7 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter Last Name..."
-          value={(table.getColumn("lastName")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("lastName")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <Select value={(table.getColumn("ageGroup")?.getFilterValue() as string) ?? "ALL"}
-                onValueChange={(value) => {
-                  if (value === "ALL") {
-                    table.getColumn("ageGroup")?.setFilterValue(undefined);
-                  } else {
-                    table.getColumn("ageGroup")?.setFilterValue(value);
-                  }
-                }}>
-          <SelectTrigger className="ml-4">
-            <SelectValue placeholder="Filter Age Group..."/>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={"8&U"}>
-              8 & Under
-            </SelectItem>
-            <SelectItem value={"9-10"}>
-              9-10
-            </SelectItem>
-            <SelectItem value={"11-12"}>
-              11-12
-            </SelectItem>
-            <SelectItem value={"13-14"}>
-              13-14
-            </SelectItem>
-            <SelectItem value={"15-18"}>
-              15-18
-            </SelectItem>
-            <SelectItem value={"ALL"}>
-              All Age Groups
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        {filters ? filters(table) : null}
       </div>
       <div className="overflow-hidden rounded-md border">
         <Table>
@@ -139,10 +100,20 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
+        <span className="text-sm text-muted-foreground">
+          Page{" "}
+          <span className="font-medium">
+            {table.getState().pagination.pageIndex + 1}
+          </span>{" "}
+          of{" "}
+          <span className="font-medium">
+            {table.getPageCount()}
+          </span>
+        </span>
         <Button
           variant="outline"
           size="sm"
-
+          onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
           Previous
@@ -150,7 +121,7 @@ export function DataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
-
+          onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
           Next
