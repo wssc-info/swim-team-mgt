@@ -71,8 +71,54 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   }
 
   // File trailer (Z0 record)
-  const totalRecords = content.split('\n').length - 1; // Don't count the final record itself
-  content += Z0Record.generate(totalRecords);
+  const lines = content.split('\n').filter(line => line.trim() !== '');
+  
+  // Count different record types
+  const bRecords = lines.filter(line => line.startsWith('B1')).length;
+  const cRecords = lines.filter(line => line.startsWith('C1')).length;
+  const dRecords = lines.filter(line => line.startsWith('D0')).length;
+  const fRecords = lines.filter(line => line.startsWith('F0')).length;
+  const gRecords = lines.filter(line => line.startsWith('G0')).length;
+  
+  // Count unique entities
+  const meets = 1; // We're exporting one meet
+  const teams = 1; // We're exporting one team (the club)
+  const uniqueSwimmers = new Set();
+  
+  // Count unique swimmers from D0 and F0 records
+  for (const swimmer of swimmers) {
+    for (const eventId of swimmer.selectedEvents) {
+      if (targetMeet.availableEvents.includes(eventId)) {
+        const event = allEvents.find(e => e.id === eventId);
+        if (event && !event.isRelay) {
+          uniqueSwimmers.add(swimmer.id);
+        }
+      }
+    }
+  }
+  
+  // Add swimmers from relay teams
+  for (const team of relayTeams) {
+    if (targetMeet.availableEvents.includes(team.eventId)) {
+      for (const swimmerId of team.swimmers) {
+        uniqueSwimmers.add(swimmerId);
+      }
+    }
+  }
+  
+  const recordCounts = {
+    bRecords,
+    meets,
+    cRecords,
+    teams,
+    dRecords,
+    swimmers: uniqueSwimmers.size,
+    eRecords: 0, // E records are not used in this implementation
+    fRecords,
+    gRecords
+  };
+  
+  content += Z0Record.generate(recordCounts);
   
   // Return the content instead of downloading
   return content;
