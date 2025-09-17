@@ -11,7 +11,25 @@ export async function PUT(
     await initializeDatabase();
     
     const updates = await request.json();
-    const { firstName, lastName, email, password, role, clubId } = updates;
+    let { firstName, lastName, email, password, role, clubId } = updates;
+
+    // Normalize clubId - convert empty string to null for admin users
+    if (!clubId || clubId.trim() === '') {
+      if (role === 'admin') {
+        clubId = null; // Admin users can have null clubId
+      } else {
+        return NextResponse.json({error: 'Club is required for non-admin users'}, {status: 400});
+      }
+    }
+
+    // Club validation - ensure club exists if provided
+    if (clubId) {
+      const { SwimClubModel } = await import('@/lib/models');
+      const club = await SwimClubModel.findByPk(clubId);
+      if (!club) {
+        return NextResponse.json({error: 'Invalid club selected'}, {status: 400});
+      }
+    }
 
     const updateData: any = {
       firstName,
