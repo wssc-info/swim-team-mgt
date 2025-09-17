@@ -6,6 +6,12 @@ import { SwimEvent } from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface Swimmer {
   id: string;
@@ -202,7 +208,7 @@ export function EventsPage() {
       )}
 
       {/* Swimmers List */}
-      <div className="space-y-6">
+      <Accordion type="multiple" className="space-y-4">
         {Object.entries(
           swimmers.reduce((groups, swimmer) => {
             const group: SwimmerWithEvents[] = groups[swimmer.ageGroup] || [];
@@ -226,16 +232,18 @@ export function EventsPage() {
             }
 
             return (
-              <div key={ageGroup} className="bg-white rounded-lg shadow">
-                <div className="bg-gray-50 px-6 py-3 border-b">
-                  <h2 className="text-xl font-semibold">
-                    {ageGroup} ({groupSwimmers.length} swimmers)
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    {ageGroupEvents.length} events available for this age group
-                  </p>
-                </div>
-                <div className="p-6">
+              <AccordionItem key={ageGroup} value={ageGroup} className="bg-white rounded-lg shadow border">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  <div className="flex flex-col items-start text-left">
+                    <h2 className="text-xl font-semibold">
+                      {ageGroup} ({groupSwimmers.length} swimmers)
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {ageGroupEvents.length} events available for this age group
+                    </p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
                   <div className="grid gap-4">
                     {groupSwimmers
                       .sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))
@@ -284,12 +292,12 @@ export function EventsPage() {
                         );
                       })}
                   </div>
-                </div>
-              </div>
+                </AccordionContent>
+              </AccordionItem>
             );
           })
           .filter(Boolean)}
-      </div>
+      </Accordion>
     </div>
   );
 }
