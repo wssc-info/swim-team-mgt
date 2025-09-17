@@ -72,7 +72,7 @@ export interface SwimEvent {
   id: string;
   name: string;
   distance: number;
-  stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'individual-medley';
+  stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'medley';
   course: 'SCY' | 'LCM' | 'SCM';
   isRelay: boolean;
   ageGroups: string[];

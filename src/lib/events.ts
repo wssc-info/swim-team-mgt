@@ -53,29 +53,29 @@ export const USA_SWIMMING_EVENTS_SEED : SwimEvent[] = [
   { id: '200-fly-scm', name: '200 Butterfly', distance: 200, stroke: 'butterfly', course: 'SCM', isRelay: false, ageGroups: ['13-14', '15-18'], isActive: true },
 
   // SCY Individual Medley Events
-  { id: '100-im-scy', name: '100 Individual Medley', distance: 100, stroke: 'individual-medley', course: 'SCY', isRelay: false, ageGroups: ['9-10', '11-12'], isActive: true },
-  { id: '200-im-scy', name: '200 Individual Medley', distance: 200, stroke: 'individual-medley', course: 'SCY', isRelay: false, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
-  { id: '400-im-scy', name: '400 Individual Medley', distance: 400, stroke: 'individual-medley', course: 'SCY', isRelay: false, ageGroups: ['13-14', '15-18'], isActive: true },
+  { id: '100-im-scy', name: '100 Individual Medley', distance: 100, stroke: 'medley', course: 'SCY', isRelay: false, ageGroups: ['9-10', '11-12'], isActive: true },
+  { id: '200-im-scy', name: '200 Individual Medley', distance: 200, stroke: 'medley', course: 'SCY', isRelay: false, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
+  { id: '400-im-scy', name: '400 Individual Medley', distance: 400, stroke: 'medley', course: 'SCY', isRelay: false, ageGroups: ['13-14', '15-18'], isActive: true },
 
   // SCM Individual Medley Events
-  { id: '100-im-scm', name: '100 Individual Medley', distance: 100, stroke: 'individual-medley', course: 'SCM', isRelay: false, ageGroups: ['9-10', '11-12'], isActive: true },
-  { id: '200-im-scm', name: '200 Individual Medley', distance: 200, stroke: 'individual-medley', course: 'SCM', isRelay: false, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
-  { id: '400-im-scm', name: '400 Individual Medley', distance: 400, stroke: 'individual-medley', course: 'SCM', isRelay: false, ageGroups: ['13-14', '15-18'], isActive: true },
+  { id: '100-im-scm', name: '100 Individual Medley', distance: 100, stroke: 'medley', course: 'SCM', isRelay: false, ageGroups: ['9-10', '11-12'], isActive: true },
+  { id: '200-im-scm', name: '200 Individual Medley', distance: 200, stroke: 'medley', course: 'SCM', isRelay: false, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
+  { id: '400-im-scm', name: '400 Individual Medley', distance: 400, stroke: 'medley', course: 'SCM', isRelay: false, ageGroups: ['13-14', '15-18'], isActive: true },
 
   // SCY Relay Events
   { id: '100-free-relay-scy', name: '100 Freestyle Relay', distance: 100, stroke: 'freestyle', course: 'SCY', isRelay: true, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '200-free-relay-scy', name: '200 Freestyle Relay', distance: 200, stroke: 'freestyle', course: 'SCY', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-free-relay-scy', name: '400 Freestyle Relay', distance: 400, stroke: 'freestyle', course: 'SCY', isRelay: true, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
   { id: '800-free-relay-scy', name: '800 Freestyle Relay', distance: 800, stroke: 'freestyle', course: 'SCY', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
-  { id: '200-medley-relay-scy', name: '200 Medley Relay', distance: 200, stroke: 'individual-medley', course: 'SCY', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
-  { id: '400-medley-relay-scy', name: '400 Medley Relay', distance: 400, stroke: 'individual-medley', course: 'SCY', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
+  { id: '200-medley-relay-scy', name: '200 Medley Relay', distance: 200, stroke: 'medley', course: 'SCY', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
+  { id: '400-medley-relay-scy', name: '400 Medley Relay', distance: 400, stroke: 'medley', course: 'SCY', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
 
   // SCM Relay Events
   { id: '200-free-relay-scm', name: '200 Freestyle Relay', distance: 200, stroke: 'freestyle', course: 'SCM', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-free-relay-scm', name: '400 Freestyle Relay', distance: 400, stroke: 'freestyle', course: 'SCM', isRelay: true, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
   { id: '800-free-relay-scm', name: '800 Freestyle Relay', distance: 800, stroke: 'freestyle', course: 'SCM', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
-  { id: '200-medley-relay-scm', name: '200 Medley Relay', distance: 200, stroke: 'individual-medley', course: 'SCM', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
-  { id: '400-medley-relay-scm', name: '400 Medley Relay', distance: 400, stroke: 'individual-medley', course: 'SCM', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
+  { id: '200-medley-relay-scm', name: '200 Medley Relay', distance: 200, stroke: 'medley', course: 'SCM', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
+  { id: '400-medley-relay-scm', name: '400 Medley Relay', distance: 400, stroke: 'medley', course: 'SCM', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
 ];
 
 // Database functions

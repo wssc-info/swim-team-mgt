@@ -15,30 +15,46 @@ export function timeToSdifFormat(timeString: string): string {
 }
 
 // Get SDIF stroke code
-export function getStrokeCode(stroke: string): string {
+export function getStrokeCode(stroke: string, isRelay: boolean): string {
   const strokeCodes: Record<string, string> = {
     'freestyle': '1',
     'backstroke': '2',
     'breaststroke': '3',
     'butterfly': '4',
-    'individual-medley': '5'
+    'medley': '5'
   };
-  return strokeCodes[stroke] || '1';
+  const relayStrokeCodes: Record<string, string> = {
+    'freestyle': '6',
+    'medley': '7'
+  };
+  return (isRelay? relayStrokeCodes[stroke]: strokeCodes[stroke]) || '1';
 }
 
-// Get SDIF course code
+// Get SDIF course code   COURSE Code 013   Course/Status code
 export function getCourseCode(course: string): string {
   const courseCodes: Record<string, string> = {
-    'SCY': '1', // Short Course Yards
-    'LCM': '2', // Long Course Meters
-    'SCM': '3'  // Short Course Meters
+    'SCY': 'Y', // Short Course Yards
+    'LCM': 'L', // Long Course Meters
+    'SCM': 'S'  // Short Course Meters
   };
   return courseCodes[course] || '1';
 }
 
+// Get SDIF age code
+export function getAgeCode(age: string): string {
+  const agesCodes: Record<string, string> = {
+    '8&U': 'UN08',
+    '9-10': '0910',
+    '11-12': '1112',
+    '13-14': '1314',
+    '15-18': '1518',
+  };
+  return agesCodes[age] || '1';
+}
+
 // Get SDIF event code for swimming events
 export function getEventCode(event: any): string {
-  const stroke = getStrokeCode(event.stroke);
+  const stroke = getStrokeCode(event.stroke, event.isRelay);
   const distance = event.distance.toString().padStart(4, '0');
   const course = getCourseCode(event.course);
   

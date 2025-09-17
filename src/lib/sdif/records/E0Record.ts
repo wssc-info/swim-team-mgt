@@ -1,5 +1,5 @@
 import { RelayTeam } from '../types';
-import { getStrokeCode, getCourseCode } from '../utils';
+import {getStrokeCode, getCourseCode, getAgeCode} from '../utils';
 
 // E0 -- Relay Event Record
 export class E0Record {
@@ -13,9 +13,9 @@ export class E0Record {
     const numF0RecordsCount = numF0Records.toString().padStart(2, '0'); // positions 19-20
     const eventSexCode = team.gender === 'Mixed' ? 'X' : team.gender; // position 21
     const relayDistance = event.distance.toString().padStart(4, '0'); // positions 22-25
-    const strokeCode = getStrokeCode(event.stroke); // position 26
+    const strokeCode = getStrokeCode(event.stroke, event.isRelay); // position 26
     const eventNumber = ''.padEnd(4, ' '); // positions 27-30, event number
-    const eventAgeCode = team.ageGroup.padEnd(4, ' ').substring(0, 4); // positions 31-34
+    const eventAgeCode = getAgeCode(team.ageGroup); // positions 31-34
     const totalAge = ''.padEnd(3, ' '); // positions 35-37, total age of all athletes
     const dateOfSwim = meetDate; // positions 38-45
     const seedTime = ''.padEnd(8, ' '); // positions 46-53, seed time

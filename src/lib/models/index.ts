@@ -549,7 +549,7 @@ interface SwimEventAttributes {
   id: string;
   name: string;
   distance: number;
-  stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'individual-medley';
+  stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'medley';
   course: 'SCY' | 'LCM' | 'SCM';
   isRelay: boolean;
   ageGroups: string;
@@ -563,7 +563,7 @@ export class SwimEventModel extends Model<SwimEventAttributes, SwimEventCreation
   declare id: string;
   declare name: string;
   declare distance: number;
-  declare stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'individual-medley';
+  declare stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'medley';
   declare course: 'SCY' | 'LCM' | 'SCM';
   declare isRelay: boolean;
   declare ageGroups: string;
@@ -588,7 +588,7 @@ SwimEventModel.init(
       allowNull: false,
     },
     stroke: {
-      type: DataTypes.ENUM('freestyle', 'backstroke', 'breaststroke', 'butterfly', 'individual-medley'),
+      type: DataTypes.ENUM('freestyle', 'backstroke', 'breaststroke', 'butterfly', 'medley'),
       allowNull: false,
     },
     course: {

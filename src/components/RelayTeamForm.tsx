@@ -187,7 +187,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               className="w-full p-2 border rounded-md"
-              placeholder="e.g., Lightning Bolts"
+              placeholder="e.g., A"
+              maxLength={1}
               required
             />
           </div>

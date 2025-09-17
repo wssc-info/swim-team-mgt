@@ -1,5 +1,5 @@
 import { Swimmer } from '../types';
-import { timeToSdifFormat, getStrokeCode, getCourseCode } from '../utils';
+import {timeToSdifFormat, getStrokeCode, getCourseCode, getAgeCode} from '../utils';
 
 // D0 -- Individual Event Record
 export class D0Record {
@@ -18,9 +18,9 @@ export class D0Record {
     const sexCode = swimmer.gender; // position 66
     const eventSexCode = swimmer.gender; // position 67
     const eventDistance = event.distance.toString().padStart(4, '0'); // positions 68-71
-    const strokeCode = getStrokeCode(event.stroke); // position 72
+    const strokeCode = getStrokeCode(event.stroke, event.isRelay); // position 72
     const futureUseD0_2 = ''.padEnd(4, ' '); // positions 73-76
-    const eventAgeCode = swimmer.ageGroup.padEnd(4, ' ').substring(0, 4); // positions 77-80
+    const eventAgeCode = getAgeCode(swimmer.ageGroup); // positions 77-80
     const dateOfSwim = meetDate; // positions 81-88
     const seedTimeD0 = timeToSdifFormat(seedTime || 'NT'); // positions 89-96
     const courseCodeD0_1 = getCourseCode(event.course); // position 97

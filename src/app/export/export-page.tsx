@@ -402,12 +402,11 @@ export default function ExportPage() {
             </p>
           </div>
 
-          <textarea
-            value={exportData.content}
-            readOnly
-            className="w-full h-96 p-3 border border-gray-300 rounded-md font-mono text-sm bg-gray-50"
-            placeholder="SDIF content will appear here..."
-          />
+
+          <pre
+            className="w-full h-96 p-3 border border-gray-300 rounded-md font-mono text-sm bg-gray-50 overflow-scroll"
+          >{exportData.content}</pre>
+
 
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-700">
