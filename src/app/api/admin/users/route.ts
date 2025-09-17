@@ -123,6 +123,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({error: 'Invalid role'}, {status: 400});
     }
 
+    // Normalize clubId - convert empty string to null for admin users
+    if (!clubId || clubId.trim() === '') {
+      if (role === 'admin') {
+        clubId = null; // Admin users can have null clubId
+      } else if (currentUser?.clubId) {
+        // Non-admin users default to their club if no club specified
+        clubId = currentUser.clubId;
+      } else {
+        return NextResponse.json({error: 'Club is required for non-admin users'}, {status: 400});
+      }
+    }
+
     // Club validation - non-admins can only assign users to their own club
     if (clubId) {
       const club = await SwimClubModel.findByPk(clubId);
@@ -134,9 +146,6 @@ export async function POST(request: NextRequest) {
       if (currentUser?.role !== 'admin' && clubId !== currentUser?.clubId) {
         return NextResponse.json({error: 'You can only assign users to your own club'}, {status: 403});
       }
-    } else if (currentUser?.role !== 'admin' && currentUser?.clubId) {
-      // If non-admin user doesn't specify a club, default to their club
-      clubId = currentUser.clubId;
     }
 
     const authService = AuthService.getInstance();
