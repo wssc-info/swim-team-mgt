@@ -63,7 +63,9 @@ SwimmerModel.init(
       references: {
         model: 'swim_clubs',
         key: 'id'
-      }
+      },
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE'
     },
   },
   {
