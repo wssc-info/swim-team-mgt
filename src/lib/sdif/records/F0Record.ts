@@ -1,21 +1,30 @@
-import { RelayTeam } from '../types';
-import { getEventCode } from '../utils';
+import { RelayTeam, Swimmer } from '../types';
 
-// F0 -- Relay Event Record
+// F0 -- Relay Name Record
 export class F0Record {
-  static generate(team: RelayTeam, event: any, clubAbbrev: string): string {
-    const relayName = team.name.padEnd(20, ' ').substring(0, 20);
-    const relayId = team.id.substring(0, 12).padEnd(12, ' ');
-    const relayAgeGroup = team.ageGroup.padEnd(2, ' ').substring(0, 2);
-
-    const relayTeamCode = clubAbbrev.padEnd(8, ' ').substring(0, 8);
-    const relaySeedTime = '9999999'; // NT for relays
-    const relayEntryStatus = 'L'; // L=Entered, S=Scratched
-    const spacerF0_1 = ''.padEnd(20, ' '); // Spacer for future use after relay name
-    const spacerF0_2 = ''.padEnd(8, ' '); // Spacer for future use after age group
-    const spacerF0_3 = ''.padEnd(9, ' '); // Spacer for future use at end
-    const eventCode = getEventCode(event);
-
-    return `F0${team.gender}${relayId}${relayName}${spacerF0_1}${relayAgeGroup}${spacerF0_2}${relayTeamCode}${eventCode}${relaySeedTime}${relayEntryStatus}${spacerF0_3}\n`;
+  static generate(swimmer: Swimmer, team: RelayTeam, clubAbbrev: string, legOrder: number): string {
+    // F0 + Org + future use + team code + relay team name + swimmer name + USS# + citizen + birth date + age/class + sex + prelim order + swim-off order + finals order + leg time + course + take-off time + USS# (new) + preferred first name + future use
+    
+    const orgCode = '001'; // position 3
+    const futureUse1 = ''.padEnd(12, ' '); // positions 4-15, future use
+    const teamCode = clubAbbrev.padEnd(6, ' ').substring(0, 6); // positions 16-21
+    const relayTeamName = team.name.substring(0, 1).padEnd(1, ' '); // position 22, one alpha char
+    const swimmerName = `${swimmer.lastName.padEnd(20, ' ').substring(0, 20)}${swimmer.firstName.padEnd(8, ' ').substring(0, 8)}`.padEnd(28, ' ').substring(0, 28); // positions 23-50
+    const ussNumber = swimmer.id.substring(0, 12).padEnd(12, ' '); // positions 51-62
+    const citizenCode = ''.padEnd(3, ' '); // positions 63-65
+    const birthDate = swimmer.dateOfBirth.replace(/-/g, ''); // positions 66-73
+    const ageClass = ''.padEnd(2, ' '); // positions 74-75
+    const sexCode = swimmer.gender; // position 76
+    const prelimOrder = legOrder.toString(); // position 77
+    const swimOffOrder = legOrder.toString(); // position 78
+    const finalsOrder = legOrder.toString(); // position 79
+    const legTime = ''.padEnd(8, ' '); // positions 80-87
+    const courseCode = ''.padEnd(1, ' '); // position 88
+    const takeOffTime = ''.padEnd(4, ' '); // positions 89-92
+    const ussNumberNew = swimmer.id.substring(0, 14).padEnd(14, ' '); // positions 93-106
+    const preferredFirstName = swimmer.firstName.padEnd(15, ' ').substring(0, 15); // positions 107-121
+    const futureUse2 = ''.padEnd(39, ' '); // positions 122-160, future use
+    
+    return `F0${orgCode}${futureUse1}${teamCode}${relayTeamName}${swimmerName}${ussNumber}${citizenCode}${birthDate}${ageClass}${sexCode}${prelimOrder}${swimOffOrder}${finalsOrder}${legTime}${courseCode}${takeOffTime}${ussNumberNew}${preferredFirstName}${futureUse2}\n`;
   }
 }

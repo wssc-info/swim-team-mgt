@@ -58,15 +58,13 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     if (targetMeet.availableEvents.includes(team.eventId)) {
       const event = allEvents.find(e => e.id === team.eventId);
       if (event) {
-        content += F0Record.generate(team, event, clubAbbrev);
-
-        // Relay swimmers (G0 records)
+        // Generate F0 records for each swimmer in the relay team
         for (const swimmerId of team.swimmers) {
           const index = team.swimmers.indexOf(swimmerId);
           const swimmer = swimmers.find(s => s.id === swimmerId);
           if (swimmer) {
             const legOrder = index + 1;
-            content += G0Record.generate(swimmer, legOrder, clubAbbrev);
+            content += F0Record.generate(swimmer, team, clubAbbrev, legOrder);
           }
         }
       }
