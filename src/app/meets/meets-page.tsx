@@ -102,6 +102,21 @@ export default function MeetsPage() {
       <Spinner size={64} variant={'circle'} speed={1} className={'mr-auto ml-auto my-5'}/>
     </div>;
   }
+
+  if (!user?.clubId) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Manage Meets</h1>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Association</h2>
+          <p className="text-yellow-700">
+            You need to be associated with a club to manage meets. Please contact an administrator 
+            to assign you to a club.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
