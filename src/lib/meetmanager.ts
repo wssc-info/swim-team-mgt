@@ -101,13 +101,25 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   const spacerA0 = ''.padEnd(20, ' '); // Spacer for future use
   content += `A01V3${fileDesc}${dateStr}${spacerA0}\n`;
   
-  // Meet Header (B1 record) - positions 1-80
-  // B1 + Org + Meet Name + Start Date + End Date + Pool + Course + Spacer for future use
-  const meetName = targetMeet.name.padEnd(30, ' ').substring(0, 30);
-  const poolCode = '1'; // 1=25Y, 2=50M, 3=25M
-  const courseCode = 'Y'; // Y=SCY, M=LCM, S=SCM
-  const spacerB1 = ''.padEnd(14, ' '); // Spacer for future use
-  content += `B1001${meetName}${meetDate}${meetDate}${poolCode}${courseCode}${spacerB1}\n`;
+  // Meet Header (B1 record) - positions 1-161 (extended record)
+  // B1 + Org + future use + meet name + address1 + address2 + city + state + postal + country + meet type + start date + end date + altitude + future use + course + future use
+  const meetNameB1 = targetMeet.name.padEnd(30, ' ').substring(0, 30);
+  const futureUse1 = ''.padEnd(8, ' '); // positions 4-11
+  const meetAddress1 = (targetMeet.location || '').padEnd(22, ' ').substring(0, 22); // positions 42-63
+  const meetAddress2 = ''.padEnd(22, ' '); // positions 64-85
+  const meetCity = ''.padEnd(20, ' '); // positions 86-105, could extract from location
+  const meetState = ''.padEnd(2, ' '); // positions 106-107
+  const postalCode = ''.padEnd(10, ' '); // positions 108-117
+  const countryCode = ''.padEnd(3, ' '); // positions 118-120
+  const meetType = '1'; // position 121, 1=Invitational, 2=Regional, 3=LSC, 4=Zone, 5=National, 6=Olympic Trials, 7=Dual, 8=Time Trial
+  const startDate = meetDate; // positions 122-129
+  const endDate = meetDate; // positions 130-137
+  const altitude = ''.padEnd(4, ' '); // positions 138-141
+  const futureUse2 = ''.padEnd(8, ' '); // positions 142-149
+  const courseCode = 'Y'; // position 150, Y=SCY, L=LCM, S=SCM
+  const futureUse3 = ''.padEnd(10, ' '); // positions 151-160
+  
+  content += `B1001${futureUse1}${meetNameB1}${meetAddress1}${meetAddress2}${meetCity}${meetState}${postalCode}${countryCode}${meetType}${startDate}${endDate}${altitude}${futureUse2}${courseCode}${futureUse3}\n`;
   
   // Team record (C1 record) - positions 1-80
   // C1 + Team Code + Team Name + Team Name Short + Team Abbrev + Spacer for future use
