@@ -52,7 +52,12 @@ export function EventsPage() {
           fetchAllEvents()
         ]);
         
-        const active = meetData.find(m => m.isActive) || null;
+        // Filter meets to only show those for the user's club and find active meet
+        const filteredMeets = user?.clubId 
+          ? meetData.filter(meet => meet.clubId === user.clubId)
+          : meetData;
+        
+        const active = filteredMeets.find(m => m.isActive) || null;
         setActiveMeet(active);
         setAllEvents(eventsData);
 
