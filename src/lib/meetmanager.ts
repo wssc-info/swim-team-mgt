@@ -7,6 +7,7 @@ import { A0Record } from './sdif/records/A0Record';
 import { B1Record } from './sdif/records/B1Record';
 import { C1Record } from './sdif/records/C1Record';
 import { D0Record } from './sdif/records/D0Record';
+import { E0Record } from './sdif/records/E0Record';
 import { F0Record } from './sdif/records/F0Record';
 import { Z0Record } from './sdif/records/Z0Record';
 
@@ -51,12 +52,16 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     }
   }
   
-  // Relay Entries (F0 records) - only for selected meet events
+  // Relay Entries (E0 and F0 records) - only for selected meet events
   for (const team of relayTeams) {
     // Only include relay teams for events available in the target meet
     if (targetMeet.availableEvents.includes(team.eventId)) {
       const event = allEvents.find(e => e.id === team.eventId);
       if (event) {
+        // Generate E0 record for the relay team
+        const numF0Records = team.swimmers.length;
+        content += E0Record.generate(team, event, clubAbbrev, meetDate, numF0Records);
+        
         // Generate F0 records for each swimmer in the relay team
         for (const swimmerId of team.swimmers) {
           const index = team.swimmers.indexOf(swimmerId);
@@ -77,6 +82,7 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   const bRecords = lines.filter(line => line.startsWith('B1')).length;
   const cRecords = lines.filter(line => line.startsWith('C1')).length;
   const dRecords = lines.filter(line => line.startsWith('D0')).length;
+  const eRecords = lines.filter(line => line.startsWith('E0')).length;
   const fRecords = lines.filter(line => line.startsWith('F0')).length;
   const gRecords = lines.filter(line => line.startsWith('G0')).length;
   
@@ -113,7 +119,7 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     teams,
     dRecords,
     swimmers: uniqueSwimmers.size,
-    eRecords: 0, // E records are not used in this implementation
+    eRecords,
     fRecords,
     gRecords
   };
