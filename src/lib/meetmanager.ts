@@ -121,8 +121,8 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   
   content += `B1001${futureUse1}${meetNameB1}${meetAddress1}${meetAddress2}${meetCity}${meetState}${postalCode}${countryCode}${meetType}${startDate}${endDate}${altitude}${futureUse2}${courseCode}${futureUse3}\n`;
   
-  // Team record (C1 record) - positions 1-80
-  // C1 + Team Code + Team Name + Team Name Short + Team Abbrev + Spacer for future use
+  // Team record (C1 record) - positions 1-161 (extended record)
+  // C1 + Org + future use + team code + full team name + abbreviated team name + address1 + address2 + city + state + postal + country + region + future use + 5th char + future use
   let clubAbbrev = 'TEAM';
   let clubName = 'Team Name';
   let clubAddress = '';
@@ -144,13 +144,22 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     clubEmail = club.email || '';
   }
 
-  const teamCode = clubAbbrev.padEnd(8, ' ').substring(0, 8);
-  const teamNameLong = clubName.padEnd(30, ' ').substring(0, 30);
-  const teamNameShort = clubName.padEnd(16, ' ').substring(0, 16);
-  const teamAbbrev = clubAbbrev.padEnd(5, ' ').substring(0, 5);
-  const spacerC1 = ''.padEnd(19, ' '); // Spacer for future use
+  const futureUseC1_1 = ''.padEnd(8, ' '); // positions 4-11
+  const teamCode = clubAbbrev.padEnd(6, ' ').substring(0, 6); // positions 12-17
+  const fullTeamName = clubName.padEnd(30, ' ').substring(0, 30); // positions 18-47
+  const abbreviatedTeamName = clubName.padEnd(16, ' ').substring(0, 16); // positions 48-63
+  const teamAddress1 = clubAddress.padEnd(22, ' ').substring(0, 22); // positions 64-85
+  const teamAddress2 = ''.padEnd(22, ' '); // positions 86-107
+  const teamCity = clubCity.padEnd(20, ' ').substring(0, 20); // positions 108-127
+  const teamState = clubState.padEnd(2, ' ').substring(0, 2); // positions 128-129
+  const postalCodeC1 = clubZipCode.padEnd(10, ' ').substring(0, 10); // positions 130-139
+  const countryCodeC1 = ''.padEnd(3, ' '); // positions 140-142, default to blank
+  const regionCode = ''.padEnd(1, ' '); // position 143, USS region code
+  const futureUseC1_2 = ''.padEnd(6, ' '); // positions 144-149
+  const fifthCharTeamCode = ''.padEnd(1, ' '); // position 150, optional 5th char of team code
+  const futureUseC1_3 = ''.padEnd(10, ' '); // positions 151-160
   
-  content += `C1${teamCode}${teamNameLong}${teamNameShort}${teamAbbrev}${spacerC1}\n`;
+  content += `C1001${futureUseC1_1}${teamCode}${fullTeamName}${abbreviatedTeamName}${teamAddress1}${teamAddress2}${teamCity}${teamState}${postalCodeC1}${countryCodeC1}${regionCode}${futureUseC1_2}${fifthCharTeamCode}${futureUseC1_3}\n`;
   
   // Individual Entries (D0 records) - only for selected meet events
   for (const swimmer of swimmers) {
