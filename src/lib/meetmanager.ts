@@ -62,8 +62,8 @@ function timeToSdifFormat(timeString: string): string {
   return totalCentiseconds.toString().padStart(7, '0');
 }
 
-// Get SDIF event code for swimming events
-function getEventCode(event: SwimEventModel): string {
+// Get SDIF stroke code
+function getStrokeCode(stroke: string): string {
   const strokeCodes: Record<string, string> = {
     'freestyle': '1',
     'backstroke': '2',
@@ -71,10 +71,24 @@ function getEventCode(event: SwimEventModel): string {
     'butterfly': '4',
     'individual-medley': '5'
   };
-  
-  const stroke = strokeCodes[event.stroke] || '1';
+  return strokeCodes[stroke] || '1';
+}
+
+// Get SDIF course code
+function getCourseCode(course: string): string {
+  const courseCodes: Record<string, string> = {
+    'SCY': '1', // Short Course Yards
+    'LCM': '2', // Long Course Meters
+    'SCM': '3'  // Short Course Meters
+  };
+  return courseCodes[course] || '1';
+}
+
+// Get SDIF event code for swimming events
+function getEventCode(event: SwimEventModel): string {
+  const stroke = getStrokeCode(event.stroke);
   const distance = event.distance.toString().padStart(4, '0');
-  const course = event.course === 'SCY' ? '1' : event.course === 'LCM' ? '2' : '3';
+  const course = getCourseCode(event.course);
   
   return `${stroke}${distance}${course}${event.isRelay ? '1' : '0'}`;
 }
