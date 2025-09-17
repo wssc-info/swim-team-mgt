@@ -94,24 +94,32 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
   const meetDate = targetMeet.date.replace(/-/g, '');
   
-  // File Header (A0 record)
-  content += 'A01V3                   Swim Team Management    ' + dateStr + '        \n';
+  // File Header (A0 record) - positions 1-80
+  // A0 + Org + Version + File Description + Date + Reserved
+  const fileDesc = 'Swim Team Management'.padEnd(30, ' ');
+  const reserved = ''.padEnd(20, ' ');
+  content += `A01V3${fileDesc}${dateStr}${reserved}\n`;
   
-  // Meet Header (B1 record) - use actual meet name and date
-  const meetName = targetMeet.name.padEnd(20, ' ').substring(0, 20);
-  content += `B1001${meetName}${meetDate}${meetDate}    1N              \n`;
+  // Meet Header (B1 record) - positions 1-80
+  // B1 + Org + Meet Name + Start Date + End Date + Pool + Course + Reserved
+  const meetName = targetMeet.name.padEnd(30, ' ').substring(0, 30);
+  const poolCode = '1'; // 1=25Y, 2=50M, 3=25M
+  const courseCode = 'Y'; // Y=SCY, M=LCM, S=SCM
+  const b1Reserved = ''.padEnd(14, ' ');
+  content += `B1001${meetName}${meetDate}${meetDate}${poolCode}${courseCode}${b1Reserved}\n`;
   
-  // Team record (C1 record) - get active club info
-  let teamRecord = 'C1TEAM    Team Name                      Team Name                      TEAM    \n';
+  // Team record (C1 record) - positions 1-80
+  // C1 + Team Code + Team Name + Team Name Short + Team Abbrev + Reserved
+  let clubAbbrev = 'TEAM';
+  let clubName = 'Team Name';
   
   try {
     const clubResponse = await fetch('/api/admin/clubs/active');
     if (clubResponse.ok) {
       const activeClub = await clubResponse.json();
       if (activeClub) {
-        const clubName = activeClub.name.padEnd(30, ' ').substring(0, 30);
-        const clubAbbrev = activeClub.abbreviation.padEnd(8, ' ').substring(0, 8);
-        teamRecord = `C1${clubAbbrev}${clubName}${clubName}${clubAbbrev}\n`;
+        clubName = activeClub.name;
+        clubAbbrev = activeClub.abbreviation;
       }
     }
   } catch (error) {
@@ -119,7 +127,13 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     // Fall back to default if club fetch fails
   }
   
-  content += teamRecord;
+  const teamCode = clubAbbrev.padEnd(8, ' ').substring(0, 8);
+  const teamNameLong = clubName.padEnd(30, ' ').substring(0, 30);
+  const teamNameShort = clubName.padEnd(16, ' ').substring(0, 16);
+  const teamAbbrev = clubAbbrev.padEnd(5, ' ').substring(0, 5);
+  const c1Reserved = ''.padEnd(19, ' ');
+  
+  content += `C1${teamCode}${teamNameLong}${teamNameShort}${teamAbbrev}${c1Reserved}\n`;
   
   // Individual Entries (D0 records) - only for selected meet events
   for (const swimmer of swimmers) {
@@ -133,22 +147,30 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
           const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
           const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
           const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
+          const swimmerId = swimmer.id.substring(0, 12).padEnd(12, ' ');
+          const ageGroup = swimmer.ageGroup.padEnd(2, ' ').substring(0, 2);
           
           // Get club abbreviation for swimmer records
-          let clubAbbrev = 'TEAM    ';
+          let swimmerClubAbbrev = 'TEAM';
           try {
             const clubResponse = await fetch('/api/admin/clubs/active');
             if (clubResponse.ok) {
               const activeClub = await clubResponse.json();
               if (activeClub) {
-                clubAbbrev = activeClub.abbreviation.padEnd(8, ' ').substring(0, 8);
+                swimmerClubAbbrev = activeClub.abbreviation;
               }
             }
           } catch (error) {
             console.error('Error fetching club for swimmer record:', error);
           }
           
-          content += `D0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}${clubAbbrev}${eventCode}${seedTime}    L         \n`;
+          const swimmerTeamCode = swimmerClubAbbrev.padEnd(8, ' ').substring(0, 8);
+          const entryStatus = 'L'; // L=Entered, S=Scratched
+          const d0Reserved = ''.padEnd(9, ' ');
+          
+          // D0 record: positions 1-80
+          // D0 + Gender + Swimmer ID + Last Name + First Name + Age + Birth Date + Team Code + Event + Seed Time + Entry Status + Reserved
+          content += `D0${swimmer.gender}${swimmerId}${lastName}${firstName}${ageGroup}${birthDate}${swimmerTeamCode}${eventCode}${seedTime}${entryStatus}${d0Reserved}\n`;
         }
       }
     }
@@ -161,23 +183,34 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
       const event = allEvents.find(e => e.id === team.eventId);
       if (event) {
         const eventCode = getEventCode(event);
-        const teamName = team.name.padEnd(20, ' ').substring(0, 20);
+        const relayName = team.name.padEnd(20, ' ').substring(0, 20);
+        const relayId = team.id.substring(0, 12).padEnd(12, ' ');
+        const relayAgeGroup = team.ageGroup.padEnd(2, ' ').substring(0, 2);
 
         // Get club abbreviation for relay records
-        let clubAbbrev = 'TEAM    ';
+        let relayClubAbbrev = 'TEAM';
         try {
           const clubResponse = await fetch('/api/admin/clubs/active');
           if (clubResponse.ok) {
             const activeClub = await clubResponse.json();
             if (activeClub) {
-              clubAbbrev = activeClub.abbreviation.padEnd(8, ' ').substring(0, 8);
+              relayClubAbbrev = activeClub.abbreviation;
             }
           }
         } catch (error) {
           console.error('Error fetching club for relay record:', error);
         }
 
-        content += `F0${team.gender}${team.id.substring(0, 12).padEnd(12, ' ')}${teamName}                    ${team.ageGroup.padEnd(2, ' ')}        ${clubAbbrev}${eventCode}9999999    L         \n`;
+        const relayTeamCode = relayClubAbbrev.padEnd(8, ' ').substring(0, 8);
+        const relaySeedTime = '9999999'; // NT for relays
+        const relayEntryStatus = 'L'; // L=Entered, S=Scratched
+        const f0Reserved1 = ''.padEnd(20, ' '); // Reserved space after relay name
+        const f0Reserved2 = ''.padEnd(8, ' '); // Reserved space after age group
+        const f0Reserved3 = ''.padEnd(9, ' '); // Reserved space at end
+
+        // F0 record: positions 1-80
+        // F0 + Gender + Relay ID + Relay Name + Reserved + Age Group + Reserved + Team Code + Event + Seed Time + Entry Status + Reserved
+        content += `F0${team.gender}${relayId}${relayName}${f0Reserved1}${relayAgeGroup}${f0Reserved2}${relayTeamCode}${eventCode}${relaySeedTime}${relayEntryStatus}${f0Reserved3}\n`;
 
         // Relay swimmers (G0 records)
         for (const swimmerId of team.swimmers) {
@@ -188,31 +221,41 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
             const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
             const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
             const legOrder = (index + 1).toString();
+            const swimmerIdForRelay = swimmer.id.substring(0, 12).padEnd(12, ' ');
+            const swimmerAgeGroup = swimmer.ageGroup.padEnd(2, ' ').substring(0, 2);
 
             // Get club abbreviation for relay swimmer records
-            let clubAbbrev = 'TEAM    ';
+            let swimmerClubAbbrev = 'TEAM';
             try {
               const clubResponse = await fetch('/api/admin/clubs/active');
               if (clubResponse.ok) {
                 const activeClub = await clubResponse.json();
                 if (activeClub) {
-                  clubAbbrev = activeClub.abbreviation.padEnd(8, ' ').substring(0, 8);
+                  swimmerClubAbbrev = activeClub.abbreviation;
                 }
               }
             } catch (error) {
               console.error('Error fetching club for relay swimmer record:', error);
             }
 
-            content += `G0${swimmer.gender}${swimmer.id.substring(0, 12).padEnd(12, ' ')}${lastName}${firstName}${swimmer.ageGroup.padEnd(2, ' ')}${birthDate}${clubAbbrev}${legOrder}9999999    \n`;
+            const swimmerTeamCodeForRelay = swimmerClubAbbrev.padEnd(8, ' ').substring(0, 8);
+            const legSeedTime = '9999999'; // NT for relay legs
+            const g0Reserved = ''.padEnd(4, ' ');
+
+            // G0 record: positions 1-80
+            // G0 + Gender + Swimmer ID + Last Name + First Name + Age + Birth Date + Team Code + Leg Order + Seed Time + Reserved
+            content += `G0${swimmer.gender}${swimmerIdForRelay}${lastName}${firstName}${swimmerAgeGroup}${birthDate}${swimmerTeamCodeForRelay}${legOrder}${legSeedTime}${g0Reserved}\n`;
           }
         }
       }
     }
   }
 
-  // File trailer (Z0 record)
-  const totalRecords = content.split('\n').length - 1;
-  content += `Z0${totalRecords.toString().padStart(6, '0')}                                                                  \n`;
+  // File trailer (Z0 record) - positions 1-80
+  const totalRecords = content.split('\n').length - 1; // Don't count the final record itself
+  const recordCount = totalRecords.toString().padStart(6, '0');
+  const z0Reserved = ''.padEnd(72, ' ');
+  content += `Z0${recordCount}${z0Reserved}\n`;
   
   // Return the content instead of downloading
   return content;
