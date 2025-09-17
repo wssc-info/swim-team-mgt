@@ -31,6 +31,7 @@ interface Meet {
   availableEvents: string[];
   isActive: boolean;
   createdAt: string;
+  clubId?: string;
 }
 
 export interface MeetManagerEntry {
@@ -112,18 +113,55 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   // C1 + Team Code + Team Name + Team Name Short + Team Abbrev + Spacer for future use
   let clubAbbrev = 'TEAM';
   let clubName = 'Team Name';
+  let clubAddress = '';
+  let clubCity = '';
+  let clubState = '';
+  let clubZipCode = '';
+  let clubPhone = '';
+  let clubEmail = '';
   
   try {
-    const clubResponse = await fetch('/api/admin/clubs/active');
-    if (clubResponse.ok) {
-      const activeClub = await clubResponse.json();
-      if (activeClub) {
-        clubName = activeClub.name;
-        clubAbbrev = activeClub.abbreviation;
+    // First try to get the club associated with the meet
+    const meetResponse = await fetch(`/api/meets/${targetMeet.id}`);
+    if (meetResponse.ok) {
+      const meetData = await meetResponse.json();
+      if (meetData.clubId) {
+        const clubResponse = await fetch(`/api/admin/clubs/${meetData.clubId}`);
+        if (clubResponse.ok) {
+          const club = await clubResponse.json();
+          if (club) {
+            clubName = club.name;
+            clubAbbrev = club.abbreviation;
+            clubAddress = club.address || '';
+            clubCity = club.city || '';
+            clubState = club.state || '';
+            clubZipCode = club.zipCode || '';
+            clubPhone = club.phone || '';
+            clubEmail = club.email || '';
+          }
+        }
+      }
+    }
+    
+    // Fall back to active club if meet doesn't have an associated club
+    if (clubAbbrev === 'TEAM') {
+      const activeClubResponse = await fetch('/api/admin/clubs/active');
+      if (activeClubResponse.ok) {
+        const activeClub = await activeClubResponse.json();
+        if (activeClub) {
+          clubName = activeClub.name;
+          clubAbbrev = activeClub.abbreviation;
+          clubAddress = activeClub.address || '';
+          clubCity = activeClub.city || '';
+          clubState = activeClub.state || '';
+          clubZipCode = activeClub.zipCode || '';
+          clubPhone = activeClub.phone || '';
+          clubEmail = activeClub.email || '';
+        }
       }
     }
   } catch (error) {
-    console.error('Error fetching active club for export:', error);
+    console.error('Error fetching club for export:', error);
     // Fall back to default if club fetch fails
   }
   
