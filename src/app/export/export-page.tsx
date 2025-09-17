@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import {fetchMeets, fetchSwimmers, fetchSwimmerMeetEvents, fetchRelayTeams, fetchAllEvents} from '@/lib/api';
 import { exportMeetData } from '@/lib/api';
+import {useAuth} from '@/lib/auth-context';
 
 interface Swimmer {
   id: string;
@@ -34,6 +35,7 @@ interface RelayTeam {
 }
 
 export default function ExportPage() {
+  const { user } = useAuth();
   const [meets, setMeets] = useState<Meet[]>([]);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
@@ -57,11 +59,16 @@ export default function ExportPage() {
           fetchSwimmers()
         ]);
         
-        setMeets(meetData);
+        // Filter meets to only show those for the user's club
+        const filteredMeets = user?.clubId 
+          ? meetData.filter(meet => meet.clubId === user.clubId)
+          : meetData;
+        
+        setMeets(filteredMeets);
         setSwimmers(swimmerData);
         
         // Auto-select active meet if available
-        const activeMeet = meetData.find(m => m.isActive);
+        const activeMeet = filteredMeets.find(m => m.isActive);
         if (activeMeet) {
           setSelectedMeet(activeMeet);
           const relayData = await fetchRelayTeams(activeMeet.id);
@@ -74,8 +81,11 @@ export default function ExportPage() {
         setLoading(false);
       }
     };
-    loadData();
-  }, []);
+    
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const loadPreviewData = async (meet: Meet, swimmerData: Swimmer[], relayData: RelayTeam[]) => {
     try {
