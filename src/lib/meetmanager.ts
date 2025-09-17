@@ -95,21 +95,21 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   const meetDate = targetMeet.date.replace(/-/g, '');
   
   // File Header (A0 record) - positions 1-80
-  // A0 + Org + Version + File Description + Date + Reserved
+  // A0 + Org + Version + File Description + Date + Spacer for future use
   const fileDesc = 'Swim Team Management'.padEnd(30, ' ');
-  const reserved = ''.padEnd(20, ' ');
-  content += `A01V3${fileDesc}${dateStr}${reserved}\n`;
+  const spacerA0 = ''.padEnd(20, ' '); // Spacer for future use
+  content += `A01V3${fileDesc}${dateStr}${spacerA0}\n`;
   
   // Meet Header (B1 record) - positions 1-80
-  // B1 + Org + Meet Name + Start Date + End Date + Pool + Course + Reserved
+  // B1 + Org + Meet Name + Start Date + End Date + Pool + Course + Spacer for future use
   const meetName = targetMeet.name.padEnd(30, ' ').substring(0, 30);
   const poolCode = '1'; // 1=25Y, 2=50M, 3=25M
   const courseCode = 'Y'; // Y=SCY, M=LCM, S=SCM
-  const b1Reserved = ''.padEnd(14, ' ');
-  content += `B1001${meetName}${meetDate}${meetDate}${poolCode}${courseCode}${b1Reserved}\n`;
+  const spacerB1 = ''.padEnd(14, ' '); // Spacer for future use
+  content += `B1001${meetName}${meetDate}${meetDate}${poolCode}${courseCode}${spacerB1}\n`;
   
   // Team record (C1 record) - positions 1-80
-  // C1 + Team Code + Team Name + Team Name Short + Team Abbrev + Reserved
+  // C1 + Team Code + Team Name + Team Name Short + Team Abbrev + Spacer for future use
   let clubAbbrev = 'TEAM';
   let clubName = 'Team Name';
   
@@ -131,9 +131,9 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   const teamNameLong = clubName.padEnd(30, ' ').substring(0, 30);
   const teamNameShort = clubName.padEnd(16, ' ').substring(0, 16);
   const teamAbbrev = clubAbbrev.padEnd(5, ' ').substring(0, 5);
-  const c1Reserved = ''.padEnd(19, ' ');
+  const spacerC1 = ''.padEnd(19, ' '); // Spacer for future use
   
-  content += `C1${teamCode}${teamNameLong}${teamNameShort}${teamAbbrev}${c1Reserved}\n`;
+  content += `C1${teamCode}${teamNameLong}${teamNameShort}${teamAbbrev}${spacerC1}\n`;
   
   // Individual Entries (D0 records) - only for selected meet events
   for (const swimmer of swimmers) {
@@ -166,11 +166,11 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
           
           const swimmerTeamCode = swimmerClubAbbrev.padEnd(8, ' ').substring(0, 8);
           const entryStatus = 'L'; // L=Entered, S=Scratched
-          const d0Reserved = ''.padEnd(9, ' ');
+          const spacerD0 = ''.padEnd(9, ' '); // Spacer for future use
           
           // D0 record: positions 1-80
-          // D0 + Gender + Swimmer ID + Last Name + First Name + Age + Birth Date + Team Code + Event + Seed Time + Entry Status + Reserved
-          content += `D0${swimmer.gender}${swimmerId}${lastName}${firstName}${ageGroup}${birthDate}${swimmerTeamCode}${eventCode}${seedTime}${entryStatus}${d0Reserved}\n`;
+          // D0 + Gender + Swimmer ID + Last Name + First Name + Age + Birth Date + Team Code + Event + Seed Time + Entry Status + Spacer for future use
+          content += `D0${swimmer.gender}${swimmerId}${lastName}${firstName}${ageGroup}${birthDate}${swimmerTeamCode}${eventCode}${seedTime}${entryStatus}${spacerD0}\n`;
         }
       }
     }
@@ -204,13 +204,13 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
         const relayTeamCode = relayClubAbbrev.padEnd(8, ' ').substring(0, 8);
         const relaySeedTime = '9999999'; // NT for relays
         const relayEntryStatus = 'L'; // L=Entered, S=Scratched
-        const f0Reserved1 = ''.padEnd(20, ' '); // Reserved space after relay name
-        const f0Reserved2 = ''.padEnd(8, ' '); // Reserved space after age group
-        const f0Reserved3 = ''.padEnd(9, ' '); // Reserved space at end
+        const spacerF0_1 = ''.padEnd(20, ' '); // Spacer for future use after relay name
+        const spacerF0_2 = ''.padEnd(8, ' '); // Spacer for future use after age group
+        const spacerF0_3 = ''.padEnd(9, ' '); // Spacer for future use at end
 
         // F0 record: positions 1-80
-        // F0 + Gender + Relay ID + Relay Name + Reserved + Age Group + Reserved + Team Code + Event + Seed Time + Entry Status + Reserved
-        content += `F0${team.gender}${relayId}${relayName}${f0Reserved1}${relayAgeGroup}${f0Reserved2}${relayTeamCode}${eventCode}${relaySeedTime}${relayEntryStatus}${f0Reserved3}\n`;
+        // F0 + Gender + Relay ID + Relay Name + Spacer + Age Group + Spacer + Team Code + Event + Seed Time + Entry Status + Spacer for future use
+        content += `F0${team.gender}${relayId}${relayName}${spacerF0_1}${relayAgeGroup}${spacerF0_2}${relayTeamCode}${eventCode}${relaySeedTime}${relayEntryStatus}${spacerF0_3}\n`;
 
         // Relay swimmers (G0 records)
         for (const swimmerId of team.swimmers) {
@@ -240,11 +240,11 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
 
             const swimmerTeamCodeForRelay = swimmerClubAbbrev.padEnd(8, ' ').substring(0, 8);
             const legSeedTime = '9999999'; // NT for relay legs
-            const g0Reserved = ''.padEnd(4, ' ');
+            const spacerG0 = ''.padEnd(4, ' '); // Spacer for future use
 
             // G0 record: positions 1-80
-            // G0 + Gender + Swimmer ID + Last Name + First Name + Age + Birth Date + Team Code + Leg Order + Seed Time + Reserved
-            content += `G0${swimmer.gender}${swimmerIdForRelay}${lastName}${firstName}${swimmerAgeGroup}${birthDate}${swimmerTeamCodeForRelay}${legOrder}${legSeedTime}${g0Reserved}\n`;
+            // G0 + Gender + Swimmer ID + Last Name + First Name + Age + Birth Date + Team Code + Leg Order + Seed Time + Spacer for future use
+            content += `G0${swimmer.gender}${swimmerIdForRelay}${lastName}${firstName}${swimmerAgeGroup}${birthDate}${swimmerTeamCodeForRelay}${legOrder}${legSeedTime}${spacerG0}\n`;
           }
         }
       }
@@ -254,8 +254,8 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   // File trailer (Z0 record) - positions 1-80
   const totalRecords = content.split('\n').length - 1; // Don't count the final record itself
   const recordCount = totalRecords.toString().padStart(6, '0');
-  const z0Reserved = ''.padEnd(72, ' ');
-  content += `Z0${recordCount}${z0Reserved}\n`;
+  const spacerZ0 = ''.padEnd(72, ' '); // Spacer for future use
+  content += `Z0${recordCount}${spacerZ0}\n`;
   
   // Return the content instead of downloading
   return content;
