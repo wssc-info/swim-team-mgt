@@ -148,6 +148,21 @@ export function EventsPage() {
     );
   }
 
+  if (!user?.clubId) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Event Registration</h1>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Association</h2>
+          <p className="text-yellow-700">
+            You need to be associated with a club to register for events. Please contact an administrator 
+            to assign you to a club.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!activeMeet) {
     return (
       <div className="max-w-4xl mx-auto">
