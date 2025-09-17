@@ -1,6 +1,6 @@
 import { SwimEvent } from './types';
-import { fetchAllEvents } from './api';
-import {SwimEventModel} from "@/lib/models";
+import {authenticatedFetch, fetchAllEvents} from './api';
+import {SwimClubModel, SwimEventModel} from "@/lib/models";
 
 interface Swimmer {
   id: string;
@@ -119,52 +119,19 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   let clubZipCode = '';
   let clubPhone = '';
   let clubEmail = '';
-  
-  try {
-    // First try to get the club associated with the meet
-    const meetResponse = await fetch(`/api/meets/${targetMeet.id}`);
-    if (meetResponse.ok) {
-      const meetData = await meetResponse.json();
-      if (meetData.clubId) {
-        const clubResponse = await fetch(`/api/admin/clubs/${meetData.clubId}`);
-        if (clubResponse.ok) {
-          const club = await clubResponse.json();
-          if (club) {
-            clubName = club.name;
-            clubAbbrev = club.abbreviation;
-            clubAddress = club.address || '';
-            clubCity = club.city || '';
-            clubState = club.state || '';
-            clubZipCode = club.zipCode || '';
-            clubPhone = club.phone || '';
-            clubEmail = club.email || '';
-          }
-        }
-      }
-    }
-    
-    // Fall back to active club if meet doesn't have an associated club
-    if (clubAbbrev === 'TEAM') {
-      const activeClubResponse = await fetch('/api/admin/clubs/active');
-      if (activeClubResponse.ok) {
-        const activeClub = await activeClubResponse.json();
-        if (activeClub) {
-          clubName = activeClub.name;
-          clubAbbrev = activeClub.abbreviation;
-          clubAddress = activeClub.address || '';
-          clubCity = activeClub.city || '';
-          clubState = activeClub.state || '';
-          clubZipCode = activeClub.zipCode || '';
-          clubPhone = activeClub.phone || '';
-          clubEmail = activeClub.email || '';
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching club for export:', error);
-    // Fall back to default if club fetch fails
+
+  const club = await SwimClubModel.findByPk(targetMeet.clubId);
+  if (club) {
+    clubName = club.name;
+    clubAbbrev = club.abbreviation;
+    clubAddress = club.address || '';
+    clubCity = club.city || '';
+    clubState = club.state || '';
+    clubZipCode = club.zipCode || '';
+    clubPhone = club.phone || '';
+    clubEmail = club.email || '';
   }
-  
+
   const teamCode = clubAbbrev.padEnd(8, ' ').substring(0, 8);
   const teamNameLong = clubName.padEnd(30, ' ').substring(0, 30);
   const teamNameShort = clubName.padEnd(16, ' ').substring(0, 16);
