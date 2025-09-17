@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import {User, Swimmer} from '@/lib/types';
 import {fetchSwimmers} from "@/lib/api";
 
@@ -17,7 +17,7 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
 
 
-  const loadAssociations = async () => {
+  const loadAssociations = useCallback( async () => {
     setLoading(true);
     try {
       const [response, swimmers] = await Promise.all([
@@ -35,11 +35,11 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.clubId, user.id]);
 
   useEffect(() => {
     loadAssociations();
-  }, [ user.id]);
+  }, [loadAssociations, user.id]);
 
 
   const handleSwimmerToggle = (swimmerId: string) => {

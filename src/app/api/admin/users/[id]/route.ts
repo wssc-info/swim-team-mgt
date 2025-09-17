@@ -11,7 +11,8 @@ export async function PUT(
     await initializeDatabase();
     
     const updates = await request.json();
-    let { firstName, lastName, email, password, role, clubId } = updates;
+    let { clubId } = updates;
+    const { firstName, lastName, email, password, role } = updates;
 
     // Normalize clubId - convert empty string to null for admin users
     if (!clubId || clubId.trim() === '') {
