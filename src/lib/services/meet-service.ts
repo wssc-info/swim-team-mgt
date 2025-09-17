@@ -49,9 +49,9 @@ export class MeetService {
     await this.ensureInitialized();
     
     try {
-      // If this meet is being set as active, deactivate all others
-      if (meetData.isActive) {
-        await MeetModel.update({ isActive: false }, { where: {} });
+      // If this meet is being set as active, deactivate all others in the same club
+      if (meetData.isActive && meetData.clubId) {
+        await MeetModel.update({ isActive: false }, { where: { clubId: meetData.clubId } });
       }
       
       const meet = await MeetModel.create({
@@ -85,9 +85,13 @@ export class MeetService {
   public async updateMeet(id: string, updates: Partial<Meet>): Promise<void> {
     await this.ensureInitialized();
     try {
-      // If setting this meet as active, deactivate all others
+      // If setting this meet as active, deactivate all others in the same club
       if (updates.isActive) {
-        await MeetModel.update({ isActive: false }, { where: {} });
+        // First get the meet to find its clubId
+        const meet = await MeetModel.findByPk(id);
+        if (meet && meet.clubId) {
+          await MeetModel.update({ isActive: false }, { where: { clubId: meet.clubId } });
+        }
       }
       
       const updateData: any = { ...updates };
@@ -138,8 +142,14 @@ export class MeetService {
   public async activateMeet(id: string): Promise<void> {
     await this.ensureInitialized();
     try {
-      // Deactivate all meets first
-      await MeetModel.update({ isActive: false }, { where: {} });
+      // First, get the meet to find its clubId
+      const meet = await MeetModel.findByPk(id);
+      if (!meet) {
+        throw new Error('Meet not found');
+      }
+      
+      // Deactivate all meets for the same club only
+      await MeetModel.update({ isActive: false }, { where: { clubId: meet.clubId } });
       // Then activate the specified meet
       await MeetModel.update({ isActive: true }, { where: { id } });
     } catch (error) {
