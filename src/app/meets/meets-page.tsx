@@ -6,8 +6,10 @@ import MeetForm from '@/components/MeetForm';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {SwimEvent} from "@/lib/types";
 import {Meet} from "@/lib/types";
+import {useAuth} from '@/lib/auth-context';
 
 export default function MeetsPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [meets, setMeets] = useState<Meet[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -18,16 +20,23 @@ export default function MeetsPage() {
     const loadMeets = async () => {
       try {
         const meetData = await fetchMeets();
-        return setMeets(meetData);
+        // Filter meets to only show those for the user's club
+        const filteredMeets = user?.clubId 
+          ? meetData.filter(meet => meet.clubId === user.clubId)
+          : meetData;
+        return setMeets(filteredMeets);
 
       } catch (error) {
         console.error('Error loading meets:', error);
       }
     };
-    fetchAllEvents().then(allEvents => setAllEvents(allEvents)).then(() => {
-      loadMeets().then(() => setLoading(false));
-    });
-  }, []);
+    
+    if (user) {
+      fetchAllEvents().then(allEvents => setAllEvents(allEvents)).then(() => {
+        loadMeets().then(() => setLoading(false));
+      });
+    }
+  }, [user]);
 
   const handleAddMeet = () => {
     setEditingMeet(null);
@@ -44,7 +53,11 @@ export default function MeetsPage() {
       try {
         await deleteMeetApi(id);
         const updatedMeets = await fetchMeets();
-        setMeets(updatedMeets);
+        // Filter meets to only show those for the user's club
+        const filteredMeets = user?.clubId 
+          ? updatedMeets.filter(meet => meet.clubId === user.clubId)
+          : updatedMeets;
+        setMeets(filteredMeets);
       } catch (error) {
         console.error('Error deleting meet:', error);
       }
@@ -55,7 +68,11 @@ export default function MeetsPage() {
     try {
       await activateMeet(id);
       const updatedMeets = await fetchMeets();
-      setMeets(updatedMeets);
+      // Filter meets to only show those for the user's club
+      const filteredMeets = user?.clubId 
+        ? updatedMeets.filter(meet => meet.clubId === user.clubId)
+        : updatedMeets;
+      setMeets(filteredMeets);
     } catch (error) {
       console.error('Error setting active meet:', error);
     }
@@ -66,7 +83,11 @@ export default function MeetsPage() {
     setEditingMeet(null);
     try {
       const updatedMeets = await fetchMeets();
-      setMeets(updatedMeets);
+      // Filter meets to only show those for the user's club
+      const filteredMeets = user?.clubId 
+        ? updatedMeets.filter(meet => meet.clubId === user.clubId)
+        : updatedMeets;
+      setMeets(filteredMeets);
     } catch (error) {
       console.error('Error loading meets:', error);
     }
