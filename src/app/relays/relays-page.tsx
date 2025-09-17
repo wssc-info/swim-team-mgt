@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { fetchSwimmers, fetchMeets, createRelayTeam, fetchRelayTeams, updateRelayTeamApi, deleteRelayTeamApi, fetchAllEvents } from '@/lib/api';
 import { SwimEvent } from '@/lib/types';
 import RelayTeamForm from '@/components/RelayTeamForm';
+import { useAuth } from '@/lib/auth-context';
 
 interface Swimmer {
   id: string;
@@ -35,6 +36,7 @@ interface RelayTeam {
 }
 
 export default function RelaysPage() {
+  const { user } = useAuth();
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
   const [relayTeams, setRelayTeams] = useState<RelayTeam[]>([]);
@@ -54,7 +56,13 @@ export default function RelaysPage() {
         
         setSwimmers(swimmerData);
         setAllEvents(eventsData);
-        const active = meetData.find(m => m.isActive) || null;
+        
+        // Filter meets to only show those for the user's club and find active meet
+        const filteredMeets = user?.clubId 
+          ? meetData.filter(meet => meet.clubId === user.clubId)
+          : meetData;
+        
+        const active = filteredMeets.find(m => m.isActive) || null;
         setActiveMeet(active);
         
         // Load relay teams for the active meet
@@ -70,8 +78,11 @@ export default function RelaysPage() {
         setLoading(false);
       }
     };
-    loadData();
-  }, []);
+    
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const handleCreateTeam = () => {
     setSelectedTeam(null);
