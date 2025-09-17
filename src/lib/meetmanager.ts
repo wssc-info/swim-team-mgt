@@ -8,7 +8,6 @@ import { B1Record } from './sdif/records/B1Record';
 import { C1Record } from './sdif/records/C1Record';
 import { D0Record } from './sdif/records/D0Record';
 import { F0Record } from './sdif/records/F0Record';
-import { G0Record } from './sdif/records/G0Record';
 import { Z0Record } from './sdif/records/Z0Record';
 
 export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swimmer[] = [], relayTeams: RelayTeam[] = []): Promise<string> {
