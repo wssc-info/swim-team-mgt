@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi, fetchAllEvents } from '@/lib/api';
 import TimeRecordForm from '@/components/TimeRecordForm';
 import { Swimmer, TimeRecord, SwimEvent } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 
 export default function TimesPage() {
+  const { user } = useAuth();
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [timeRecords, setTimeRecords] = useState<TimeRecord[]>([]);
   const [selectedSwimmer, setSelectedSwimmer] = useState<string>('');
@@ -20,12 +22,23 @@ export default function TimesPage() {
     const loadData = async () => {
       try {
         const [swimmerData, recordData, eventsData] = await Promise.all([
-          fetchSwimmers(),
+          fetchSwimmers(user?.clubId),
           fetchTimeRecords(),
           fetchAllEvents()
         ]);
-        setSwimmers(swimmerData);
-        setTimeRecords(recordData);
+        
+        // Filter swimmers to only show those for the user's club
+        const filteredSwimmers = user?.clubId 
+          ? swimmerData.filter(swimmer => swimmer.clubId === user.clubId)
+          : swimmerData;
+        
+        setSwimmers(filteredSwimmers);
+        
+        // Filter time records to only show those for swimmers in the user's club
+        const swimmerIds = filteredSwimmers.map(swimmer => swimmer.id);
+        const filteredRecords = recordData.filter(record => swimmerIds.includes(record.swimmerId));
+        
+        setTimeRecords(filteredRecords);
         setAllEvents(eventsData);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -33,8 +46,11 @@ export default function TimesPage() {
         setLoading(false);
       }
     };
-    loadData();
-  }, []);
+    
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const handleSwimmerChange = async (swimmerId: string) => {
     setSelectedSwimmer(swimmerId);
@@ -48,7 +64,10 @@ export default function TimesPage() {
     } else {
       try {
         const records = await fetchTimeRecords();
-        setTimeRecords(records);
+        // Filter time records to only show those for swimmers in the user's club
+        const swimmerIds = swimmers.map(swimmer => swimmer.id);
+        const filteredRecords = records.filter(record => swimmerIds.includes(record.swimmerId));
+        setTimeRecords(filteredRecords);
       } catch (error) {
         console.error('Error loading all records:', error);
       }
@@ -123,7 +142,7 @@ export default function TimesPage() {
         });
 
         try {
-          // Find swimmer by name
+          // Find swimmer by name (only from filtered swimmers in user's club)
           const swimmerName = row.swimmer;
           const swimmer = swimmers.find(s => 
             `${s.firstName} ${s.lastName}`.toLowerCase() === swimmerName.toLowerCase() ||
@@ -131,7 +150,7 @@ export default function TimesPage() {
           );
 
           if (!swimmer) {
-            results.errors.push(`Row ${i}: Swimmer "${swimmerName}" not found`);
+            results.errors.push(`Row ${i}: Swimmer "${swimmerName}" not found in your club`);
             continue;
           }
 
