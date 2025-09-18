@@ -10,6 +10,7 @@ interface Meet {
   name: string;
   date: string;
   location: string;
+  course: 'SCY' | 'SCM' | 'LCM';
   availableEvents: string[];
   isActive: boolean;
   clubId: string;
@@ -28,6 +29,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     name: '',
     date: '',
     location: '',
+    course: 'SCY' as 'SCY' | 'SCM' | 'LCM',
     availableEvents: [] as string[],
     isActive: false,
     clubId: '',
@@ -78,6 +80,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
         name: meet.name,
         date: meet.date,
         location: meet.location,
+        course: meet.course,
         availableEvents: meet.availableEvents,
         isActive: meet.isActive,
         clubId: meet.clubId,
@@ -198,6 +201,11 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
   const getFilteredEvents = (): SwimEvent[] => {
     return allEvents.filter(event => {
+      // First filter by meet course type - this is mandatory
+      if (event.course !== formData.course) {
+        return false;
+      }
+      
       if (eventFilter.stroke !== 'all' && event.stroke !== eventFilter.stroke) {
         return false;
       }
@@ -310,6 +318,26 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
           )}
         </div>
 
+        <div>
+          <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
+            Course Type *
+          </label>
+          <select
+            id="course"
+            name="course"
+            value={formData.course}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="SCY">Short Course Yards (SCY)</option>
+            <option value="SCM">Short Course Meters (SCM)</option>
+            <option value="LCM">Long Course Meters (LCM)</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Only events matching this course type will be available for selection
+          </p>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
@@ -389,21 +417,10 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
           
           {/* Event Filters */}
           <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Filter Events:</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Course</label>
-                <select
-                  value={eventFilter.course}
-                  onChange={(e) => setEventFilter(prev => ({ ...prev, course: e.target.value }))}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                >
-                  <option value="all">All Courses</option>
-                  <option value="SCY">Short Course Yards</option>
-                  <option value="SCM">Short Course Meters</option>
-                  <option value="LCM">Long Course Meters</option>
-                </select>
-              </div>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">
+              Filter Events (showing only {formData.course} events):
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               
               <div>
                 <label className="block text-xs text-gray-600 mb-1">Stroke</label>

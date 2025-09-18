@@ -149,7 +149,7 @@ export default function MeetsPage() {
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-green-800">{activeMeet.name}</h3>
                 <p className="text-green-700 mt-1">
-                  {new Date(activeMeet.date).toLocaleDateString()} • {activeMeet.location}
+                  {new Date(activeMeet.date).toLocaleDateString()} • {activeMeet.location} • {activeMeet.course}
                 </p>
                 <p className="text-sm text-green-600 mt-2">
                   {activeMeet.availableEvents.length} events available for swimmer registration
@@ -222,7 +222,7 @@ export default function MeetsPage() {
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold">{meet.name}</h3>
                     <p className="text-gray-600 mt-1">
-                      {new Date(meet.date).toLocaleDateString()} • {meet.location}
+                      {new Date(meet.date).toLocaleDateString()} • {meet.location} • {meet.course}
                     </p>
                     <p className="text-sm text-gray-500 mt-2">
                       {meet.availableEvents.length} events available

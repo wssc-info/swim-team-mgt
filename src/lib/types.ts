@@ -32,6 +32,7 @@ export interface Meet {
   name: string;
   date: string;
   location: string;
+  course: 'SCY' | 'SCM' | 'LCM'; // Course type for the meet
   availableEvents: string[]; // Event IDs that swimmers can participate in
   isActive: boolean; // Only one meet can be active at a time
   clubId: string; // The club this meet is for (required)
