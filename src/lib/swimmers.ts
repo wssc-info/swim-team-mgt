@@ -2,6 +2,7 @@
 import { SwimmerService } from './services/swimmer-service';
 import { MeetService } from './services/meet-service';
 import { TimeRecordService } from './services/time-record-service';
+import {AGE_11_12, AGE_13_14, AGE_15_18, AGE_9_10, AGE_UNDER_8} from "@/lib/constants";
 
 // Export types
 export * from './types';
@@ -49,9 +50,9 @@ export function calculateAgeGroup(dateOfBirth: string): string {
     ? age - 1 
     : age;
 
-  if (actualAge <= 8) return '8&U';
-  if (actualAge <= 10) return '9-10';
-  if (actualAge <= 12) return '11-12';
-  if (actualAge <= 14) return '13-14';
-  return '15-18';
+  if (actualAge <= 8) return AGE_UNDER_8;
+  if (actualAge <= 10) return AGE_9_10;
+  if (actualAge <= 12) return AGE_11_12;
+  if (actualAge <= 14) return AGE_13_14;
+  return AGE_15_18;
 }

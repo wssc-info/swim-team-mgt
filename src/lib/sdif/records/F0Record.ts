@@ -1,4 +1,4 @@
-import { RelayTeam, Swimmer } from '../types';
+import { RelayTeam, Swimmer } from '@/lib/types';
 
 // F0 -- Relay Name Record
 export class F0Record {

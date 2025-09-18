@@ -58,7 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         setToken(tokenToVerify);
       } else {
-        localStorage.removeItem('auth_token');
+        logout()
+      //   localStorage.removeItem('auth_token');
       }
     } catch (error) {
       console.error('Token verification failed:', error);

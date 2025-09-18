@@ -501,7 +501,7 @@ SwimClubModel.init(
     abbreviation: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: "swim_clubs_abbreviation_key",
     },
     address: {
       type: DataTypes.STRING,

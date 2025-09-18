@@ -1,5 +1,5 @@
-import { SwimClubModel } from '@/lib/models';
-import { Meet } from '../types';
+import {SwimClubModel} from '@/lib/models';
+import {Meet} from '@/lib/types';
 
 // C1 -- Team Id Record
 export class C1Record {
@@ -35,7 +35,7 @@ export class C1Record {
     const futureUseC1_2 = ''.padEnd(6, ' '); // positions 144-149
     const fifthCharTeamCode = ''.padEnd(1, ' '); // position 150, optional 5th char of team code
     const futureUseC1_3 = ''.padEnd(10, ' '); // positions 151-160
-    
+
     return `C1001${futureUseC1_1}${teamCode}${fullTeamName}${abbreviatedTeamName}${teamAddress1}${teamAddress2}${teamCity}${teamState}${postalCodeC1}${countryCodeC1}${regionCode}${futureUseC1_2}${fifthCharTeamCode}${futureUseC1_3}\n`;
   }
 }

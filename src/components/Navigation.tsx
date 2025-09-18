@@ -27,7 +27,7 @@ export default function Navigation() {
           {(user.role === 'coach' || user.role === 'admin') && (
             <>
               <DropdownMenu>
-                <DropdownMenuTrigger className={'hover:underline'}>Meet Setup</DropdownMenuTrigger>
+                <DropdownMenuTrigger className={'hover:underline hover:cursor-pointer'}>Meet Setup</DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem>
                     <Link href="/meets" className="hover:underline flex-1">
@@ -54,7 +54,7 @@ export default function Navigation() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <DropdownMenu>
-                <DropdownMenuTrigger className={'hover:backdrop-blur-3xl'}>Admin
+                <DropdownMenuTrigger className={'hover:underline cursor-pointer'}>Admin
                   Functions</DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem>
@@ -84,7 +84,7 @@ export default function Navigation() {
               </DropdownMenu>
             </>
           )}
-          <Link href="/events" className="hover:underline">
+          <Link href="/events" className="hover:underline cursor-pointer">
             Events
           </Link>
           <div className="flex items-center space-x-2">

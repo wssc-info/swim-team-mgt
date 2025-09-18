@@ -1,4 +1,4 @@
-import { Swimmer } from '../types';
+import { Swimmer } from '@/lib/types';
 
 // G0 -- Splits Record
 export class G0Record {

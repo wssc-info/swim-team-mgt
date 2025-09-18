@@ -1,5 +1,5 @@
 // Helper function to make authenticated API calls
-import {SwimEvent, SwimClub} from "@/lib/types";
+import {SwimEvent, SwimClub, Swimmer, Meet, TimeRecord, RelayTeam, SwimmerMeetEvent} from "@/lib/types";
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('auth_token');
@@ -18,59 +18,6 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
       ...options.headers,
     },
   });
-}
-
-// Type definitions
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-  clubId?: string;
-}
-
-interface SwimmerMeetEvent {
-  id: string;
-  swimmerId: string;
-  meetId: string;
-  eventId: string;
-  seedTime?: string;
-  createdAt: string;
-}
-
-interface Meet {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  availableEvents: string[];
-  isActive: boolean;
-  clubId: string;
-  againstClubId?: string;
-  createdAt: string;
-}
-
-interface RelayTeam {
-  id: string;
-  meetId: string;
-  eventId: string;
-  name: string;
-  swimmers: string[];
-  ageGroup: string;
-  gender: 'M' | 'F' | 'Mixed';
-}
-
-interface TimeRecord {
-  id: string;
-  swimmerId: string;
-  eventId: string;
-  time: string;
-  meetName: string;
-  meetDate: string;
-  isPersonalBest: boolean;
-  createdAt: string;
 }
 
 // Swimmers API

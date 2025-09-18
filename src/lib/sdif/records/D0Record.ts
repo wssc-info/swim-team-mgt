@@ -1,4 +1,4 @@
-import { Swimmer } from '../types';
+import { Swimmer } from '@/lib/types';
 import {timeToSdifFormat, getStrokeCode, getCourseCode, getAgeCode} from '../utils';
 
 // D0 -- Individual Event Record

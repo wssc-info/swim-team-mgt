@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createRelayTeam, updateRelayTeamApi } from '@/lib/api';
 import {SwimEvent} from "@/lib/types";
+import {AGE_GROUPS} from "@/lib/constants";
 
 interface Swimmer {
   id: string;
@@ -145,9 +146,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
 
     if (selectedSwimmers.length > 0) {
       // For age group, use the oldest age group
-      const ageGroupOrder = ['8&U', '9-10', '11-12', '13-14', '15-18'];
       const maxAgeGroup = teamAgeGroups.reduce((max, current) => {
-        return ageGroupOrder.indexOf(current) > ageGroupOrder.indexOf(max) ? current : max;
+        return AGE_GROUPS.indexOf(current) > AGE_GROUPS.indexOf(max) ? current : max;
       }, teamAgeGroups[0]);
 
       // For gender, determine if mixed or single gender

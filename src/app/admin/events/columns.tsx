@@ -18,7 +18,7 @@ const getStrokeColor = (stroke: string) => {
     'backstroke': 'bg-green-100 text-green-800',
     'breaststroke': 'bg-yellow-100 text-yellow-800',
     'butterfly': 'bg-purple-100 text-purple-800',
-    'individual-medley': 'bg-red-100 text-red-800'
+    'medley': 'bg-red-100 text-red-800'
   };
   return colors[stroke as keyof typeof colors] || 'bg-gray-100 text-gray-800';
 };
@@ -79,6 +79,21 @@ export const getColumns = (editFunction: (swimEvent: SwimEvent) => void,
       }
     },
     {
+      accessorKey: "course",
+      header: ({column}) => {
+        return (
+          <>
+            Course
+            {buildFilter(column, [
+              {value: 'SCY', text: 'Short Course Yards (SCY)'},
+              {value: 'SCM', text: 'Short Course Meters (SCM)'},
+              {value: 'LCM', text: 'Long Course Meters (LCM)'},
+            ])}
+          </>
+        );
+      }
+    },
+    {
       accessorKey: "distance",
       header: ({column}) => {
         return (
@@ -106,7 +121,7 @@ export const getColumns = (editFunction: (swimEvent: SwimEvent) => void,
               {value: 'backstroke', text: 'Backstroke'},
               {value: 'breaststroke', text: 'Breaststroke'},
               {value: 'butterfly', text: 'Butterfly'},
-              {value: 'individual-medley', text: 'Individual Medley'},
+              {value: 'medley', text: 'Medley'},
             ])}
           </>
         );
@@ -117,21 +132,6 @@ export const getColumns = (editFunction: (swimEvent: SwimEvent) => void,
             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStrokeColor(row.original.stroke)}`}>
               {row.original.stroke.replace('-', ' ')}
           </span>)
-      }
-    },
-    {
-      accessorKey: "course",
-      header: ({column}) => {
-        return (
-          <>
-            Course
-            {buildFilter(column, [
-              {value: 'SCY', text: 'Short Course Yards (SCY)'},
-              {value: 'SCM', text: 'Short Course Meters (SCM)'},
-              {value: 'LCM', text: 'Long Course Meters (LCM)'},
-            ])}
-          </>
-        );
       }
     },
     {

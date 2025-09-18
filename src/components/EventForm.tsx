@@ -1,29 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { SwimEvent } from '@/lib/types';
+import {useEffect, useState} from 'react';
+import {SwimEvent} from '@/lib/types';
+import {AGE_GROUPS, COURSES, STROKES} from "@/lib/constants";
 
 interface EventFormProps {
   event?: SwimEvent | null;
   onClose: () => void;
   onSuccess: () => void;
 }
-
-const STROKES = [
-  { value: 'freestyle', label: 'Freestyle' },
-  { value: 'backstroke', label: 'Backstroke' },
-  { value: 'breaststroke', label: 'Breaststroke' },
-  { value: 'butterfly', label: 'Butterfly' },
-  { value: 'individual-medley', label: 'Individual Medley' }
-];
-
-const COURSES = [
-  { value: 'SCY', label: 'Short Course Yards (SCY)' },
-  { value: 'SCM', label: 'Short Course Meters (SCM)' },
-  { value: 'LCM', label: 'Long Course Meters (LCM)' }
-];
-
-const AGE_GROUPS = ['8&U', '9-10', '11-12', '13-14', '15-18'];
 
 export default function EventForm({ event, onClose, onSuccess }: EventFormProps) {
   const [formData, setFormData] = useState({
@@ -135,6 +120,23 @@ export default function EventForm({ event, onClose, onSuccess }: EventFormProps)
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
+            Course
+          </label>
+          <select
+            value={formData.course}
+            onChange={(e) => setFormData(prev => ({ ...prev, course: e.target.value as any }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            {COURSES.map(course => (
+              <option key={course.value} value={course.value}>
+                {course.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Distance
           </label>
           <input
@@ -163,25 +165,6 @@ export default function EventForm({ event, onClose, onSuccess }: EventFormProps)
             ))}
           </select>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Course
-          </label>
-          <select
-            value={formData.course}
-            onChange={(e) => setFormData(prev => ({ ...prev, course: e.target.value as any }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            {COURSES.map(course => (
-              <option key={course.value} value={course.value}>
-                {course.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div>
           <label className="flex items-center space-x-2">
             <input
@@ -193,7 +176,6 @@ export default function EventForm({ event, onClose, onSuccess }: EventFormProps)
             <span className="text-sm font-medium text-gray-700">Relay Event</span>
           </label>
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Age Groups

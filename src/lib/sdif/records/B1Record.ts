@@ -1,6 +1,7 @@
-import { Meet } from '../types';
 
 // B1 -- Meet Record
+import {Meet} from "@/lib/types";
+
 export class B1Record {
   static generate(meet: Meet): string {
     const meetDate = meet.date.replace(/-/g, '');

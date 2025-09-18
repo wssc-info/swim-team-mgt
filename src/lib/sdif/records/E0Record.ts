@@ -1,4 +1,4 @@
-import { RelayTeam } from '../types';
+import { RelayTeam } from '@/lib/types';
 import {getStrokeCode, getCourseCode, getAgeCode} from '../utils';
 
 // E0 -- Relay Event Record

@@ -92,3 +92,16 @@ export interface SwimClub {
   website?: string;
   isActive: boolean;
 }
+
+
+export interface MeetManagerEntry {
+  swimmer: Swimmer;
+  event: SwimEvent;
+  seedTime?: string;
+}
+
+export interface MeetManagerRelay {
+  team: RelayTeam;
+  event: SwimEvent;
+  swimmers: Swimmer[];
+}
