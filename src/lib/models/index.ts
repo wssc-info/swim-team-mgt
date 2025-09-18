@@ -81,6 +81,7 @@ interface MeetAttributes {
   name: string;
   date: string;
   location: string;
+  course: 'SCY' | 'SCM' | 'LCM';
   availableEvents: string;
   isActive: boolean;
   clubId: string;
@@ -95,6 +96,7 @@ export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes>
   declare name: string;
   declare date: string;
   declare location: string;
+  declare course: 'SCY' | 'SCM' | 'LCM';
   declare availableEvents: string;
   declare isActive: boolean;
   declare clubId: string;
@@ -121,6 +123,11 @@ MeetModel.init(
     location: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    course: {
+      type: DataTypes.ENUM('SCY', 'SCM', 'LCM'),
+      allowNull: false,
+      defaultValue: 'SCY',
     },
     availableEvents: {
       type: DataTypes.TEXT,
