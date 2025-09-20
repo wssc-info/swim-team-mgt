@@ -92,7 +92,7 @@ export default function SwimmersPage() {
 
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
       if (missingHeaders.length > 0) {
-        alert(`CSV file is missing required columns: ${missingHeaders.join(', ')}\nRequired columns: firstname, lastname, dateofbirth, gender`);
+        alert(`CSV file is missing required columns: ${missingHeaders.join(', ')}\nRequired columns: firstname, lastname, dateofbirth, gender\nOptional columns: externalid`);
         return;
       }
 
@@ -147,7 +147,8 @@ export default function SwimmersPage() {
             firstName: row.firstname,
             lastName: row.lastname,
             dateOfBirth: dateOfBirth.toISOString().split('T')[0],
-            gender: normalizedGender
+            gender: normalizedGender,
+            ...(row.externalid && { externalId: row.externalid })
           };
           console.log('saving swimmer', swimmerData);
 
@@ -316,8 +317,11 @@ export default function SwimmersPage() {
         <p className="text-sm text-blue-700 mb-2">
           Your CSV file should have these columns: <code>firstname, lastname, dateofbirth, gender</code>
         </p>
+        <p className="text-sm text-blue-700 mb-2">
+          Optional columns: <code>externalid</code>
+        </p>
         <p className="text-xs text-blue-600">
-          Example: &#34;John, Smith, 2010-05-15, Male&#34;
+          Example: &#34;John, Smith, 2010-05-15, Male, USA123456&#34;
         </p>
       </div>
     </div>
