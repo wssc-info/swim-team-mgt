@@ -41,6 +41,7 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
     dateOfBirth: '',
     gender: 'M' as 'M' | 'F',
     clubId: '',
+    externalId: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,6 +60,7 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         clubId: swimmer.clubId || '',
+        externalId: swimmer.externalId || '',
       });
     } else if (currentUser?.clubId && currentUser.role !== 'admin') {
       // Auto-assign current user's club for non-admin users
@@ -238,6 +240,24 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
             <option value="M">Male</option>
             <option value="F">Female</option>
           </select>
+        </div>
+
+        <div>
+          <label htmlFor="externalId" className="block text-sm font-medium text-gray-700 mb-1">
+            External ID (Optional)
+          </label>
+          <input
+            type="text"
+            id="externalId"
+            name="externalId"
+            value={formData.externalId}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="e.g., USA Swimming ID, Team Manager ID"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Optional identifier from external systems (USA Swimming, Team Manager, etc.)
+          </p>
         </div>
 
         <div>
