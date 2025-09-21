@@ -130,9 +130,36 @@ async function createSwimmer(swimmerData: SwimmerInfo & { clubId?: string }, res
   }
 }
 
+// Check if a time record already exists
+async function checkTimeRecordExists(swimmerId: string, eventId: string, time: string, meetDate: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/times?swimmerId=${swimmerId}&eventId=${eventId}&time=${encodeURIComponent(time)}&meetDate=${meetDate}`);
+    if (!response.ok) {
+      return false; // If we can't check, assume it doesn't exist and try to create
+    }
+    const timeRecords = await response.json();
+    return timeRecords.length > 0;
+  } catch (error) {
+    return false; // If we can't check, assume it doesn't exist and try to create
+  }
+}
+
 // Create a time record
 async function createTimeRecord(timeRecordData: any, results: { success: number, errors: string[] }, rowIndex: number, eventName: string) {
   try {
+    // Check if this time record already exists
+    const exists = await checkTimeRecordExists(
+      timeRecordData.swimmerId,
+      timeRecordData.eventId,
+      timeRecordData.time,
+      timeRecordData.meetDate
+    );
+
+    if (exists) {
+      results.errors.push(`Row ${rowIndex + 1}: Time record for ${eventName} already exists - skipped`);
+      return;
+    }
+
     const response = await fetch('/api/times', {
       method: 'POST',
       headers: {
