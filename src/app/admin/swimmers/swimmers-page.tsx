@@ -10,6 +10,38 @@ import {getColumns} from "@/app/admin/swimmers/columns";
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
+// Helper function to map Team Unify event names to database event IDs
+function mapTeamUnifyEventToId(eventName: string, course: string, allEvents: any[]): string | null {
+  // Parse event name: "25 Free" -> distance: 25, stroke: "Free"
+  const match = eventName.match(/^(\d+)\s+(.+)$/);
+  if (!match) return null;
+  
+  const [, distanceStr, strokeShort] = match;
+  const distance = parseInt(distanceStr);
+  
+  // Map short stroke names to full names
+  const strokeMap: Record<string, string> = {
+    'Free': 'freestyle',
+    'Back': 'backstroke',
+    'Breast': 'breaststroke',
+    'Fly': 'butterfly',
+    'IM': 'medley'
+  };
+  
+  const stroke = strokeMap[strokeShort];
+  if (!stroke) return null;
+  
+  // Find matching event in database
+  const matchingEvent = allEvents.find(event => 
+    event.distance === distance && 
+    event.stroke === stroke && 
+    event.course === course &&
+    !event.isRelay
+  );
+  
+  return matchingEvent ? matchingEvent.id : null;
+}
+
 // Helper function to properly parse CSV lines with quoted fields
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -54,18 +86,24 @@ export default function SwimmersPage() {
   const [editingSwimmer, setEditingSwimmer] = useState<Swimmer | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResults, setUploadResults] = useState<{ success: number, errors: string[] } | null>(null);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    const loadSwimmers = async () => {
+    const loadData = async () => {
       try {
-        const swimmerData = await fetchSwimmers();
+        const [swimmerData, eventsData] = await Promise.all([
+          fetchSwimmers(),
+          fetch('/api/admin/events').then(res => res.json())
+        ]);
         setSwimmers(swimmerData);
+        setAllEvents(eventsData);
         setLoading(false);
       } catch (error) {
-        console.error('Error loading swimmers:', error);
+        console.error('Error loading data:', error);
+        setLoading(false);
       }
     };
-    loadSwimmers();
+    loadData();
   }, []);
 
   const handleAddSwimmer = () => {
@@ -231,10 +269,25 @@ export default function SwimmersPage() {
                 meetDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
               }
 
-              // Find matching event by name (this is simplified - you might want more sophisticated matching)
+              // Determine course type from time suffix
+              let courseType = 'SCY'; // default
+              if (bestTime.endsWith('L')) {
+                courseType = 'LCM';
+              } else if (bestTime.endsWith('S')) {
+                courseType = 'SCM';
+              }
+
+              // Map event name to event ID
+              const eventId = mapTeamUnifyEventToId(eventName.trim(), courseType, allEvents);
+              
+              if (!eventId) {
+                results.errors.push(`Row ${i + 1}: Could not find matching event for "${eventName}" in ${courseType}`);
+                continue;
+              }
+
               const timeRecordData = {
                 swimmerId: currentSwimmerId,
-                eventId: 'unknown', // You'll need to map event names to event IDs
+                eventId: eventId,
                 time: bestTime.replace(/[SLF]$/, ''), // Remove suffix
                 meetName: meetName.trim(),
                 meetDate,
@@ -266,6 +319,10 @@ export default function SwimmersPage() {
       // Reload swimmers to show newly imported ones
       const updatedSwimmers = await fetchSwimmers();
       setSwimmers(updatedSwimmers);
+      
+      // Add summary of time records created
+      const timeRecordsCreated = results.success; // This will be updated as we process time records
+      results.errors.unshift(`Successfully processed ${timeRecordsCreated} swimmers with their time records`);
     } catch (error) {
       console.error('Error processing Team Unify file:', error);
       alert('Error processing file. Please check the file format.');
