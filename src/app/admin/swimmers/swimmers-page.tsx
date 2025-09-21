@@ -10,6 +10,43 @@ import {getColumns} from "@/app/admin/swimmers/columns";
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
+// Helper function to properly parse CSV lines with quoted fields
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < line.length) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Handle escaped quotes ("")
+        current += '"';
+        i += 2;
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+        i++;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // End of field
+      result.push(current.trim());
+      current = '';
+      i++;
+    } else {
+      current += char;
+      i++;
+    }
+  }
+  
+  // Add the last field
+  result.push(current.trim());
+  
+  return result;
+}
+
 export default function SwimmersPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
@@ -95,8 +132,8 @@ export default function SwimmersPage() {
         if (!line) continue;
         console.log(i, line);
 
-        // Split by comma but handle quoted values
-        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        // Parse CSV line properly handling quoted fields
+        const values = parseCSVLine(line);
         
         if (values[0] === 'Rank') {
           // Skip header row
@@ -272,7 +309,7 @@ export default function SwimmersPage() {
       const results = {success: 0, errors: [] as string[]};
 
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const values = parseCSVLine(lines[i]);
         const row: Record<string, string> = {};
 
         headers.forEach((header, index) => {
