@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SwimEvent } from '@/lib/types';
+import {Meet, SwimEvent} from '@/lib/types';
 import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets } from '@/lib/api';
 
 interface Swimmer {
@@ -24,11 +24,12 @@ interface SwimmerMeetEvent {
 
 interface EventSelectionProps {
   swimmer: Swimmer;
+  meet: Meet;
   availableEvents: SwimEvent[];
   onClose: () => void;
 }
 
-export default function EventSelection({ swimmer, availableEvents, onClose }: EventSelectionProps) {
+export default function EventSelection({ swimmer, meet, availableEvents, onClose }: EventSelectionProps) {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [seedTimes, setSeedTimes] = useState<Record<string, string>>({});
   const [activeMeetId, setActiveMeetId] = useState<string | null>(null);
@@ -45,19 +46,19 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
       setLoading(true);
       try {
         // Get the active meet
-        const meets = await fetchMeets();
-        const activeMeet = meets.find(m => m.isActive);
-        
-        if (!activeMeet) {
-          console.error('No active meet found');
-          setLoading(false);
-          return;
-        }
-        
-        setActiveMeetId(activeMeet.id);
+        // const meets = await fetchMeets();
+        // const activeMeet = meets.find(m => m.isActive);
+        //
+        // if (!activeMeet) {
+        //   console.error('No active meet found');
+        //   setLoading(false);
+        //   return;
+        // }
+        //
+        setActiveMeetId(meet.id);
         
         // Load swimmer's event selections for this meet
-        const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, activeMeet.id);
+        const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, meet.id);
         const eventIds = swimmerMeetEvents.map(sme => sme.eventId);
         const seedTimesMap = swimmerMeetEvents.reduce((acc, sme) => {
           if (sme.seedTime) {
@@ -87,7 +88,7 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
     };
 
     loadSwimmerData();
-  }, [swimmer]);
+  }, [meet.id, swimmer]);
 
   const handleEventToggle = (eventId: string) => {
     setSelectedEvents(prev => 
@@ -291,14 +292,14 @@ export default function EventSelection({ swimmer, availableEvents, onClose }: Ev
                             </label>
                             <input
                               type="text"
-                              value={seedTime || ''}
+                              value={seedTime || 'NTY'}
                               onChange={(e) => setSeedTimes(prev => ({
                                 ...prev,
                                 [event.id]: e.target.value
                               }))}
                               placeholder="MM:SS.ss or NT"
                               className="w-24 px-2 py-1 text-sm border border-gray-300 rounded text-center"
-                              disabled={!isSelected}
+                              disabled={true}
                             />
                           </div>
                         )}

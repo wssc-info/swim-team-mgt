@@ -22,7 +22,7 @@ export class D0Record {
     const futureUseD0_2 = ''.padEnd(4, ' '); // positions 73-76
     const eventAgeCode = getAgeCode(swimmer.ageGroup); // positions 77-80
     const dateOfSwim = meetDate; // positions 81-88
-    const seedTimeD0 = timeToSdifFormat(seedTime || 'NT'); // positions 89-96
+    const seedTimeD0 = (seedTime || 'NTY').padStart(8, ' ');//timeToSdifFormat(seedTime || 'NTY').padStart(8, ' '); // positions 89-96
     const courseCodeD0_1 = getCourseCode(event.course); // position 97
     const prelimTime = ''.padEnd(8, ' '); // positions 98-105
     const courseCodeD0_2 = ''.padEnd(1, ' '); // position 106
@@ -41,6 +41,6 @@ export class D0Record {
     const flightStatus = ''.padEnd(1, ' '); // position 145
     const futureUseD0_3 = ''.padEnd(15, ' '); // positions 146-160
     
-    return `D0001${futureUseD0_1}${swimmerName}${ussNumber}${attachCode}${citizenCode}${swimmerBirthDate}${swimmerAgeClass}${sexCode}${eventSexCode}${eventDistance}${strokeCode}${futureUseD0_2}${eventAgeCode}${dateOfSwim}${seedTimeD0}${courseCodeD0_1}${prelimTime}${courseCodeD0_2}${swimOffTime}${courseCodeD0_3}${finalsTime}${courseCodeD0_4}${prelimHeat}${prelimLane}${finalsHeat}${finalsLane}${prelimPlace}${finalsPlace}${pointsScored}${eventTimeClass}${flightStatus}${futureUseD0_3}\n`;
+    return `D01${futureUseD0_1}${swimmerName}${ussNumber}${attachCode}${citizenCode}${swimmerBirthDate}${swimmerAgeClass}${sexCode}${eventSexCode}${eventDistance}${strokeCode}${futureUseD0_2}${eventAgeCode}${dateOfSwim}${seedTimeD0}${courseCodeD0_1}${prelimTime}${courseCodeD0_2}${swimOffTime}${courseCodeD0_3}${finalsTime}${courseCodeD0_4}${prelimHeat}${prelimLane}${finalsHeat}${finalsLane}${prelimPlace}${finalsPlace}${pointsScored}${eventTimeClass}${flightStatus}${futureUseD0_3}\n`;
   }
 }

@@ -13,7 +13,7 @@ export class Z0Record {
   }): string {
     // Z0 + Org + future use + file code + notes + B records + meets + C records + teams + D records + swimmers + E records + F records + G records + batch + new members + renew members + member changes + member deletes + future use
     
-    const orgCode = '001'; // position 3
+    const orgCode = '1'; // position 3
     const futureUse1 = ''.padEnd(8, ' '); // positions 4-11, future use
     const fileCode = '01'; // positions 12-13, FILE Code 003 (01 = meet results)
     const notes = ''.padEnd(30, ' '); // positions 14-43, notes

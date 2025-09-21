@@ -1,16 +1,18 @@
 "use client"
 
-import {ColumnDef} from "@tanstack/react-table"
-import {SwimEvent, Swimmer} from "@/lib/types";
-import {ArrowUpDown, FilterIcon, MoreHorizontal} from "lucide-react";
+import {Column, ColumnDef} from "@tanstack/react-table"
+import {SwimEvent} from "@/lib/types";
+import {ArrowDownAZ, ArrowDownZA, ArrowUpDown, MoreHorizontal} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuCheckboxItem,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {buildFilter} from "@/components/datatable/buildFilter";
+import {buildSort} from "@/components/datatable/buildSort";
 
 const getStrokeColor = (stroke: string) => {
   const colors = {
@@ -23,41 +25,6 @@ const getStrokeColor = (stroke: string) => {
   return colors[stroke as keyof typeof colors] || 'bg-gray-100 text-gray-800';
 };
 
-const buildFilter = (column: any, filters: { value: any, text: string }[]) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="px-1!">
-          <FilterIcon className="h-2 w-2"/>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {filters.map((filter) => {
-          return (
-            <DropdownMenuCheckboxItem
-              key={filter.value}
-              className="capitalize"
-              checked={column.getFilterValue() === filter.value}
-              onCheckedChange={
-                (value) => {
-                  if (value) {
-                    column?.setFilterValue(filter.value)
-                  } else {
-                    column?.setFilterValue(undefined);
-                  }
-                }
-              }
-            >
-              {filter.text}
-            </DropdownMenuCheckboxItem>
-          );
-        })
-        }
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
 export const getColumns = (editFunction: (swimEvent: SwimEvent) => void,
                            deleteFunction: (id: string) => void): ColumnDef<SwimEvent>[] => {
   return [
@@ -67,13 +34,7 @@ export const getColumns = (editFunction: (swimEvent: SwimEvent) => void,
         return (
           <>
             Event Name
-            <Button
-              variant="ghost"
-              className="px-1!"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              <ArrowUpDown className="h-4 w-4"/>
-            </Button>
+            {buildSort(column)}
           </>
         );
       }
@@ -99,13 +60,7 @@ export const getColumns = (editFunction: (swimEvent: SwimEvent) => void,
         return (
           <>
             Distance
-            <Button
-              variant="ghost"
-              className="px-1!"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              <ArrowUpDown className="h-4 w-4"/>
-            </Button>
+            {buildSort(column)}
           </>
         );
       }

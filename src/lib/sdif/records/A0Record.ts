@@ -5,7 +5,7 @@ export class A0Record {
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
     
     // A0 + Org + SDIF Version + File Code + future use + software name + software version + contact name + contact phone + file creation date + future use + LSC + future use
-    const orgCode = '001'; // position 3, ORG Code 001
+    const orgCode = '1'; // position 3, ORG Code 001
     const sdifVersion = 'V3      '; // positions 4-11, SDIF version number (8 chars)
     const fileCode = '01'; // positions 12-13, FILE Code 003 (01 = meet results)
     const futureUse1 = ''.padEnd(30, ' '); // positions 14-43, future use

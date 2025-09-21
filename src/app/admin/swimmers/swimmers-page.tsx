@@ -1,15 +1,14 @@
 'use client';
 
-import {useState, useEffect} from 'react';
-import {fetchSwimmers, deleteSwimmerApi} from '@/lib/api';
+import {useEffect, useState} from 'react';
+import {deleteSwimmerApi, fetchSwimmers} from '@/lib/api';
 import SwimmerForm from '@/components/SwimmerForm';
 import {Swimmer} from '@/lib/types';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
-import {DataTable} from "@/app/admin/swimmers/dataTable";
+import {DataTable} from "@/components/datatable/dataTable";
 import {getColumns} from "@/app/admin/swimmers/columns";
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {Table} from "lucide-react";
 
 export default function SwimmersPage() {
   const [loading, setLoading] = useState<boolean>(true);

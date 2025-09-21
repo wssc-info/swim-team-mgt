@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
-
+console.log(user);
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

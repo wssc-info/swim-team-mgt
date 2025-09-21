@@ -5,7 +5,7 @@ export class F0Record {
   static generate(swimmer: Swimmer, team: RelayTeam, clubAbbrev: string, legOrder: number): string {
     // F0 + Org + future use + team code + relay team name + swimmer name + USS# + citizen + birth date + age/class + sex + prelim order + swim-off order + finals order + leg time + course + take-off time + USS# (new) + preferred first name + future use
     
-    const orgCode = '001'; // position 3
+    const orgCode = '1'; // position 3
     const futureUse1 = ''.padEnd(12, ' '); // positions 4-15, future use
     const teamCode = clubAbbrev.padEnd(6, ' ').substring(0, 6); // positions 16-21
     const relayTeamName = team.name.substring(0, 1).padEnd(1, ' '); // position 22, one alpha char

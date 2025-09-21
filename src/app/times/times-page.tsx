@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi, fetchAllEvents } from '@/lib/api';
+import {useState, useEffect} from 'react';
+import {fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi, fetchAllEvents} from '@/lib/api';
 import TimeRecordForm from '@/components/TimeRecordForm';
-import { Swimmer, TimeRecord, SwimEvent } from '@/lib/types';
-import { useAuth } from '@/lib/auth-context';
+import {Swimmer, TimeRecord, SwimEvent} from '@/lib/types';
+import {useAuth} from '@/lib/auth-context';
+import {DataTable} from "@/components/datatable/dataTable";
+import {getColumns} from "@/app/times/columns";
 
 export default function TimesPage() {
-  const { user } = useAuth();
+  const {user} = useAuth();
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [timeRecords, setTimeRecords] = useState<TimeRecord[]>([]);
   const [selectedSwimmer, setSelectedSwimmer] = useState<string>('');
@@ -15,7 +17,7 @@ export default function TimesPage() {
   const [editingRecord, setEditingRecord] = useState<TimeRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [uploadResults, setUploadResults] = useState<{success: number, errors: string[]} | null>(null);
+  const [uploadResults, setUploadResults] = useState<{ success: number, errors: string[] } | null>(null);
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
@@ -26,18 +28,18 @@ export default function TimesPage() {
           fetchTimeRecords(),
           fetchAllEvents()
         ]);
-        
+
         // Filter swimmers to only show those for the user's club
-        const filteredSwimmers = user?.clubId 
+        const filteredSwimmers = user?.clubId
           ? swimmerData.filter(swimmer => swimmer.clubId === user.clubId)
           : swimmerData;
-        
+
         setSwimmers(filteredSwimmers);
-        
+
         // Filter time records to only show those for swimmers in the user's club
         const swimmerIds = filteredSwimmers.map(swimmer => swimmer.id);
         const filteredRecords = recordData.filter(record => swimmerIds.includes(record.swimmerId));
-        
+
         setTimeRecords(filteredRecords);
         setAllEvents(eventsData);
       } catch (error) {
@@ -46,7 +48,7 @@ export default function TimesPage() {
         setLoading(false);
       }
     };
-    
+
     if (user) {
       loadData();
     }
@@ -116,7 +118,7 @@ export default function TimesPage() {
     try {
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim());
-      
+
       if (lines.length < 2) {
         alert('CSV file must have at least a header row and one data row');
         return;
@@ -124,19 +126,19 @@ export default function TimesPage() {
 
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
       const requiredHeaders = ['swimmer', 'event', 'time', 'meet', 'date'];
-      
+
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
       if (missingHeaders.length > 0) {
         alert(`CSV file is missing required columns: ${missingHeaders.join(', ')}\nRequired columns: swimmer, event, time, meet, date`);
         return;
       }
 
-      const results = { success: 0, errors: [] as string[] };
+      const results = {success: 0, errors: [] as string[]};
 
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         const row: Record<string, string> = {};
-        
+
         headers.forEach((header, index) => {
           row[header] = values[index] || '';
         });
@@ -144,7 +146,7 @@ export default function TimesPage() {
         try {
           // Find swimmer by name (only from filtered swimmers in user's club)
           const swimmerName = row.swimmer;
-          const swimmer = swimmers.find(s => 
+          const swimmer = swimmers.find(s =>
             `${s.firstName} ${s.lastName}`.toLowerCase() === swimmerName.toLowerCase() ||
             `${s.lastName}, ${s.firstName}`.toLowerCase() === swimmerName.toLowerCase()
           );
@@ -156,7 +158,7 @@ export default function TimesPage() {
 
           // Find event by name
           const eventName = row.event;
-          const event = allEvents.find(e => 
+          const event = allEvents.find(e =>
             e.name.toLowerCase().includes(eventName.toLowerCase()) ||
             eventName.toLowerCase().includes(e.name.toLowerCase())
           );
@@ -221,19 +223,9 @@ export default function TimesPage() {
     }
   };
 
-  const filteredRecords = selectedSwimmer 
+  const filteredRecords = selectedSwimmer
     ? timeRecords.filter(record => record.swimmerId === selectedSwimmer)
     : timeRecords;
-
-  const getSwimmerName = (swimmerId: string) => {
-    const swimmer = swimmers.find(s => s.id === swimmerId);
-    return swimmer ? `${swimmer.firstName} ${swimmer.lastName}` : 'Unknown Swimmer';
-  };
-
-  const getEventName = (eventId: string) => {
-    const event = allEvents.find(e => e.id === eventId);
-    return event ? `${event.name} (${event.course})` : 'Unknown Event';
-  };
 
   if (loading) {
     return (
@@ -306,28 +298,6 @@ export default function TimesPage() {
         </p>
       </div>
 
-      {/* Swimmer Filter */}
-      <div className="mb-6 bg-white rounded-lg shadow p-4">
-        <label htmlFor="swimmerFilter" className="block text-sm font-medium text-gray-700 mb-2">
-          Filter by Swimmer
-        </label>
-        <select
-          id="swimmerFilter"
-          value={selectedSwimmer}
-          onChange={(e) => handleSwimmerChange(e.target.value)}
-          className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All Swimmers</option>
-          {swimmers
-            .sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))
-            .map(swimmer => (
-              <option key={swimmer.id} value={swimmer.id}>
-                {swimmer.lastName}, {swimmer.firstName} ({swimmer.ageGroup})
-              </option>
-            ))}
-        </select>
-      </div>
-
       {/* Time Record Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -342,7 +312,7 @@ export default function TimesPage() {
       )}
 
       {/* Time Records List */}
-      {filteredRecords.length === 0 ? (
+      {timeRecords.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-500 mb-4">
             {selectedSwimmer ? 'No time records found for this swimmer.' : 'No time records found.'}
@@ -355,84 +325,15 @@ export default function TimesPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Swimmer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Event
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Meet
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredRecords.map((record) => (
-                  <tr key={record.id} className={record.isPersonalBest ? 'bg-yellow-50' : ''}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {getSwimmerName(record.swimmerId)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {getEventName(record.eventId)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className={`text-sm font-medium ${record.isPersonalBest ? 'text-yellow-600' : 'text-gray-900'}`}>
-                          {record.time}
-                        </span>
-                        {record.isPersonalBest && (
-                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            PB
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{record.meetName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {new Date(record.meetDate).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEditRecord(record)}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRecord(record.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable columns={
+          getColumns(
+            handleEditRecord,
+            handleDeleteRecord,
+            swimmers,
+            allEvents,
+            timeRecords)}
+          data={timeRecords}></DataTable>
+
       )}
     </div>
   );

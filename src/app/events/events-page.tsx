@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents } from '@/lib/api';
-import { SwimEvent } from '@/lib/types';
+import {Meet, SwimEvent} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
@@ -27,15 +27,6 @@ interface SwimmerWithEvents extends Swimmer {
   selectedEvents?: string[];
 }
 
-interface Meet {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  availableEvents: string[];
-  isActive: boolean;
-  createdAt: string;
-}
 
 export function EventsPage() {
   const { user } = useAuth();
@@ -57,8 +48,9 @@ export function EventsPage() {
         const filteredMeets = user?.clubId 
           ? meetData.filter(meet => meet.clubId === user.clubId)
           : meetData;
-        
+
         const active = filteredMeets.find(m => m.isActive) || null;
+
         setActiveMeet(active);
         setAllEvents(eventsData);
 
@@ -221,6 +213,7 @@ export function EventsPage() {
           <div className="bg-white p-6 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <EventSelection
               swimmer={selectedSwimmer}
+              meet={activeMeet}
               availableEvents={availableEvents}
               onClose={handleEventSelectionClose}
             />
@@ -319,13 +312,5 @@ export function EventsPage() {
           .filter(Boolean)}
       </Accordion>
     </div>
-  );
-}
-
-export default function ProtectedEventsPage() {
-  return (
-    <ProtectedRoute allowedRoles={['coach', 'family']}>
-      <EventsPage />
-    </ProtectedRoute>
   );
 }

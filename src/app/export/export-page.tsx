@@ -39,7 +39,6 @@ export default function ExportPage() {
   const [meets, setMeets] = useState<Meet[]>([]);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
-  // const [relayTeams, setRelayTeams] = useState<RelayTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportData, setExportData] = useState<{

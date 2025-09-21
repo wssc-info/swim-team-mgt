@@ -1,9 +1,9 @@
 // Convert time string (MM:SS.ss) to centiseconds for SDIF format
 export function timeToSdifFormat(timeString: string): string {
-  if (!timeString || timeString === 'NT') return '9999999';
+  if (!timeString || timeString === 'NTY') return 'NTY';
   
   const parts = timeString.split(':');
-  if (parts.length !== 2) return '9999999';
+  if (parts.length !== 2) return 'NTY';
   
   const minutes = parseInt(parts[0]) || 0;
   const secondsParts = parts[1].split('.');

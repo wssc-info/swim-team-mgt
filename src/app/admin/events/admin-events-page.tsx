@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { SwimEvent } from '@/lib/types';
+import {useEffect, useState} from 'react';
+import {SwimEvent} from '@/lib/types';
 import EventForm from '@/components/EventForm';
-import { authenticatedFetch, seedEventsApi } from "@/lib/api";
-import {DataTable} from "@/app/admin/swimmers/dataTable";
+import {authenticatedFetch, seedEventsApi} from "@/lib/api";
+import {DataTable} from "@/components/datatable/dataTable";
 import {getColumns} from "@/app/admin/events/columns";
 
 export default function AdminEventsPage() {

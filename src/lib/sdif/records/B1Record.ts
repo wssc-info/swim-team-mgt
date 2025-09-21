@@ -1,6 +1,7 @@
 
 // B1 -- Meet Record
 import {Meet} from "@/lib/types";
+import {getCourseCode} from "@/lib/sdif/utils";
 
 export class B1Record {
   static generate(meet: Meet): string {
@@ -20,9 +21,9 @@ export class B1Record {
     const endDate = meetDate; // positions 130-137
     const altitude = ''.padEnd(4, ' '); // positions 138-141
     const futureUse2 = ''.padEnd(8, ' '); // positions 142-149
-    const courseCode = 'Y'; // position 150, Y=SCY, L=LCM, S=SCM
+    const courseCode = getCourseCode(meet.course); // position 150, Y=SCY, L=LCM, S=SCM
     const futureUse3 = ''.padEnd(10, ' '); // positions 151-160
-    
-    return `B1001${futureUse1}${meetNameB1}${meetAddress1}${meetAddress2}${meetCity}${meetState}${postalCode}${countryCode}${meetType}${startDate}${endDate}${altitude}${futureUse2}${courseCode}${futureUse3}\n`;
+
+    return `B11${futureUse1}${meetNameB1}${meetAddress1}${meetAddress2}${meetCity}${meetState}${postalCode}${countryCode}${meetType}${startDate}${endDate}${altitude}${futureUse2}${courseCode}${futureUse3}\n`;
   }
 }

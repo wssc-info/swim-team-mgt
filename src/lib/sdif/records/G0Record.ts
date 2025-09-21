@@ -11,7 +11,7 @@ export class G0Record {
   ): string {
     // G0 + Org + future use + swimmer name + USS# + sequence + total splits + split distance + split code + split times (10) + prelims/finals + future use
     
-    const orgCode = '001'; // position 3
+    const orgCode = '1'; // position 3
     const futureUse1 = ''.padEnd(12, ' '); // positions 4-15, future use
     const swimmerName = `${swimmer.lastName.padEnd(20, ' ').substring(0, 20)}${swimmer.firstName.padEnd(8, ' ').substring(0, 8)}`.padEnd(28, ' ').substring(0, 28); // positions 16-43
     const ussNumber = swimmer.id.substring(0, 12).padEnd(12, ' '); // positions 44-55

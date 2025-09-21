@@ -6,7 +6,7 @@ export class E0Record {
   static generate(team: RelayTeam, event: any, clubAbbrev: string, meetDate: string, numF0Records: number): string {
     // E0 + Org + future use + relay team name + team code + num F0 records + event sex + distance + stroke + event number + event age + total age + date of swim + seed time + course + prelim time + course + swim-off time + course + finals time + course + prelim heat + prelim lane + finals heat + finals lane + prelim place + finals place + points + time class + future use
     
-    const orgCode = '001'; // position 3
+    const orgCode = '1'; // position 3
     const futureUse1 = ''.padEnd(8, ' '); // positions 4-11, future use
     const relayTeamName = team.name.substring(0, 1).padEnd(1, ' '); // position 12, one alpha char
     const teamCode = clubAbbrev.padEnd(6, ' ').substring(0, 6); // positions 13-18
