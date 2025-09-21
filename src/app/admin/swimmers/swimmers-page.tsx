@@ -65,6 +65,175 @@ export default function SwimmersPage() {
     }
   };
 
+  const handleTeamUnifyUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Please select a CSV file');
+      return;
+    }
+
+    setUploading(true);
+    setUploadResults(null);
+
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+
+      if (lines.length < 2) {
+        alert('CSV file must have at least a header row and one data row');
+        return;
+      }
+
+      const results = {success: 0, errors: [] as string[]};
+      let currentSwimmer: any = null;
+      let currentSwimmerId: string | null = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        // Split by comma but handle quoted values
+        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        
+        if (values[0] === 'Rank') {
+          // Skip header row
+          continue;
+        }
+
+        if (values[0] !== '1') {
+          // This is swimmer data
+          const swimmerInfo = values[0];
+          
+          // Parse swimmer info: "LastName, FirstName: MM/DD/YYYY (Gender Age) ExternalId"
+          const match = swimmerInfo.match(/^(.+?),\s*(.+?):\s*(\d{2}\/\d{2}\/\d{4})\s*\((\w+)\s+\d+\)\s*(.+)$/);
+          
+          if (!match) {
+            results.errors.push(`Row ${i + 1}: Could not parse swimmer info: ${swimmerInfo}`);
+            continue;
+          }
+
+          const [, lastName, firstName, dateStr, gender, externalId] = match;
+          
+          // Convert date from MM/DD/YYYY to YYYY-MM-DD
+          const [month, day, year] = dateStr.split('/');
+          const dateOfBirth = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          
+          // Normalize gender
+          const normalizedGender = gender.toLowerCase().startsWith('boy') || gender.toLowerCase() === 'm' ? 'M' : 'F';
+
+          // Check if swimmer already exists
+          const existingSwimmer = swimmers.find(s =>
+            s.firstName.toLowerCase() === firstName.toLowerCase() &&
+            s.lastName.toLowerCase() === lastName.toLowerCase() &&
+            new Date(s.dateOfBirth).getTime() === new Date(dateOfBirth).getTime()
+          );
+
+          if (existingSwimmer) {
+            currentSwimmer = existingSwimmer;
+            currentSwimmerId = existingSwimmer.id;
+          } else {
+            // Create new swimmer
+            try {
+              const swimmerData = {
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+                dateOfBirth,
+                gender: normalizedGender,
+                externalId: externalId.trim()
+              };
+
+              const response = await fetch('/api/swimmers', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(swimmerData),
+              });
+
+              if (!response.ok) {
+                const error = await response.text();
+                results.errors.push(`Row ${i + 1}: Failed to create swimmer - ${error}`);
+                currentSwimmer = null;
+                currentSwimmerId = null;
+                continue;
+              }
+
+              const newSwimmer = await response.json();
+              currentSwimmer = newSwimmer;
+              currentSwimmerId = newSwimmer.id;
+              results.success++;
+            } catch (error) {
+              results.errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error creating swimmer'}`);
+              currentSwimmer = null;
+              currentSwimmerId = null;
+            }
+          }
+        } else if (values[0] === '1' && currentSwimmerId) {
+          // This is a time record for the current swimmer
+          const [, eventName, bestTime, , dateStr, meetName] = values;
+          
+          if (!eventName || !bestTime || !dateStr || !meetName) {
+            continue; // Skip incomplete records
+          }
+
+          // Skip if time is not valid (contains 'S' suffix, etc.)
+          const timeMatch = bestTime.match(/^(\d+:)?(\d+\.\d+)/);
+          if (!timeMatch) {
+            continue;
+          }
+
+          try {
+            // Convert date from MM/DD/YYYY to YYYY-MM-DD
+            let meetDate = dateStr;
+            if (dateStr.includes('/')) {
+              const [month, day, year] = dateStr.split('/');
+              meetDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+
+            // Find matching event by name (this is simplified - you might want more sophisticated matching)
+            const timeRecordData = {
+              swimmerId: currentSwimmerId,
+              eventId: 'unknown', // You'll need to map event names to event IDs
+              time: bestTime.replace(/[SLF]$/, ''), // Remove suffix
+              meetName: meetName.trim(),
+              meetDate,
+              isPersonalBest: true // Assuming Team Unify exports are best times
+            };
+
+            const response = await fetch('/api/times', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(timeRecordData),
+            });
+
+            if (!response.ok) {
+              const error = await response.text();
+              results.errors.push(`Row ${i + 1}: Failed to create time record for ${eventName} - ${error}`);
+            }
+          } catch (error) {
+            results.errors.push(`Row ${i + 1}: Error processing time record - ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        }
+      }
+
+      setUploadResults(results);
+      // Reload swimmers to show newly imported ones
+      const updatedSwimmers = await fetchSwimmers();
+      setSwimmers(updatedSwimmers);
+    } catch (error) {
+      console.error('Error processing Team Unify file:', error);
+      alert('Error processing file. Please check the file format.');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -259,6 +428,16 @@ export default function SwimmersPage() {
               className="hidden"
             />
           </label>
+          <label className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 cursor-pointer">
+            {uploading ? 'Uploading...' : 'Import Team Unify'}
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleTeamUnifyUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
           <button
             onClick={handleAddSwimmer}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -310,18 +489,33 @@ export default function SwimmersPage() {
       <DataTable columns={getColumns(handleEditSwimmer, handleDeleteSwimmer)} data={swimmers} filters={createFilters}/>
 
 
-      {/* CSV Format Help */}
-      <div className="mb-6 bg-blue-50 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-800 mb-2">CSV Import Format</h3>
-        <p className="text-sm text-blue-700 mb-2">
-          Your CSV file should have these columns: <code>firstname, lastname, dateofbirth, gender</code>
-        </p>
-        <p className="text-sm text-blue-700 mb-2">
-          Optional columns: <code>externalid</code>
-        </p>
-        <p className="text-xs text-blue-600">
-          Example: &#34;John, Smith, 2010-05-15, Male, USA123456&#34;
-        </p>
+      {/* Import Format Help */}
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-blue-50 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-blue-800 mb-2">CSV Import Format</h3>
+          <p className="text-sm text-blue-700 mb-2">
+            Your CSV file should have these columns: <code>firstname, lastname, dateofbirth, gender</code>
+          </p>
+          <p className="text-sm text-blue-700 mb-2">
+            Optional columns: <code>externalid</code>
+          </p>
+          <p className="text-xs text-blue-600">
+            Example: &#34;John, Smith, 2010-05-15, Male, USA123456&#34;
+          </p>
+        </div>
+        
+        <div className="bg-purple-50 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-purple-800 mb-2">Team Unify Import Format</h3>
+          <p className="text-sm text-purple-700 mb-2">
+            Import swimmers and their best times from Team Unify export files.
+          </p>
+          <p className="text-sm text-purple-700 mb-2">
+            Format: Swimmer info in first column, times in subsequent rows with "1" in first column.
+          </p>
+          <p className="text-xs text-purple-600">
+            Creates both swimmer records and time records automatically.
+          </p>
+        </div>
       </div>
     </div>
   );
