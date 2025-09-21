@@ -93,6 +93,7 @@ export default function SwimmersPage() {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
+        console.log(i, line);
 
         // Split by comma but handle quoted values
         const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
@@ -105,10 +106,10 @@ export default function SwimmersPage() {
         if (values[0] !== '1') {
           // This is swimmer data
           const swimmerInfo = values[0];
-          
+          console.log(swimmerInfo);
           // Parse swimmer info: "LastName, FirstName: MM/DD/YYYY (Gender Age) ExternalId"
           const match = swimmerInfo.match(/^(.+?),\s*(.+?):\s*(\d{2}\/\d{2}\/\d{4})\s*\((\w+)\s+\d+\)\s*(.+)$/);
-          
+
           if (!match) {
             results.errors.push(`Row ${i + 1}: Could not parse swimmer info: ${swimmerInfo}`);
             continue;
@@ -170,52 +171,56 @@ export default function SwimmersPage() {
               currentSwimmerId = null;
             }
           }
-        } else if (values[0] === '1' && currentSwimmerId) {
-          // This is a time record for the current swimmer
-          const [, eventName, bestTime, , dateStr, meetName] = values;
-          
-          if (!eventName || !bestTime || !dateStr || !meetName) {
-            continue; // Skip incomplete records
-          }
+        } else if (values[0] === '1') {
+          if (currentSwimmerId) {
+            // This is a time record for the current swimmer
+            const [, eventName, bestTime, , dateStr, meetName] = values;
 
-          // Skip if time is not valid (contains 'S' suffix, etc.)
-          const timeMatch = bestTime.match(/^(\d+:)?(\d+\.\d+)/);
-          if (!timeMatch) {
-            continue;
-          }
-
-          try {
-            // Convert date from MM/DD/YYYY to YYYY-MM-DD
-            let meetDate = dateStr;
-            if (dateStr.includes('/')) {
-              const [month, day, year] = dateStr.split('/');
-              meetDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            if (!eventName || !bestTime || !dateStr || !meetName) {
+              continue; // Skip incomplete records
             }
 
-            // Find matching event by name (this is simplified - you might want more sophisticated matching)
-            const timeRecordData = {
-              swimmerId: currentSwimmerId,
-              eventId: 'unknown', // You'll need to map event names to event IDs
-              time: bestTime.replace(/[SLF]$/, ''), // Remove suffix
-              meetName: meetName.trim(),
-              meetDate,
-              isPersonalBest: true // Assuming Team Unify exports are best times
-            };
-
-            const response = await fetch('/api/times', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(timeRecordData),
-            });
-
-            if (!response.ok) {
-              const error = await response.text();
-              results.errors.push(`Row ${i + 1}: Failed to create time record for ${eventName} - ${error}`);
+            // Skip if time is not valid (contains 'S' suffix, etc.)
+            const timeMatch = bestTime.match(/^(\d+:)?(\d+\.\d+)/);
+            if (!timeMatch) {
+              continue;
             }
-          } catch (error) {
-            results.errors.push(`Row ${i + 1}: Error processing time record - ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+            try {
+              // Convert date from MM/DD/YYYY to YYYY-MM-DD
+              let meetDate = dateStr;
+              if (dateStr.includes('/')) {
+                const [month, day, year] = dateStr.split('/');
+                meetDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+              }
+
+              // Find matching event by name (this is simplified - you might want more sophisticated matching)
+              const timeRecordData = {
+                swimmerId: currentSwimmerId,
+                eventId: 'unknown', // You'll need to map event names to event IDs
+                time: bestTime.replace(/[SLF]$/, ''), // Remove suffix
+                meetName: meetName.trim(),
+                meetDate,
+                isPersonalBest: true // Assuming Team Unify exports are best times
+              };
+
+              const response = await fetch('/api/times', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(timeRecordData),
+              });
+
+              if (!response.ok) {
+                const error = await response.text();
+                results.errors.push(`Row ${i + 1}: Failed to create time record for ${eventName} - ${error}`);
+              }
+            } catch (error) {
+              results.errors.push(`Row ${i + 1}: Error processing time record - ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+          } else {
+            results.errors.push(`Row ${i + 1}: Skipped, no Swimmer context for time record`);
           }
         }
       }
