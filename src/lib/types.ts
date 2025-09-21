@@ -6,6 +6,7 @@ export interface Swimmer {
   gender: 'M' | 'F';
   ageGroup: string;
   clubId?: string;
+  externalId?: string;
 }
 
 export interface SwimmerMeetEvent {

@@ -13,6 +13,7 @@ interface SwimmerAttributes {
   gender: 'M' | 'F';
   ageGroup: string;
   clubId?: string;
+  externalId?: string;
 }
 
 type SwimmerCreationAttributes = Optional<SwimmerAttributes, 'id'>
@@ -26,6 +27,7 @@ export class SwimmerModel extends Model<SwimmerAttributes, SwimmerCreationAttrib
   declare gender: 'M' | 'F';
   declare ageGroup: string;
   declare clubId?: string;
+  declare externalId?: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -66,6 +68,11 @@ SwimmerModel.init(
       },
       onDelete: 'SET NULL',
       onUpdate: 'CASCADE'
+    },
+    externalId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: false,
     },
   },
   {
