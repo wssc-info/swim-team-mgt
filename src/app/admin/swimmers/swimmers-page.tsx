@@ -58,6 +58,7 @@ export default function SwimmersPage() {
   const [editingSwimmer, setEditingSwimmer] = useState<Swimmer | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResults, setUploadResults] = useState<{ success: number, errors: string[] } | null>(null);
+  const [importProgress, setImportProgress] = useState<{ currentRow: number, totalRows: number, currentAction: string, errors: string[] } | null>(null);
   const [allEvents, setAllEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -123,9 +124,18 @@ export default function SwimmersPage() {
 
     setUploading(true);
     setUploadResults(null);
+    setImportProgress(null);
 
     try {
-      const results = await processTeamUnifyFile(file, swimmers, allEvents, user?.clubId);
+      const results = await processTeamUnifyFile(
+        file, 
+        swimmers, 
+        allEvents, 
+        user?.clubId,
+        (progress) => {
+          setImportProgress(progress);
+        }
+      );
       setUploadResults(results);
       
       // Reload swimmers to show newly imported ones
@@ -136,6 +146,7 @@ export default function SwimmersPage() {
       alert(error instanceof Error ? error.message : 'Error processing file. Please check the file format.');
     } finally {
       setUploading(false);
+      setImportProgress(null);
       // Reset file input
       event.target.value = '';
     }
@@ -355,8 +366,42 @@ export default function SwimmersPage() {
       </div>
 
 
+      {/* Import Progress */}
+      {importProgress && (
+        <div className="mb-6 bg-blue-50 rounded-lg shadow p-4">
+          <h3 className="text-lg font-semibold mb-3 text-blue-800">Team Unify Import Progress</h3>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="flex-1 bg-blue-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(importProgress.currentRow / importProgress.totalRows) * 100}%` }}
+                ></div>
+              </div>
+              <span className="text-sm font-medium text-blue-700">
+                {importProgress.currentRow} / {importProgress.totalRows}
+              </span>
+            </div>
+            <p className="text-blue-700 text-sm">{importProgress.currentAction}</p>
+            {importProgress.errors.length > 0 && (
+              <div className="max-h-32 overflow-y-auto">
+                <p className="text-red-600 font-medium text-sm">Recent Errors:</p>
+                <ul className="text-xs text-red-600 ml-4 space-y-1">
+                  {importProgress.errors.slice(-5).map((error, index) => (
+                    <li key={index} className="list-disc">{error}</li>
+                  ))}
+                </ul>
+                {importProgress.errors.length > 5 && (
+                  <p className="text-xs text-gray-500 ml-4">... and {importProgress.errors.length - 5} more errors</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Upload Results */}
-      {uploadResults && (
+      {uploadResults && !importProgress && (
         <div className="mb-6 bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-3">Import Results</h3>
           <div className="space-y-2">

@@ -237,12 +237,13 @@ async function processTimeRecord(
   await createTimeRecord(timeRecordData, results, rowIndex, eventName);
 }
 
-// Main Team Unify import function
+// Main Team Unify import function with progress callback
 export async function processTeamUnifyFile(
   file: File, 
   existingSwimmers: any[], 
   allEvents: any[],
-  userClubId?: string
+  userClubId?: string,
+  onProgress?: (progress: { currentRow: number, totalRows: number, currentAction: string, errors: string[] }) => void
 ): Promise<{ success: number, errors: string[] }> {
   const text = await file.text();
   const lines = text.split('\n').filter(line => line.trim());
@@ -254,25 +255,62 @@ export async function processTeamUnifyFile(
   const results = { success: 0, errors: [] as string[] };
   let currentSwimmer: any = null;
   let currentSwimmerId: string | null = null;
+  const totalRows = lines.length;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
+
+    // Update progress
+    if (onProgress) {
+      onProgress({
+        currentRow: i + 1,
+        totalRows,
+        currentAction: `Processing row ${i + 1} of ${totalRows}`,
+        errors: [...results.errors]
+      });
+    }
 
     // Parse CSV line properly handling quoted fields
     const values = parseCSVLine(line);
     
     if (values[0] === 'Rank') {
       // Skip header row
+      if (onProgress) {
+        onProgress({
+          currentRow: i + 1,
+          totalRows,
+          currentAction: 'Skipping header row',
+          errors: [...results.errors]
+        });
+      }
       continue;
     }
 
     if (values[0] !== '1') {
       // This is swimmer data
+      if (onProgress) {
+        onProgress({
+          currentRow: i + 1,
+          totalRows,
+          currentAction: 'Processing swimmer data...',
+          errors: [...results.errors]
+        });
+      }
+
       const swimmerInfo = parseSwimmerInfo(values[0]);
       
       if (!swimmerInfo) {
-        results.errors.push(`Row ${i + 1}: Could not parse swimmer info: ${values[0]}`);
+        const error = `Row ${i + 1}: Could not parse swimmer info: ${values[0]}`;
+        results.errors.push(error);
+        if (onProgress) {
+          onProgress({
+            currentRow: i + 1,
+            totalRows,
+            currentAction: 'Error parsing swimmer data',
+            errors: [...results.errors]
+          });
+        }
         continue;
       }
 
@@ -286,8 +324,25 @@ export async function processTeamUnifyFile(
       if (existingSwimmer) {
         currentSwimmer = existingSwimmer;
         currentSwimmerId = existingSwimmer.id;
+        if (onProgress) {
+          onProgress({
+            currentRow: i + 1,
+            totalRows,
+            currentAction: `Found existing swimmer: ${swimmerInfo.firstName} ${swimmerInfo.lastName}`,
+            errors: [...results.errors]
+          });
+        }
       } else {
         // Create new swimmer with clubId
+        if (onProgress) {
+          onProgress({
+            currentRow: i + 1,
+            totalRows,
+            currentAction: `Creating new swimmer: ${swimmerInfo.firstName} ${swimmerInfo.lastName}`,
+            errors: [...results.errors]
+          });
+        }
+
         const swimmerData = {
           ...swimmerInfo,
           ...(userClubId && { clubId: userClubId })
@@ -295,11 +350,56 @@ export async function processTeamUnifyFile(
 
         currentSwimmer = await createSwimmer(swimmerData, results, i);
         currentSwimmerId = currentSwimmer ? currentSwimmer.id : null;
+
+        if (onProgress) {
+          onProgress({
+            currentRow: i + 1,
+            totalRows,
+            currentAction: currentSwimmer ? 
+              `Successfully created swimmer: ${swimmerInfo.firstName} ${swimmerInfo.lastName}` :
+              `Failed to create swimmer: ${swimmerInfo.firstName} ${swimmerInfo.lastName}`,
+            errors: [...results.errors]
+          });
+        }
       }
     } else if (values[0] === '1') {
       // This is a time record for the current swimmer
+      if (onProgress) {
+        const eventName = values[1] || 'Unknown Event';
+        onProgress({
+          currentRow: i + 1,
+          totalRows,
+          currentAction: `Processing time record: ${eventName}`,
+          errors: [...results.errors]
+        });
+      }
+
       await processTimeRecord(values, currentSwimmerId, allEvents, results, i);
+
+      if (onProgress) {
+        onProgress({
+          currentRow: i + 1,
+          totalRows,
+          currentAction: `Completed time record processing`,
+          errors: [...results.errors]
+        });
+      }
     }
+
+    // Small delay to allow UI updates
+    if (i % 10 === 0) {
+      await new Promise(resolve => setTimeout(resolve, 1));
+    }
+  }
+
+  // Final progress update
+  if (onProgress) {
+    onProgress({
+      currentRow: totalRows,
+      totalRows,
+      currentAction: 'Import completed',
+      errors: [...results.errors]
+    });
   }
 
   // Add summary of time records created
