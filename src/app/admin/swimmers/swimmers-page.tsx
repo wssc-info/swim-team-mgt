@@ -9,38 +9,8 @@ import {DataTable} from "@/components/datatable/dataTable";
 import {getColumns} from "@/app/admin/swimmers/columns";
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-
-// Helper function to map Team Unify event names to database event IDs
-function mapTeamUnifyEventToId(eventName: string, course: string, allEvents: any[]): string | null {
-  // Parse event name: "25 Free" -> distance: 25, stroke: "Free"
-  const match = eventName.match(/^(\d+)\s+(.+)$/);
-  if (!match) return null;
-  
-  const [, distanceStr, strokeShort] = match;
-  const distance = parseInt(distanceStr);
-  
-  // Map short stroke names to full names
-  const strokeMap: Record<string, string> = {
-    'Free': 'freestyle',
-    'Back': 'backstroke',
-    'Breast': 'breaststroke',
-    'Fly': 'butterfly',
-    'IM': 'medley'
-  };
-  
-  const stroke = strokeMap[strokeShort];
-  if (!stroke) return null;
-  
-  // Find matching event in database
-  const matchingEvent = allEvents.find(event => 
-    event.distance === distance && 
-    event.stroke === stroke && 
-    event.course === course &&
-    !event.isRelay
-  );
-  
-  return matchingEvent ? matchingEvent.id : null;
-}
+import {processTeamUnifyFile} from '@/lib/team-unify-import';
+import {useAuth} from '@/lib/auth-context';
 
 // Helper function to properly parse CSV lines with quoted fields
 function parseCSVLine(line: string): string[] {
@@ -81,6 +51,7 @@ function parseCSVLine(line: string): string[] {
 }
 
 export default function SwimmersPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -154,179 +125,15 @@ export default function SwimmersPage() {
     setUploadResults(null);
 
     try {
-      const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
-
-      if (lines.length < 2) {
-        alert('CSV file must have at least a header row and one data row');
-        return;
-      }
-
-      const results = {success: 0, errors: [] as string[]};
-      let currentSwimmer: any = null;
-      let currentSwimmerId: string | null = null;
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        console.log(i, line);
-
-        // Parse CSV line properly handling quoted fields
-        const values = parseCSVLine(line);
-        
-        if (values[0] === 'Rank') {
-          // Skip header row
-          continue;
-        }
-
-        if (values[0] !== '1') {
-          // This is swimmer data
-          const swimmerInfo = values[0];
-          console.log(swimmerInfo);
-          // Parse swimmer info: "LastName, FirstName: MM/DD/YYYY (Gender Age) ExternalId"
-          const match = swimmerInfo.match(/^(.+?),\s*(.+?):\s*(\d{2}\/\d{2}\/\d{4})\s*\((\w+)\s+\d+\)\s*(.+)$/);
-
-          if (!match) {
-            results.errors.push(`Row ${i + 1}: Could not parse swimmer info: ${swimmerInfo}`);
-            continue;
-          }
-
-          const [, lastName, firstName, dateStr, gender, externalId] = match;
-          
-          // Convert date from MM/DD/YYYY to YYYY-MM-DD
-          const [month, day, year] = dateStr.split('/');
-          const dateOfBirth = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          
-          // Normalize gender
-          const normalizedGender = gender.toLowerCase().startsWith('boy') || gender.toLowerCase() === 'm' ? 'M' : 'F';
-
-          // Check if swimmer already exists
-          const existingSwimmer = swimmers.find(s =>
-            s.firstName.toLowerCase() === firstName.toLowerCase() &&
-            s.lastName.toLowerCase() === lastName.toLowerCase() &&
-            new Date(s.dateOfBirth).getTime() === new Date(dateOfBirth).getTime()
-          );
-
-          if (existingSwimmer) {
-            currentSwimmer = existingSwimmer;
-            currentSwimmerId = existingSwimmer.id;
-          } else {
-            // Create new swimmer
-            try {
-              const swimmerData = {
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                dateOfBirth,
-                gender: normalizedGender,
-                externalId: externalId.trim()
-              };
-
-              const response = await fetch('/api/swimmers', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(swimmerData),
-              });
-
-              if (!response.ok) {
-                const error = await response.text();
-                results.errors.push(`Row ${i + 1}: Failed to create swimmer - ${error}`);
-                currentSwimmer = null;
-                currentSwimmerId = null;
-                continue;
-              }
-
-              const newSwimmer = await response.json();
-              currentSwimmer = newSwimmer;
-              currentSwimmerId = newSwimmer.id;
-              results.success++;
-            } catch (error) {
-              results.errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error creating swimmer'}`);
-              currentSwimmer = null;
-              currentSwimmerId = null;
-            }
-          }
-        } else if (values[0] === '1') {
-          if (currentSwimmerId) {
-            // This is a time record for the current swimmer
-            const [, eventName, bestTime, , dateStr, meetName] = values;
-
-            if (!eventName || !bestTime || !dateStr || !meetName) {
-              continue; // Skip incomplete records
-            }
-
-            // Skip if time is not valid (contains 'S' suffix, etc.)
-            const timeMatch = bestTime.match(/^(\d+:)?(\d+\.\d+)/);
-            if (!timeMatch) {
-              continue;
-            }
-
-            try {
-              // Convert date from MM/DD/YYYY to YYYY-MM-DD
-              let meetDate = dateStr;
-              if (dateStr.includes('/')) {
-                const [month, day, year] = dateStr.split('/');
-                meetDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-              }
-
-              // Determine course type from time suffix
-              let courseType = 'SCY'; // default
-              if (bestTime.endsWith('L')) {
-                courseType = 'LCM';
-              } else if (bestTime.endsWith('S')) {
-                courseType = 'SCM';
-              }
-
-              // Map event name to event ID
-              const eventId = mapTeamUnifyEventToId(eventName.trim(), courseType, allEvents);
-              
-              if (!eventId) {
-                results.errors.push(`Row ${i + 1}: Could not find matching event for "${eventName}" in ${courseType}`);
-                continue;
-              }
-
-              const timeRecordData = {
-                swimmerId: currentSwimmerId,
-                eventId: eventId,
-                time: bestTime.replace(/[SLF]$/, ''), // Remove suffix
-                meetName: meetName.trim(),
-                meetDate,
-                isPersonalBest: true // Assuming Team Unify exports are best times
-              };
-
-              const response = await fetch('/api/times', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(timeRecordData),
-              });
-
-              if (!response.ok) {
-                const error = await response.text();
-                results.errors.push(`Row ${i + 1}: Failed to create time record for ${eventName} - ${error}`);
-              }
-            } catch (error) {
-              results.errors.push(`Row ${i + 1}: Error processing time record - ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-          } else {
-            results.errors.push(`Row ${i + 1}: Skipped, no Swimmer context for time record`);
-          }
-        }
-      }
-
+      const results = await processTeamUnifyFile(file, swimmers, allEvents, user?.clubId);
       setUploadResults(results);
+      
       // Reload swimmers to show newly imported ones
       const updatedSwimmers = await fetchSwimmers();
       setSwimmers(updatedSwimmers);
-      
-      // Add summary of time records created
-      const timeRecordsCreated = results.success; // This will be updated as we process time records
-      results.errors.unshift(`Successfully processed ${timeRecordsCreated} swimmers with their time records`);
     } catch (error) {
       console.error('Error processing Team Unify file:', error);
-      alert('Error processing file. Please check the file format.');
+      alert(error instanceof Error ? error.message : 'Error processing file. Please check the file format.');
     } finally {
       setUploading(false);
       // Reset file input
