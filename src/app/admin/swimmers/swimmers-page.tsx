@@ -47,6 +47,7 @@ function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
+
   let i = 0;
 
   while (i < line.length) {
