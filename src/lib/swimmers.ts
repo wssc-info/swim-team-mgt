@@ -12,33 +12,6 @@ const swimmerService = SwimmerService.getInstance();
 const meetService = MeetService.getInstance();
 const timeRecordService = TimeRecordService.getInstance();
 
-// Swimmer functions
-export const getSwimmers = () => swimmerService.getSwimmers();
-export const addSwimmer = (swimmer: any) => swimmerService.addSwimmer(swimmer);
-export const updateSwimmer = (id: string, updates: any) => swimmerService.updateSwimmer(id, updates);
-export const deleteSwimmer = (id: string) => swimmerService.deleteSwimmer(id);
-
-// Meet functions
-export const getMeets = () => meetService.getMeets();
-export const addMeet = (meet: any) => meetService.addMeet(meet);
-export const updateMeet = (id: string, updates: any) => meetService.updateMeet(id, updates);
-export const deleteMeet = (id: string) => meetService.deleteMeet(id);
-export const getActiveMeet = () => meetService.getActiveMeet();
-export const setActiveMeet = (id: string) => meetService.setActiveMeet(id);
-
-// Time record functions
-export const getTimeRecords = (swimmerId?: string) => timeRecordService.getTimeRecords(swimmerId);
-export const addTimeRecord = (record: any) => timeRecordService.addTimeRecord(record);
-export const updateTimeRecord = (id: string, updates: any) => timeRecordService.updateTimeRecord(id, updates);
-export const deleteTimeRecord = (id: string) => timeRecordService.deleteTimeRecord(id);
-export const getBestTimeForEvent = (swimmerId: string, eventId: string) => timeRecordService.getBestTimeForEvent(swimmerId, eventId);
-
-// Relay team functions (placeholder - implement RelayTeamService similarly)
-// export const getRelayTeams = async () => [];
-// export const addRelayTeam = async (team: any) => team;
-// export const updateRelayTeam = async (id: string, updates: any) => {};
-// export const deleteRelayTeam = async (id: string) => {};
-
 // Utility function
 export function calculateAgeGroup(dateOfBirth: string): string {
   const birthDate = new Date(dateOfBirth);

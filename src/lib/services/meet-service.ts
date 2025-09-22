@@ -22,6 +22,26 @@ export class MeetService {
     }
   }
 
+  public async getMeet(meetId: string): Promise<Meet | undefined> {
+    await this.ensureInitialized();
+      const meet = await MeetModel.findByPk(meetId);
+      if (!meet) {
+        return undefined;
+      }
+      return {
+        id: meet.id,
+        name: meet.name,
+        date: meet.date,
+        location: meet.location,
+        course: meet.course,
+        availableEvents: JSON.parse(meet.availableEvents || '[]'),
+        meetEvents: JSON.parse(meet.meetEvents || '[]'),
+        isActive: meet.isActive,
+        clubId: meet.clubId,
+        againstClubId: meet.againstClubId,
+        createdAt: (meet.createdAt || new Date()).toISOString(),
+      };
+  }
   public async getMeets(activeOnly: boolean, clubId?: string): Promise<Meet[]> {
     await this.ensureInitialized();
     try {

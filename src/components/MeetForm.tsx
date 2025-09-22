@@ -521,7 +521,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
                 <DataTable 
                   columns={meetEventColumns} 
                   data={meetEventTableData}
-                  filters={() => null}
+
                 />
               </div>
             </div>

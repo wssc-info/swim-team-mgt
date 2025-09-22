@@ -18,8 +18,7 @@ export async function POST(request: NextRequest) {
     
     let selectedMeet = null;
     if (meetId) {
-      const meets = await meetService.getMeets();
-      selectedMeet = meets.find(m => m.id === meetId);
+      selectedMeet = await meetService.getMeet(meetId);
       if (!selectedMeet) {
         return NextResponse.json({ error: 'Meet not found' }, { status: 404 });
       }

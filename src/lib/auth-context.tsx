@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {createContext, useContext, useState, useEffect, useCallback} from 'react';
 
 interface User {
   id: string;
@@ -26,17 +26,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for stored token on mount
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      verifyToken(storedToken);
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  const verifyToken = useCallback(async (tokenToVerify: string) => {
+      try {
+        const response = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token: tokenToVerify }),
+        });
 
-  const verifyToken = async (tokenToVerify: string) => {
+        if (response.ok) {
+          const decoded = await response.json();
+          setUser({
+            id: decoded.userId,
+            email: decoded.email,
+            role: decoded.role,
+            firstName: decoded.firstName || '',
+            lastName: decoded.lastName || '',
+            clubId: decoded.clubId,
+          });
+          setToken(tokenToVerify);
+        } else {
+          logout()
+          //   localStorage.removeItem('auth_token');
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+        localStorage.removeItem('auth_token');
+      } finally {
+        setLoading(false);
+      }
+  }, []);
+  const verifyTokenOld = async (tokenToVerify: string) => {
     try {
       const response = await fetch('/api/auth/verify', {
         method: 'POST',
@@ -59,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(tokenToVerify);
       } else {
         logout()
-      //   localStorage.removeItem('auth_token');
+        //   localStorage.removeItem('auth_token');
       }
     } catch (error) {
       console.error('Token verification failed:', error);
@@ -68,6 +90,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Check for stored token on mount
+    const storedToken = localStorage.getItem('auth_token');
+    if (storedToken) {
+      verifyToken(storedToken);
+    } else {
+      setLoading(false);
+    }
+  }, [verifyToken]);
+
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
