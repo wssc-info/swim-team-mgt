@@ -22,11 +22,13 @@ export class SwimmerMeetEventService {
     }
   }
 
-  public async getSwimmerMeetEvents(swimmerId: string, meetId: string): Promise<SwimmerMeetEvent[]> {
+  public async getSwimmerMeetEvents(swimmerId: string | null, meetId: string): Promise<SwimmerMeetEvent[]> {
     await this.ensureInitialized();
+    const where = swimmerId ? { swimmerId, meetId } : { meetId };
+    console.log(where);
     try {
       const events = await SwimmerMeetEventModel.findAll({
-        where: { swimmerId, meetId }
+        where: where
       });
       return events.map(event => ({
         id: event.id,

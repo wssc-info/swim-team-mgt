@@ -121,8 +121,10 @@ export const USA_SWIMMING_EVENTS_SEED : SwimEvent[] = [
 // Database functions
 export async function getAllEvents(): Promise<SwimEvent[]> {
   await initializeDatabase();
+  const where = { isActive: true };
+
   const events = await SwimEventModel.findAll({
-    where: { isActive: true },
+    where: where,
     order: [['course', 'ASC'], ['stroke', 'ASC'], ['distance', 'ASC']]
   });
   

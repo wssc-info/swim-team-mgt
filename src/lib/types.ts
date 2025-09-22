@@ -8,7 +8,9 @@ export interface Swimmer {
   clubId?: string;
   externalId?: string;
 }
-
+export interface SwimmerWithEvents extends Swimmer {
+  selectedEvents?: SwimmerMeetEvent[];
+}
 export interface SwimmerMeetEvent {
   id: string;
   swimmerId: string;

@@ -8,9 +8,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const swimmerId = searchParams.get('swimmerId');
     const meetId = searchParams.get('meetId');
-    
-    if (!swimmerId || !meetId) {
-      return NextResponse.json({ error: 'swimmerId and meetId are required' }, { status: 400 });
+    if (!meetId) {
+      return NextResponse.json({ error: 'meetId is required' }, { status: 400 });
     }
 
     const events = await swimmerMeetEventService.getSwimmerMeetEvents(swimmerId, meetId);

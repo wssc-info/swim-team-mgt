@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {Meet, SwimEvent} from '@/lib/types';
+import {Meet, SwimEvent, SwimmerWithEvents} from '@/lib/types';
 import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets } from '@/lib/api';
 
 interface Swimmer {
@@ -23,7 +23,7 @@ interface SwimmerMeetEvent {
 }
 
 interface EventSelectionProps {
-  swimmer: Swimmer;
+  swimmer: SwimmerWithEvents;
   meet: Meet;
   availableEvents: SwimEvent[];
   onClose: () => void;
@@ -45,20 +45,10 @@ export default function EventSelection({ swimmer, meet, availableEvents, onClose
     const loadSwimmerData = async () => {
       setLoading(true);
       try {
-        // Get the active meet
-        // const meets = await fetchMeets();
-        // const activeMeet = meets.find(m => m.isActive);
-        //
-        // if (!activeMeet) {
-        //   console.error('No active meet found');
-        //   setLoading(false);
-        //   return;
-        // }
-        //
         setActiveMeetId(meet.id);
         
         // Load swimmer's event selections for this meet
-        const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, meet.id);
+        const swimmerMeetEvents = swimmer.selectedEvents || [];//await fetchSwimmerMeetEvents(swimmer.id, meet.id);
         const eventIds = swimmerMeetEvents.map(sme => sme.eventId);
         const seedTimesMap = swimmerMeetEvents.reduce((acc, sme) => {
           if (sme.seedTime) {
@@ -71,6 +61,7 @@ export default function EventSelection({ swimmer, meet, availableEvents, onClose
         
         // Load best times from API for events not already selected
         const response = await fetch(`/api/swimmers/${swimmer.id}/best-times`);
+
         if (response.ok) {
           const bestTimes = await response.json();
           // Merge best times with existing seed times, preferring existing seed times

@@ -60,8 +60,8 @@ export async function deleteSwimmerApi(id: string): Promise<void> {
 }
 
 // Meets API
-export async function fetchMeets(): Promise<Meet[]> {
-  const response = await authenticatedFetch('/api/meets');
+export async function fetchMeets(active: boolean = false): Promise<Meet[]> {
+  const response = await authenticatedFetch(`/api/meets?active=${active}`);
   if (!response.ok) {
     throw new Error('Failed to fetch meets');
   }
@@ -210,8 +210,8 @@ export async function deleteRelayTeamApi(id: string): Promise<void> {
 }
 
 // Swimmer Meet Events API
-export async function fetchSwimmerMeetEvents(swimmerId: string, meetId: string): Promise<SwimmerMeetEvent[]> {
-  const response = await authenticatedFetch(`/api/swimmer-meet-events?swimmerId=${swimmerId}&meetId=${meetId}`);
+export async function fetchSwimmerMeetEvents(meetId: string, swimmerId?: string): Promise<SwimmerMeetEvent[]> {
+  const response = await authenticatedFetch(`/api/swimmer-meet-events?swimmerId=${swimmerId?swimmerId:''}&meetId=${meetId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch swimmer meet events');
   }

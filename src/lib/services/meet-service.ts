@@ -22,11 +22,16 @@ export class MeetService {
     }
   }
 
-  public async getMeets(): Promise<Meet[]> {
+  public async getMeets(activeOnly: boolean, clubId?: string): Promise<Meet[]> {
     await this.ensureInitialized();
     try {
+      const whereClause = activeOnly ? { isActive: true } : {};
+      if(clubId) {
+        Object.assign(whereClause, { clubId });
+      }
       const meets = await MeetModel.findAll({
-        order: [['date', 'DESC']]
+        order: [['date', 'DESC']],
+        where: whereClause
       });
       return meets.map(meet => ({
         id: meet.id,

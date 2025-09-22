@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents } from '@/lib/api';
-import {Meet, SwimEvent} from '@/lib/types';
+import {Meet, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
@@ -10,37 +10,51 @@ import { DataTable } from "@/components/datatable/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-}
-
-interface SwimmerWithEvents extends Swimmer {
-  selectedEvents?: string[];
-}
-
+import {getAllEvents} from "@/lib/events";
 
 export function EventsPage() {
   const { user } = useAuth();
   const [swimmers, setSwimmers] = useState<SwimmerWithEvents[]>([]);
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
-  const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
+  const [selectedSwimmer, setSelectedSwimmer] = useState<SwimmerWithEvents | null>(null);
   const [loading, setLoading] = useState(true);
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
+
+  const loadSwimmerData = useCallback(async (activeMeet: Meet) => {
+    // Fetch swimmers based on user role
+    let swimmerData: Swimmer[];
+    if (user?.role === 'family' && user?.id) {
+      // For family users, only fetch their associated swimmers
+      swimmerData = await fetchAssociatedSwimmers(user.id);
+    } else {
+      // For coaches, fetch all swimmers
+      swimmerData = await fetchSwimmers();
+    }
+
+    const allEventsForMeet = await fetchSwimmerMeetEvents(activeMeet.id);
+    console.log("All events for meet:", allEventsForMeet);
+    const swimmersWithEvents = await Promise.all(
+      swimmerData.map(async (swimmer) => {
+        try {
+          const selectedEvents = allEventsForMeet.filter(event=> event.swimmerId === swimmer.id);
+          return { ...swimmer, selectedEvents };
+        } catch (error) {
+          console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
+          return { ...swimmer, selectedEvents: [] };
+        }
+      })
+    );
+    setSwimmers(swimmersWithEvents);
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const [meetData, eventsData] = await Promise.all([
-          fetchMeets(),
+          fetchMeets(true),
           fetchAllEvents()
         ]);
-        
+
         // Filter meets to only show those for the user's club and find active meet
         const filteredMeets = user?.clubId 
           ? meetData.filter(meet => meet.clubId === user.clubId)
@@ -51,35 +65,10 @@ export function EventsPage() {
         setActiveMeet(active);
         setAllEvents(eventsData);
 
-        // Fetch swimmers based on user role
-        let swimmerData: Swimmer[];
-        if (user?.role === 'family' && user?.id) {
-          // For family users, only fetch their associated swimmers
-          swimmerData = await fetchAssociatedSwimmers(user.id);
-        } else {
-          // For coaches, fetch all swimmers
-          swimmerData = await fetchSwimmers();
+        if (!active) {
+          return;
         }
-        
-        // If we have an active meet, load event selections for each swimmer
-        if (active) {
-          const swimmersWithEvents = await Promise.all(
-            swimmerData.map(async (swimmer) => {
-              try {
-                const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, active.id);
-                const selectedEvents = swimmerMeetEvents.map(sme => sme.eventId);
-                return { ...swimmer, selectedEvents };
-              } catch (error) {
-                console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
-                return { ...swimmer, selectedEvents: [] };
-              }
-            })
-          );
-          setSwimmers(swimmersWithEvents);
-        } else {
-          // No active meet, so no selected events
-          setSwimmers(swimmerData.map(swimmer => ({ ...swimmer, selectedEvents: [] })));
-        }
+        await loadSwimmerData(active);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -90,39 +79,20 @@ export function EventsPage() {
     if (user) {
       loadData();
     }
-  }, [user]);
+  }, [loadSwimmerData, user]);
 
   const handleSwimmerSelect = (swimmer: Swimmer) => {
     setSelectedSwimmer(swimmer);
   };
 
   const handleEventSelectionClose = async () => {
+    const selectedSwimmerToReload = selectedSwimmer;
     setSelectedSwimmer(null);
     // Refresh swimmers data to show updated selections
     if (!activeMeet) return;
     
     try {
-      let swimmerData: Swimmer[];
-      if (user?.role === 'family' && user?.id) {
-        swimmerData = await fetchAssociatedSwimmers(user.id);
-      } else {
-        swimmerData = await fetchSwimmers();
-      }
-      
-      // Load event selections for each swimmer
-      const swimmersWithEvents = await Promise.all(
-        swimmerData.map(async (swimmer) => {
-          try {
-            const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, activeMeet.id);
-            const selectedEvents = swimmerMeetEvents.map(sme => sme.eventId);
-            return { ...swimmer, selectedEvents };
-          } catch (error) {
-            console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
-            return { ...swimmer, selectedEvents: [] };
-          }
-        })
-      );
-      setSwimmers(swimmersWithEvents);
+      await loadSwimmerData(activeMeet);
     } catch (error) {
       console.error('Error refreshing swimmers:', error);
     }

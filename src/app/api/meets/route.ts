@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MeetService } from '@/lib/services/meet-service';
+import {UserModel} from "@/lib/models";
+import {AuthService} from "@/lib/services/auth-service";
 
 const meetService = MeetService.getInstance();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const meets = await meetService.getMeets();
+    const user: UserModel | null = await AuthService.getInstance().getUser(request);
+    const activeOnly = 'true' === request.nextUrl.searchParams.get('active')
+    const meets = await meetService.getMeets(activeOnly, user?.clubId);
     return NextResponse.json(meets);
   } catch (error) {
     console.error('Error fetching meets:', error);
