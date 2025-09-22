@@ -48,48 +48,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           setToken(tokenToVerify);
         } else {
-          logout();
+          // Token is invalid, clear it
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token');
+          }
+          setUser(null);
+          setToken(null);
         }
       } catch (error) {
         console.error('Token verification failed:', error);
-        localStorage.removeItem('auth_token');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        setUser(null);
+        setToken(null);
       } finally {
         setLoading(false);
       }
   }, []);
-  const verifyTokenOld = async (tokenToVerify: string) => {
-    try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: tokenToVerify }),
-      });
-
-      if (response.ok) {
-        const decoded = await response.json();
-        setUser({
-          id: decoded.userId,
-          email: decoded.email,
-          role: decoded.role,
-          firstName: decoded.firstName || '',
-          lastName: decoded.lastName || '',
-          clubId: decoded.clubId,
-        });
-        setToken(tokenToVerify);
-      } else {
-        logout();
-      }
-    } catch (error) {
-      console.error('Token verification failed:', error);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     // Check for stored token on mount
