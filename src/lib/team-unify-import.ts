@@ -145,7 +145,11 @@ async function checkTimeRecordExists(swimmerId: string, eventId: string, time: s
 }
 
 // Create a time record
-async function createTimeRecord(timeRecordData: any, results: { success: number, errors: string[] }, rowIndex: number, eventName: string) {
+async function createTimeRecord(timeRecordData: any,
+                                results: { success: number,
+                                   successTimeRecords: number,
+                                  info: string[],
+                                  errors: string[] }, rowIndex: number, eventName: string) {
   try {
     // Check if this time record already exists
     const exists = await checkTimeRecordExists(
@@ -156,7 +160,7 @@ async function createTimeRecord(timeRecordData: any, results: { success: number,
     );
 
     if (exists) {
-      results.errors.push(`Row ${rowIndex + 1}: Time record for ${eventName} already exists - skipped`);
+      results.info.push(`Row ${rowIndex + 1}: Time record for ${eventName} already exists - skipped`);
       return;
     }
 
@@ -167,7 +171,7 @@ async function createTimeRecord(timeRecordData: any, results: { success: number,
       },
       body: JSON.stringify(timeRecordData),
     });
-
+    results.successTimeRecords++;
     if (!response.ok) {
       const error = await response.text();
       results.errors.push(`Row ${rowIndex + 1}: Failed to create time record for ${eventName} - ${error}`);
@@ -182,7 +186,7 @@ async function processTimeRecord(
   values: string[], 
   currentSwimmerId: string | null, 
   allEvents: any[], 
-  results: { success: number, errors: string[] }, 
+  results: { success: number, successTimeRecords: number, info: string[], errors: string[] },
   rowIndex: number
 ) {
   if (!currentSwimmerId) {
@@ -228,7 +232,7 @@ async function processTimeRecord(
   const timeRecordData = {
     swimmerId: currentSwimmerId,
     eventId: eventId,
-    time: bestTime.replace(/[SLF]$/, ''), // Remove suffix
+    time: bestTime.replace(/[SLFY]$/, ''), // Remove suffix
     meetName: meetName.trim(),
     meetDate,
     isPersonalBest: true // Assuming Team Unify exports are best times
@@ -244,7 +248,7 @@ export async function processTeamUnifyFile(
   allEvents: any[],
   userClubId?: string,
   onProgress?: (progress: { currentRow: number, totalRows: number, currentAction: string, errors: string[] }) => void
-): Promise<{ success: number, errors: string[] }> {
+): Promise<{ success: number, successTimeRecords: number, info: string[], errors: string[] }> {
   const text = await file.text();
   const lines = text.split('\n').filter(line => line.trim());
 
@@ -252,7 +256,7 @@ export async function processTeamUnifyFile(
     throw new Error('CSV file must have at least a header row and one data row');
   }
 
-  const results = { success: 0, errors: [] as string[] };
+  const results = { success: 0, successTimeRecords: 0, errors: [] as string[], info: [] as string[] };
   let currentSwimmer: any = null;
   let currentSwimmerId: string | null = null;
   const totalRows = lines.length;
@@ -369,7 +373,7 @@ export async function processTeamUnifyFile(
         onProgress({
           currentRow: i + 1,
           totalRows,
-          currentAction: `Processing time record: ${eventName}`,
+          currentAction: `Processing time record: ${eventName} for ${currentSwimmer ? `${currentSwimmer.firstName} ${currentSwimmer.lastName}` : 'Unknown Swimmer'}`,
           errors: [...results.errors]
         });
       }

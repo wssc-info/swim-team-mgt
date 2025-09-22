@@ -57,7 +57,7 @@ export default function SwimmersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingSwimmer, setEditingSwimmer] = useState<Swimmer | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadResults, setUploadResults] = useState<{ success: number, errors: string[] } | null>(null);
+  const [uploadResults, setUploadResults] = useState<{ success: number, successTimeRecords: number, info: string[], errors: string[] } | null>(null);
   const [importProgress, setImportProgress] = useState<{ currentRow: number, totalRows: number, currentAction: string, errors: string[] } | null>(null);
   const [allEvents, setAllEvents] = useState<any[]>([]);
 
@@ -257,7 +257,7 @@ export default function SwimmersPage() {
         }
       }
 
-      setUploadResults(results);
+      setUploadResults({successTimeRecords: 0, info: [], ...results});
       // Reload swimmers to show newly imported ones
       const updatedSwimmers = await fetchSwimmers();
       setSwimmers(updatedSwimmers);
@@ -405,7 +405,17 @@ export default function SwimmersPage() {
         <div className="mb-6 bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-3">Import Results</h3>
           <div className="space-y-2">
-            <p className="text-green-600">Successfully imported: {uploadResults.success} swimmers</p>
+            <p className="text-green-600">Successfully imported: {uploadResults.success} swimmers and {uploadResults.successTimeRecords} time records</p>
+            {uploadResults.info.length > 0 && (
+              <div>
+                <p className="text-green-600 font-medium">Errors ({uploadResults.info.length}):</p>
+                <ul className="text-sm text-green-600 ml-4 max-h-32 overflow-y-auto">
+                  {uploadResults.info.map((info, index) => (
+                    <li key={index} className="list-disc">{info}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {uploadResults.errors.length > 0 && (
               <div>
                 <p className="text-red-600 font-medium">Errors ({uploadResults.errors.length}):</p>

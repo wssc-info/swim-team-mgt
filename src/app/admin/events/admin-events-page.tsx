@@ -219,15 +219,13 @@ export default function AdminEventsPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Event Administration</h1>
         <div className="space-x-4">
-          {events.length === 0 && (
-            <button
-              onClick={handleSeedEvents}
-              disabled={seeding}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
-            >
-              {seeding ? 'Seeding...' : 'Seed Default Events'}
-            </button>
-          )}
+          <button
+            onClick={handleSeedEvents}
+            disabled={seeding}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
+          >
+            {seeding ? 'Seeding...' : 'Seed Default Events'}
+          </button>
           <button
             onClick={() => setShowForm(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
