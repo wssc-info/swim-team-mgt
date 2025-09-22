@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { createMeet, updateMeetApi, fetchAllEvents, fetchClubs } from '@/lib/api';
 import { SwimEvent, SwimClub } from "@/lib/types";
 import { useAuth } from '@/lib/auth-context';
+import { DataTable } from "@/components/datatable/dataTable";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface MeetEvent {
   eventId: string;
@@ -261,6 +263,75 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     return event.ageGroups.filter(ag => !usedAgeGroups.includes(ag));
   };
 
+  // Create columns for the meet events data table
+  const meetEventColumns: ColumnDef<MeetEvent & { eventName: string; eventDetails: string }>[] = [
+    {
+      accessorKey: "eventNumber",
+      header: "Event #",
+      cell: ({ row }) => {
+        const meetEvent = formData.meetEvents.find(me => 
+          me.eventId === row.original.eventId && me.ageGroup === row.original.ageGroup
+        );
+        return (
+          <input
+            type="number"
+            min="1"
+            value={meetEvent?.eventNumber || 1}
+            onChange={(e) => updateMeetEventNumber(row.original.eventId, row.original.ageGroup, parseInt(e.target.value) || 1)}
+            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
+          />
+        );
+      },
+    },
+    {
+      accessorKey: "eventName",
+      header: "Event",
+      cell: ({ row }) => (
+        <div>
+          <span className={`font-medium ${row.original.eventName.includes('Relay') ? 'text-purple-700' : ''}`}>
+            {row.original.eventName}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "ageGroup",
+      header: "Age Group",
+    },
+    {
+      accessorKey: "eventDetails",
+      header: "Details",
+      cell: ({ row }) => (
+        <span className="text-xs text-gray-500">
+          {row.original.eventDetails}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <button
+          type="button"
+          onClick={() => removeMeetEvent(row.original.eventId, row.original.ageGroup)}
+          className="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50"
+        >
+          Remove
+        </button>
+      ),
+    },
+  ];
+
+  // Prepare data for the meet events table
+  const meetEventTableData = formData.meetEvents.map(meetEvent => {
+    const event = allEvents.find(e => e.id === meetEvent.eventId);
+    return {
+      ...meetEvent,
+      eventName: event?.name || 'Unknown Event',
+      eventDetails: event ? `${event.course} • ${event.distance}m ${event.stroke}` : 'Unknown'
+    };
+  }).sort((a, b) => a.eventNumber - b.eventNumber);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -444,47 +515,15 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
           
           {/* Current Meet Events */}
           {formData.meetEvents.length > 0 && (
-            <div className="mb-4 space-y-3">
-              <h4 className="text-sm font-medium text-gray-700">Current Events:</h4>
-              {formData.meetEvents
-                .sort((a, b) => a.eventNumber - b.eventNumber)
-                .map((meetEvent, index) => {
-                  const event = allEvents.find(e => e.id === meetEvent.eventId);
-                  if (!event) return null;
-                  
-                  return (
-                    <div key={`${meetEvent.eventId}-${meetEvent.ageGroup}`} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <span className={`font-medium ${event.isRelay ? 'text-purple-700' : ''}`}>
-                            Event #{meetEvent.eventNumber}: {event.name} - {meetEvent.ageGroup}
-                          </span>
-                          <div className="text-xs text-gray-500">
-                            {event.course} • {event.distance}m {event.stroke}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeMeetEvent(meetEvent.eventId, meetEvent.ageGroup)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">Event Number</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={meetEvent.eventNumber}
-                          onChange={(e) => updateMeetEventNumber(meetEvent.eventId, meetEvent.ageGroup, parseInt(e.target.value) || 1)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Current Events:</h4>
+              <div className="border rounded-lg">
+                <DataTable 
+                  columns={meetEventColumns} 
+                  data={meetEventTableData}
+                  filters={() => null}
+                />
+              </div>
             </div>
           )}
 
