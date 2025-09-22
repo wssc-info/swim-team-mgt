@@ -48,8 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           setToken(tokenToVerify);
         } else {
-          logout()
-          //   localStorage.removeItem('auth_token');
+          logout();
         }
       } catch (error) {
         console.error('Token verification failed:', error);
@@ -80,12 +79,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         setToken(tokenToVerify);
       } else {
-        logout()
-        //   localStorage.removeItem('auth_token');
+        logout();
       }
     } catch (error) {
       console.error('Token verification failed:', error);
-      localStorage.removeItem('auth_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+      }
     } finally {
       setLoading(false);
     }
@@ -93,9 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check for stored token on mount
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      verifyToken(storedToken);
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('auth_token');
+      if (storedToken) {
+        verifyToken(storedToken);
+      } else {
+        setLoading(false);
+      }
     } else {
       setLoading(false);
     }
@@ -116,7 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         setUser(data.user);
         setToken(data.token);
-        localStorage.setItem('auth_token', data.token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', data.token);
+        }
         return true;
       }
       return false;
@@ -129,7 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage?.removeItem('auth_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
   };
 
   return (
