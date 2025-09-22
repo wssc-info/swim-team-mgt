@@ -6,13 +6,10 @@ import {Meet, SwimEvent} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {AGE_GROUPS} from "@/lib/constants";
+import { DataTable } from "@/components/datatable/dataTable";
+import { ColumnDef } from "@tanstack/react-table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Swimmer {
   id: string;
@@ -190,6 +187,141 @@ export function EventsPage() {
     .map(eventId => allEvents.find(e => e.id === eventId))
     .filter(Boolean) as SwimEvent[];
 
+  // Create columns for the swimmers data table
+  const swimmerColumns: ColumnDef<SwimmerWithEvents>[] = [
+    {
+      accessorKey: "lastName",
+      header: "Last Name",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.lastName}</span>
+      ),
+    },
+    {
+      accessorKey: "firstName", 
+      header: "First Name",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.firstName}</span>
+      ),
+    },
+    {
+      accessorKey: "ageGroup",
+      header: "Age Group",
+      cell: ({ row }) => (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+          {row.original.ageGroup}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.gender}</span>
+      ),
+    },
+    {
+      accessorKey: "dateOfBirth",
+      header: "Date of Birth",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {new Date(row.original.dateOfBirth).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      id: "eventsSelected",
+      header: "Events Selected",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {row.original.selectedEvents?.length || 0}
+        </span>
+      ),
+    },
+    {
+      id: "eventsAvailable",
+      header: "Events Available",
+      cell: ({ row }) => {
+        const eligibleEvents = availableEvents.filter(event => 
+          event.ageGroups.includes(row.original.ageGroup)
+        );
+        return (
+          <span className="text-sm text-gray-600">
+            {eligibleEvents.length}
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <button
+          onClick={() => handleSwimmerSelect(row.original)}
+          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+        >
+          Select Events
+        </button>
+      ),
+    },
+  ];
+
+  // Create filters for the data table
+  const createFilters = (table: any) => {
+    return (
+      <>
+        <Input
+          placeholder="Filter by last name..."
+          value={(table.getColumn("lastName")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("lastName")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
+        <Select 
+          value={(table.getColumn("ageGroup")?.getFilterValue() as string) ?? "ALL"}
+          onValueChange={(value) => {
+            if (value === "ALL") {
+              table.getColumn("ageGroup")?.setFilterValue(undefined);
+            } else {
+              table.getColumn("ageGroup")?.setFilterValue(value);
+            }
+          }}
+        >
+          <SelectTrigger className="ml-4 max-w-sm">
+            <SelectValue placeholder="Filter by age group..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="8&U">8 & Under</SelectItem>
+            <SelectItem value="9-10">9-10</SelectItem>
+            <SelectItem value="11-12">11-12</SelectItem>
+            <SelectItem value="13-14">13-14</SelectItem>
+            <SelectItem value="15-18">15-18</SelectItem>
+            <SelectItem value="ALL">All Age Groups</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select 
+          value={(table.getColumn("gender")?.getFilterValue() as string) ?? "ALL"}
+          onValueChange={(value) => {
+            if (value === "ALL") {
+              table.getColumn("gender")?.setFilterValue(undefined);
+            } else {
+              table.getColumn("gender")?.setFilterValue(value);
+            }
+          }}
+        >
+          <SelectTrigger className="ml-4 max-w-sm">
+            <SelectValue placeholder="Filter by gender..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="M">Male</SelectItem>
+            <SelectItem value="F">Female</SelectItem>
+            <SelectItem value="ALL">All Genders</SelectItem>
+          </SelectContent>
+        </Select>
+      </>
+    );
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Event Registration</h1>
@@ -222,95 +354,23 @@ export function EventsPage() {
       )}
 
       {/* Swimmers List */}
-      <Accordion type="multiple" className="space-y-4">
-        {Object.entries(
-          swimmers.reduce((groups, swimmer) => {
-            const group: SwimmerWithEvents[] = groups[swimmer.ageGroup] || [];
-            group.push(swimmer);
-            groups[swimmer.ageGroup] = group;
-            return groups;
-          }, {} as Record<string, SwimmerWithEvents[]>)
-        )
-          .sort(([a], [b]) => {
-            return AGE_GROUPS.indexOf(a) - AGE_GROUPS.indexOf(b);
-          })
-          .map(([ageGroup, groupSwimmers]) => {
-            // Filter events available for this age group
-            const ageGroupEvents = availableEvents.filter(event => 
-              event.ageGroups.includes(ageGroup)
-            );
-
-            if (ageGroupEvents.length === 0) {
-              return null; // Skip age groups with no available events
-            }
-
-            return (
-              <AccordionItem key={ageGroup} value={ageGroup} className="bg-white rounded-lg shadow border">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                  <div className="flex flex-col items-start text-left">
-                    <h2 className="text-xl font-semibold">
-                      {ageGroup} ({groupSwimmers.length} swimmers)
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      {ageGroupEvents.length} events available for this age group
-                    </p>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
-                  <div className="grid gap-4">
-                    {groupSwimmers
-                      .sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))
-                      .map((swimmer) => {
-                        const eligibleEvents = ageGroupEvents.filter(event => 
-                          event.ageGroups.includes(swimmer.ageGroup)
-                        );
-                        // const selectedCount = swimmer.selectedEvents.filter(eventId =>
-                        //   activeMeet.availableEvents.includes(eventId)
-                        // ).length;
-
-                        return (
-                          <div
-                            key={swimmer.id}
-                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-4">
-                                <div>
-                                  <h3 className="font-semibold">
-                                    {swimmer.firstName} {swimmer.lastName}
-                                  </h3>
-                                  <p className="text-sm text-gray-600">
-                                    {swimmer.gender} • Born: {new Date(swimmer.dateOfBirth).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <p className="text-sm text-gray-600">
-                                  Events: {swimmer.selectedEvents?.length || 0} selected
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {eligibleEvents.length} events available
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleSwimmerSelect(swimmer)}
-                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                              >
-                                Select Events
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })
-          .filter(Boolean)}
-      </Accordion>
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b">
+          <h2 className="text-xl font-semibold mb-2">
+            Swimmers ({swimmers.length} total)
+          </h2>
+          <p className="text-sm text-gray-600">
+            Select events for each swimmer below
+          </p>
+        </div>
+        <div className="p-6">
+          <DataTable 
+            columns={swimmerColumns} 
+            data={swimmers.sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))}
+            filters={createFilters}
+          />
+        </div>
+      </div>
     </div>
   );
 }
