@@ -183,9 +183,22 @@ export function EventsPage() {
     );
   }
 
-  const availableEvents = activeMeet.availableEvents
-    .map(eventId => allEvents.find(e => e.id === eventId))
+  // Get available events from meetEvents, filtering by age group
+  const getAvailableEventsForSwimmer = (swimmerAgeGroup: string): SwimEvent[] => {
+    return activeMeet.meetEvents
+      .filter(meetEvent => meetEvent.ageGroup === swimmerAgeGroup)
+      .map(meetEvent => allEvents.find(e => e.id === meetEvent.eventId))
+      .filter(Boolean) as SwimEvent[];
+  };
+
+  // Get all unique events from meetEvents for general display
+  const allMeetEvents = activeMeet.meetEvents
+    .map(meetEvent => allEvents.find(e => e.id === meetEvent.eventId))
     .filter(Boolean) as SwimEvent[];
+  
+  const uniqueMeetEvents = allMeetEvents.filter((event, index, self) => 
+    index === self.findIndex(e => e.id === event.id)
+  );
 
   // Create columns for the swimmers data table
   const swimmerColumns: ColumnDef<SwimmerWithEvents>[] = [
@@ -241,9 +254,7 @@ export function EventsPage() {
       id: "eventsAvailable",
       header: "Events Available",
       cell: ({ row }) => {
-        const eligibleEvents = availableEvents.filter(event => 
-          event.ageGroups.includes(row.original.ageGroup)
-        );
+        const eligibleEvents = getAvailableEventsForSwimmer(row.original.ageGroup);
         return (
           <span className="text-sm text-gray-600">
             {eligibleEvents.length}
@@ -335,7 +346,7 @@ export function EventsPage() {
           {new Date(activeMeet.date).toLocaleDateString()} • {activeMeet.location}
         </p>
         <p className="text-sm text-green-600">
-          {availableEvents.length} events available for registration
+          {uniqueMeetEvents.length} unique events available for registration
         </p>
       </div>
 
@@ -346,7 +357,7 @@ export function EventsPage() {
             <EventSelection
               swimmer={selectedSwimmer}
               meet={activeMeet}
-              availableEvents={availableEvents}
+              availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup)}
               onClose={handleEventSelectionClose}
             />
           </div>
