@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (response.ok) {
           const decoded = await response.json();
+          console.log(decoded);
           setUser({
             id: decoded.userId,
             email: decoded.email,
@@ -69,14 +70,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check for stored token on mount
+    console.log('AuthProvider mounted, checking for stored token');
     if (typeof window !== 'undefined') {
+      console.log('Window is defined, accessing localStorage');
       const storedToken = localStorage.getItem('auth_token');
+      console.log('Stored token:', storedToken);
       if (storedToken) {
         verifyToken(storedToken);
       } else {
         setLoading(false);
       }
     } else {
+      console.log('Window is undefined, skipping localStorage access');
       setLoading(false);
     }
   }, [verifyToken]);
