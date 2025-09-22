@@ -31,7 +31,7 @@ export interface RelayTeam {
 export interface MeetEvent {
   eventId: string;
   eventNumber: number;
-  ageGroups: string[]; // Which age groups this event is for in this meet
+  ageGroup: string; // Single age group for this event number
 }
 
 export interface Meet {

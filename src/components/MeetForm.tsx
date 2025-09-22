@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 interface MeetEvent {
   eventId: string;
   eventNumber: number;
-  ageGroups: string[];
+  ageGroup: string;
 }
 
 interface Meet {
@@ -169,7 +169,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
   };
 
-  const addMeetEvent = (eventId: string) => {
+  const addMeetEvent = (eventId: string, ageGroup: string) => {
     const event = allEvents.find(e => e.id === eventId);
     if (!event) return;
 
@@ -178,13 +178,13 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     const newMeetEvent: MeetEvent = {
       eventId,
       eventNumber: nextEventNumber,
-      ageGroups: event.ageGroups // Default to all age groups the event supports
+      ageGroup
     };
 
     setFormData(prev => ({
       ...prev,
       meetEvents: [...prev.meetEvents, newMeetEvent],
-      availableEvents: [...prev.availableEvents, eventId] // Keep for backward compatibility
+      availableEvents: [...new Set([...prev.availableEvents, eventId])] // Keep for backward compatibility
     }));
 
     // Clear error when events are added
@@ -196,28 +196,26 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
   };
 
-  const removeMeetEvent = (eventId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      meetEvents: prev.meetEvents.filter(me => me.eventId !== eventId),
-      availableEvents: prev.availableEvents.filter(id => id !== eventId)
-    }));
+  const removeMeetEvent = (eventId: string, ageGroup: string) => {
+    setFormData(prev => {
+      const newMeetEvents = prev.meetEvents.filter(me => !(me.eventId === eventId && me.ageGroup === ageGroup));
+      // Only remove from availableEvents if no other age groups use this event
+      const stillUsed = newMeetEvents.some(me => me.eventId === eventId);
+      const newAvailableEvents = stillUsed ? prev.availableEvents : prev.availableEvents.filter(id => id !== eventId);
+      
+      return {
+        ...prev,
+        meetEvents: newMeetEvents,
+        availableEvents: newAvailableEvents
+      };
+    });
   };
 
-  const updateMeetEventNumber = (eventId: string, eventNumber: number) => {
+  const updateMeetEventNumber = (eventId: string, ageGroup: string, eventNumber: number) => {
     setFormData(prev => ({
       ...prev,
       meetEvents: prev.meetEvents.map(me => 
-        me.eventId === eventId ? { ...me, eventNumber } : me
-      )
-    }));
-  };
-
-  const updateMeetEventAgeGroups = (eventId: string, ageGroups: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      meetEvents: prev.meetEvents.map(me => 
-        me.eventId === eventId ? { ...me, ageGroups } : me
+        me.eventId === eventId && me.ageGroup === ageGroup ? { ...me, eventNumber } : me
       )
     }));
   };
@@ -254,9 +252,14 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
   };
 
   const filteredEvents = getFilteredEvents();
-  const availableToAdd = filteredEvents.filter(event => 
-    !formData.meetEvents.some(me => me.eventId === event.id)
-  );
+  
+  // Get events that can still be added (have age groups not yet used)
+  const getAvailableEventAgeGroups = (event: SwimEvent) => {
+    const usedAgeGroups = formData.meetEvents
+      .filter(me => me.eventId === event.id)
+      .map(me => me.ageGroup);
+    return event.ageGroups.filter(ag => !usedAgeGroups.includes(ag));
+  };
 
   if (loading) {
     return (
@@ -445,63 +448,39 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
               <h4 className="text-sm font-medium text-gray-700">Current Events:</h4>
               {formData.meetEvents
                 .sort((a, b) => a.eventNumber - b.eventNumber)
-                .map((meetEvent) => {
+                .map((meetEvent, index) => {
                   const event = allEvents.find(e => e.id === meetEvent.eventId);
                   if (!event) return null;
                   
                   return (
-                    <div key={meetEvent.eventId} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div key={`${meetEvent.eventId}-${meetEvent.ageGroup}`} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <span className={`font-medium ${event.isRelay ? 'text-purple-700' : ''}`}>
-                            {event.name}
+                            Event #{meetEvent.eventNumber}: {event.name} - {meetEvent.ageGroup}
                           </span>
                           <div className="text-xs text-gray-500">
-                            {event.course} • Available for: ({event.ageGroups.join(', ')})
+                            {event.course} • {event.distance}m {event.stroke}
                           </div>
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeMeetEvent(meetEvent.eventId)}
+                          onClick={() => removeMeetEvent(meetEvent.eventId, meetEvent.ageGroup)}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >
                           Remove
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs text-gray-600 mb-1">Event Number</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={meetEvent.eventNumber}
-                            onChange={(e) => updateMeetEventNumber(meetEvent.eventId, parseInt(e.target.value) || 1)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-xs text-gray-600 mb-1">Age Groups for this Event</label>
-                          <div className="flex flex-wrap gap-1">
-                            {['8&U', '9-10', '11-12', '13-14', '15-18'].map(ageGroup => (
-                              <label key={ageGroup} className="flex items-center text-xs">
-                                <input
-                                  type="checkbox"
-                                  checked={meetEvent.ageGroups.includes(ageGroup)}
-                                  onChange={(e) => {
-                                    const newAgeGroups = e.target.checked
-                                      ? [...meetEvent.ageGroups, ageGroup]
-                                      : meetEvent.ageGroups.filter(ag => ag !== ageGroup);
-                                    updateMeetEventAgeGroups(meetEvent.eventId, newAgeGroups);
-                                  }}
-                                  className="mr-1"
-                                />
-                                {ageGroup}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Event Number</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={meetEvent.eventNumber}
+                          onChange={(e) => updateMeetEventNumber(meetEvent.eventId, meetEvent.ageGroup, parseInt(e.target.value) || 1)}
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                        />
                       </div>
                     </div>
                   );
@@ -564,31 +543,43 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
             {/* Available Events to Add */}
             <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
               <div className="text-xs text-gray-600 mb-2">
-                Available to add ({availableToAdd.length} events):
+                Available to add (by age group):
               </div>
               <div className="grid grid-cols-1 gap-2">
-                {availableToAdd.map((event) => (
-                  <div key={event.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                    <div className="flex-1">
-                      <span className={`text-sm ${event.isRelay ? 'text-purple-700 font-medium' : ''}`}>
-                        {event.name}
-                      </span>
-                      <div className="text-xs text-gray-500">
-                        {event.course} • ({event.ageGroups.join(', ')})
+                {filteredEvents.map((event) => {
+                  const availableAgeGroups = getAvailableEventAgeGroups(event);
+                  if (availableAgeGroups.length === 0) return null;
+                  
+                  return (
+                    <div key={event.id} className="border border-gray-100 rounded p-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex-1">
+                          <span className={`text-sm font-medium ${event.isRelay ? 'text-purple-700' : ''}`}>
+                            {event.name}
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            {event.course} • {event.distance}m {event.stroke}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {availableAgeGroups.map((ageGroup) => (
+                          <button
+                            key={ageGroup}
+                            type="button"
+                            onClick={() => addMeetEvent(event.id, ageGroup)}
+                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                          >
+                            Add {ageGroup}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => addMeetEvent(event.id)}
-                      className="text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                    >
-                      Add
-                    </button>
-                  </div>
-                ))}
-                {availableToAdd.length === 0 && (
+                  );
+                })}
+                {filteredEvents.every(event => getAvailableEventAgeGroups(event).length === 0) && (
                   <div className="text-sm text-gray-500 text-center py-4">
-                    No more events available to add with current filters
+                    No more events/age groups available to add with current filters
                   </div>
                 )}
               </div>
