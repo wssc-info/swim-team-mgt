@@ -35,6 +35,7 @@ export class MeetService {
         location: meet.location,
         course: meet.course,
         availableEvents: JSON.parse(meet.availableEvents || '[]'),
+        meetEvents: JSON.parse(meet.meetEvents || '[]'),
         isActive: meet.isActive,
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
@@ -61,7 +62,8 @@ export class MeetService {
         date: meetData.date,
         location: meetData.location,
         course: meetData.course,
-        availableEvents: JSON.stringify(meetData.availableEvents),
+        availableEvents: JSON.stringify(meetData.availableEvents || []),
+        meetEvents: JSON.stringify(meetData.meetEvents || []),
         isActive: meetData.isActive,
         clubId: meetData.clubId,
         againstClubId: meetData.againstClubId || undefined,
@@ -74,6 +76,7 @@ export class MeetService {
         location: meet.location,
         course: meet.course,
         availableEvents: JSON.parse(meet.availableEvents),
+        meetEvents: JSON.parse(meet.meetEvents || '[]'),
         isActive: meet.isActive,
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
@@ -101,6 +104,10 @@ export class MeetService {
       
       if (updates.availableEvents) {
         updateData.availableEvents = JSON.stringify(updates.availableEvents);
+      }
+      
+      if (updates.meetEvents) {
+        updateData.meetEvents = JSON.stringify(updates.meetEvents);
       }
       
       await MeetModel.update(updateData, { where: { id } });
@@ -133,6 +140,7 @@ export class MeetService {
         location: meet.location,
         course: meet.course,
         availableEvents: JSON.parse(meet.availableEvents || '[]'),
+        meetEvents: JSON.parse(meet.meetEvents || '[]'),
         isActive: meet.isActive,
         createdAt: meet.createdAt.toISOString(),
         clubId: meet.clubId,

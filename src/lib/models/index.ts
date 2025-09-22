@@ -90,6 +90,7 @@ interface MeetAttributes {
   location: string;
   course: 'SCY' | 'SCM' | 'LCM';
   availableEvents: string;
+  meetEvents: string; // JSON string of MeetEvent[]
   isActive: boolean;
   clubId: string;
   againstClubId?: string;
@@ -105,6 +106,7 @@ export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes>
   declare location: string;
   declare course: 'SCY' | 'SCM' | 'LCM';
   declare availableEvents: string;
+  declare meetEvents: string;
   declare isActive: boolean;
   declare clubId: string;
   declare againstClubId?: string;
@@ -137,6 +139,11 @@ MeetModel.init(
       defaultValue: 'SCY',
     },
     availableEvents: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '[]',
+    },
+    meetEvents: {
       type: DataTypes.TEXT,
       allowNull: false,
       defaultValue: '[]',

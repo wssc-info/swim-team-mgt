@@ -5,6 +5,12 @@ import { createMeet, updateMeetApi, fetchAllEvents, fetchClubs } from '@/lib/api
 import { SwimEvent, SwimClub } from "@/lib/types";
 import { useAuth } from '@/lib/auth-context';
 
+interface MeetEvent {
+  eventId: string;
+  eventNumber: number;
+  ageGroups: string[];
+}
+
 interface Meet {
   id: string;
   name: string;
@@ -12,6 +18,7 @@ interface Meet {
   location: string;
   course: 'SCY' | 'SCM' | 'LCM';
   availableEvents: string[];
+  meetEvents: MeetEvent[];
   isActive: boolean;
   clubId: string;
   againstClubId?: string;
@@ -31,6 +38,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     location: '',
     course: 'SCY' as 'SCY' | 'SCM' | 'LCM',
     availableEvents: [] as string[],
+    meetEvents: [] as MeetEvent[],
     isActive: false,
     clubId: '',
     againstClubId: ''
@@ -81,7 +89,8 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
         date: meet.date,
         location: meet.location,
         course: meet.course,
-        availableEvents: meet.availableEvents,
+        availableEvents: meet.availableEvents || [],
+        meetEvents: meet.meetEvents || [],
         isActive: meet.isActive,
         clubId: meet.clubId,
         againstClubId: meet.againstClubId || ''
@@ -111,8 +120,8 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       newErrors.location = 'Meet location is required';
     }
 
-    if (formData.availableEvents.length === 0) {
-      newErrors.availableEvents = 'At least one event must be selected';
+    if (formData.meetEvents.length === 0) {
+      newErrors.availableEvents = 'At least one event must be added';
     }
 
     if (!formData.clubId) {
@@ -160,15 +169,25 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
   };
 
-  const handleEventToggle = (eventId: string) => {
+  const addMeetEvent = (eventId: string) => {
+    const event = allEvents.find(e => e.id === eventId);
+    if (!event) return;
+
+    const nextEventNumber = Math.max(0, ...formData.meetEvents.map(me => me.eventNumber)) + 1;
+    
+    const newMeetEvent: MeetEvent = {
+      eventId,
+      eventNumber: nextEventNumber,
+      ageGroups: event.ageGroups // Default to all age groups the event supports
+    };
+
     setFormData(prev => ({
       ...prev,
-      availableEvents: prev.availableEvents.includes(eventId)
-        ? prev.availableEvents.filter(id => id !== eventId)
-        : [...prev.availableEvents, eventId]
+      meetEvents: [...prev.meetEvents, newMeetEvent],
+      availableEvents: [...prev.availableEvents, eventId] // Keep for backward compatibility
     }));
 
-    // Clear error when events are selected
+    // Clear error when events are added
     if (errors.availableEvents) {
       setErrors(prev => ({
         ...prev,
@@ -177,26 +196,30 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
   };
 
-  const handleSelectAllEvents = () => {
-    const filteredEvents = getFilteredEvents();
-    const allSelected = filteredEvents.every(event => formData.availableEvents.includes(event.id));
-    
-    if (allSelected) {
-      // Deselect all filtered events
-      setFormData(prev => ({
-        ...prev,
-        availableEvents: prev.availableEvents.filter(id => 
-          !filteredEvents.some(event => event.id === id)
-        )
-      }));
-    } else {
-      // Select all filtered events
-      const newEventIds = filteredEvents.map(event => event.id);
-      setFormData(prev => ({
-        ...prev,
-        availableEvents: [...new Set([...prev.availableEvents, ...newEventIds])]
-      }));
-    }
+  const removeMeetEvent = (eventId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      meetEvents: prev.meetEvents.filter(me => me.eventId !== eventId),
+      availableEvents: prev.availableEvents.filter(id => id !== eventId)
+    }));
+  };
+
+  const updateMeetEventNumber = (eventId: string, eventNumber: number) => {
+    setFormData(prev => ({
+      ...prev,
+      meetEvents: prev.meetEvents.map(me => 
+        me.eventId === eventId ? { ...me, eventNumber } : me
+      )
+    }));
+  };
+
+  const updateMeetEventAgeGroups = (eventId: string, ageGroups: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      meetEvents: prev.meetEvents.map(me => 
+        me.eventId === eventId ? { ...me, ageGroups } : me
+      )
+    }));
   };
 
   const getFilteredEvents = (): SwimEvent[] => {
@@ -231,8 +254,9 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
   };
 
   const filteredEvents = getFilteredEvents();
-  const allFilteredSelected = filteredEvents.length > 0 && 
-    filteredEvents.every(event => formData.availableEvents.includes(event.id));
+  const availableToAdd = filteredEvents.filter(event => 
+    !formData.meetEvents.some(me => me.eventId === event.id)
+  );
 
   if (loading) {
     return (
@@ -412,16 +436,85 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            Available Events * ({formData.availableEvents.length} selected)
+            Meet Events * ({formData.meetEvents.length} events added)
           </label>
           
-          {/* Event Filters */}
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
-              Filter Events (showing only {formData.course} events):
+          {/* Current Meet Events */}
+          {formData.meetEvents.length > 0 && (
+            <div className="mb-4 space-y-3">
+              <h4 className="text-sm font-medium text-gray-700">Current Events:</h4>
+              {formData.meetEvents
+                .sort((a, b) => a.eventNumber - b.eventNumber)
+                .map((meetEvent) => {
+                  const event = allEvents.find(e => e.id === meetEvent.eventId);
+                  if (!event) return null;
+                  
+                  return (
+                    <div key={meetEvent.eventId} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <span className={`font-medium ${event.isRelay ? 'text-purple-700' : ''}`}>
+                            {event.name}
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            {event.course} • Available for: ({event.ageGroups.join(', ')})
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeMeetEvent(meetEvent.eventId)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Event Number</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={meetEvent.eventNumber}
+                            onChange={(e) => updateMeetEventNumber(meetEvent.eventId, parseInt(e.target.value) || 1)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Age Groups for this Event</label>
+                          <div className="flex flex-wrap gap-1">
+                            {['8&U', '9-10', '11-12', '13-14', '15-18'].map(ageGroup => (
+                              <label key={ageGroup} className="flex items-center text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={meetEvent.ageGroups.includes(ageGroup)}
+                                  onChange={(e) => {
+                                    const newAgeGroups = e.target.checked
+                                      ? [...meetEvent.ageGroups, ageGroup]
+                                      : meetEvent.ageGroups.filter(ag => ag !== ageGroup);
+                                    updateMeetEventAgeGroups(meetEvent.eventId, newAgeGroups);
+                                  }}
+                                  className="mr-1"
+                                />
+                                {ageGroup}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+
+          {/* Add New Events */}
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+            <h4 className="text-sm font-medium text-blue-800 mb-2">
+              Add Events (showing only {formData.course} events):
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
               <div>
                 <label className="block text-xs text-gray-600 mb-1">Stroke</label>
                 <select
@@ -434,7 +527,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
                   <option value="backstroke">Backstroke</option>
                   <option value="breaststroke">Breaststroke</option>
                   <option value="butterfly">Butterfly</option>
-                  <option value="individual-medley">Individual Medley</option>
+                  <option value="medley">Individual Medley</option>
                 </select>
               </div>
               
@@ -467,39 +560,38 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
                 </select>
               </div>
             </div>
-            
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={handleSelectAllEvents}
-                className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"
-              >
-                {allFilteredSelected ? 'Deselect All Filtered' : 'Select All Filtered'} ({filteredEvents.length})
-              </button>
-            </div>
-          </div>
 
-          {/* Events List */}
-          <div className="max-h-64 overflow-y-auto border border-gray-300 rounded-md p-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {filteredEvents.map((event) => (
-                <label key={event.id} className="flex items-center space-x-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={formData.availableEvents.includes(event.id)}
-                    onChange={() => handleEventToggle(event.id)}
-                    className="rounded"
-                  />
-                  <div className="flex-1">
-                    <span className={event.isRelay ? 'text-purple-700 font-medium' : ''}>
-                      {event.name}
-                    </span>
-                    <div className="text-xs text-gray-500">
-                      {event.course} • ({event.ageGroups.join(', ')})
+            {/* Available Events to Add */}
+            <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
+              <div className="text-xs text-gray-600 mb-2">
+                Available to add ({availableToAdd.length} events):
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {availableToAdd.map((event) => (
+                  <div key={event.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                    <div className="flex-1">
+                      <span className={`text-sm ${event.isRelay ? 'text-purple-700 font-medium' : ''}`}>
+                        {event.name}
+                      </span>
+                      <div className="text-xs text-gray-500">
+                        {event.course} • ({event.ageGroups.join(', ')})
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => addMeetEvent(event.id)}
+                      className="text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                    >
+                      Add
+                    </button>
                   </div>
-                </label>
-              ))}
+                ))}
+                {availableToAdd.length === 0 && (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    No more events available to add with current filters
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           

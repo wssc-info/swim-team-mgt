@@ -28,13 +28,20 @@ export interface RelayTeam {
   gender: 'M' | 'F' | 'Mixed';
 }
 
+export interface MeetEvent {
+  eventId: string;
+  eventNumber: number;
+  ageGroups: string[]; // Which age groups this event is for in this meet
+}
+
 export interface Meet {
   id: string;
   name: string;
   date: string;
   location: string;
   course: 'SCY' | 'SCM' | 'LCM'; // Course type for the meet
-  availableEvents: string[]; // Event IDs that swimmers can participate in
+  availableEvents: string[]; // Event IDs that swimmers can participate in (deprecated)
+  meetEvents: MeetEvent[]; // Event numbers and age group assignments
   isActive: boolean; // Only one meet can be active at a time
   clubId: string; // The club this meet is for (required)
   againstClubId?: string; // The club this meet is against (optional)
