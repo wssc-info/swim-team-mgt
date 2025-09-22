@@ -152,22 +152,24 @@ export default function MeetsPage() {
                   {new Date(activeMeet.date).toLocaleDateString()} • {activeMeet.location} • {activeMeet.course}
                 </p>
                 <p className="text-sm text-green-600 mt-2">
-                  {activeMeet.availableEvents.length} events available for swimmer registration
+                  {activeMeet.meetEvents.length} event entries configured for this meet
                 </p>
                 <div className="mt-3">
                   <details className="text-sm">
                     <summary className="cursor-pointer text-green-700 hover:text-green-800">
-                      View Available Events ({activeMeet.availableEvents.length})
+                      View Meet Events ({activeMeet.meetEvents.length})
                     </summary>
-                    <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {activeMeet.availableEvents.map(eventId => {
-                        const event = allEvents.find(e => e.id === eventId);
-                        return event ? (
-                          <span key={eventId} className="text-xs bg-green-100 px-2 py-1 rounded">
-                            {event.name}
-                          </span>
-                        ) : null;
-                      })}
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {activeMeet.meetEvents
+                        .sort((a, b) => a.eventNumber - b.eventNumber)
+                        .map(meetEvent => {
+                          const event = allEvents.find(e => e.id === meetEvent.eventId);
+                          return event ? (
+                            <span key={`${meetEvent.eventId}-${meetEvent.ageGroup}`} className="text-xs bg-green-100 px-2 py-1 rounded">
+                              Event #{meetEvent.eventNumber}: {event.name} - {meetEvent.ageGroup}
+                            </span>
+                          ) : null;
+                        })}
                     </div>
                   </details>
                 </div>
@@ -225,22 +227,24 @@ export default function MeetsPage() {
                       {new Date(meet.date).toLocaleDateString()} • {meet.location} • {meet.course}
                     </p>
                     <p className="text-sm text-gray-500 mt-2">
-                      {meet.availableEvents.length} events available
+                      {meet.meetEvents.length} event entries configured
                     </p>
                     <div className="mt-3">
                       <details className="text-sm">
                         <summary className="cursor-pointer text-gray-600 hover:text-gray-800">
-                          View Available Events ({meet.availableEvents.length})
+                          View Meet Events ({meet.meetEvents.length})
                         </summary>
-                        <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {meet.availableEvents.map(eventId => {
-                            const event = allEvents.find(e => e.id === eventId);
-                            return event ? (
-                              <span key={eventId} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                {event.name}
-                              </span>
-                            ) : null;
-                          })}
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {meet.meetEvents
+                            .sort((a, b) => a.eventNumber - b.eventNumber)
+                            .map(meetEvent => {
+                              const event = allEvents.find(e => e.id === meetEvent.eventId);
+                              return event ? (
+                                <span key={`${meetEvent.eventId}-${meetEvent.ageGroup}`} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                  Event #{meetEvent.eventNumber}: {event.name} - {meetEvent.ageGroup}
+                                </span>
+                              ) : null;
+                            })}
                         </div>
                       </details>
                     </div>

@@ -45,9 +45,13 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     const swimmerEvents = await swimmerMeetEventService.getSwimmerMeetEvents(swimmer.id, targetMeet.id);
     swimmerToEventsMap.set(swimmer.id, swimmerEvents);
     for (const swimmerEvent of swimmerEvents) {
-      // Only include events that are available in the target meet
+      // Only include events that are in the target meet's meetEvents and match swimmer's age group
       const event = allEvents.find(e => e.id === swimmerEvent.eventId);
-      if (event && !event.isRelay) {
+      const meetEvent = targetMeet.meetEvents.find(me => 
+        me.eventId === swimmerEvent.eventId && me.ageGroup === swimmer.ageGroup
+      );
+      
+      if (event && !event.isRelay && meetEvent) {
         const seedTime = swimmerEvent.seedTime || 'NT';
         content += D0Record.generate(swimmer, event, meetDate, seedTime);
       }
@@ -56,8 +60,12 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   
   // Relay Entries (E0 and F0 records) - only for selected meet events
   for (const team of relayTeams) {
-    // Only include relay teams for events available in the target meet
-    if (targetMeet.availableEvents.includes(team.eventId)) {
+    // Only include relay teams for events in the target meet's meetEvents that match the team's age group
+    const meetEvent = targetMeet.meetEvents.find(me => 
+      me.eventId === team.eventId && me.ageGroup === team.ageGroup
+    );
+    
+    if (meetEvent) {
       const event = allEvents.find(e => e.id === team.eventId);
       if (event) {
         // Generate E0 record for the relay team
@@ -98,7 +106,11 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
     const swimmerEvents = swimmerToEventsMap.get(swimmer.id) || [];
     for (const swimmerEvent of swimmerEvents) {
       const event = allEvents.find(e => e.id === swimmerEvent.eventId);
-      if (event && !event.isRelay) {
+      const meetEvent = targetMeet.meetEvents.find(me => 
+        me.eventId === swimmerEvent.eventId && me.ageGroup === swimmer.ageGroup
+      );
+      
+      if (event && !event.isRelay && meetEvent) {
         uniqueSwimmers.add(swimmer.id);
       }
     }
@@ -106,7 +118,11 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   
   // Add swimmers from relay teams
   for (const team of relayTeams) {
-    if (targetMeet.availableEvents.includes(team.eventId)) {
+    const meetEvent = targetMeet.meetEvents.find(me => 
+      me.eventId === team.eventId && me.ageGroup === team.ageGroup
+    );
+    
+    if (meetEvent) {
       for (const swimmerId of team.swimmers) {
         uniqueSwimmers.add(swimmerId);
       }
