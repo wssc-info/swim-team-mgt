@@ -76,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedToken = localStorage.getItem('auth_token');
       console.log('Stored token:', storedToken);
       if (storedToken) {
+        // verifyToken will handle setting loading to false
         verifyToken(storedToken);
       } else {
         setLoading(false);
@@ -123,7 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>
-      {children}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-lg">Loading...</div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
