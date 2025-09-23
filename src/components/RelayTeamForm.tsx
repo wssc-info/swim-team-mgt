@@ -2,27 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createRelayTeam, updateRelayTeamApi } from '@/lib/api';
-import {SwimEvent} from "@/lib/types";
 import {AGE_GROUPS} from "@/lib/constants";
-
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-}
-
-interface RelayTeam {
-  id: string;
-  meetId: string;
-  eventId: string;
-  name: string;
-  swimmers: string[];
-  ageGroup: string;
-  gender: 'M' | 'F' | 'Mixed';
-}
+import {Swimmer, SwimEvent, RelayTeam} from "@/lib/types";
 
 interface RelayTeamFormProps {
   team?: RelayTeam | null;

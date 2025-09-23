@@ -1,9 +1,10 @@
-import { Swimmer } from '@/lib/types';
+import {MeetEvent, Swimmer} from '@/lib/types';
 import {timeToSdifFormat, getStrokeCode, getCourseCode, getAgeCode} from '../utils';
+import {SwimEventModel} from "@/lib/models";
 
 // D0 -- Individual Event Record
 export class D0Record {
-  static generate(swimmer: Swimmer, event: any, meetDate: string, seedTime: string): string {
+  static generate(swimmer: Swimmer, event: SwimEventModel, meetEvent:MeetEvent ,meetDate: string, seedTime: string): string {
     const birthDate = swimmer.dateOfBirth.replace(/-/g, '');
     const lastName = swimmer.lastName.padEnd(20, ' ').substring(0, 20);
     const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
@@ -19,7 +20,7 @@ export class D0Record {
     const eventSexCode = swimmer.gender; // position 67
     const eventDistance = event.distance.toString().padStart(4, '0'); // positions 68-71
     const strokeCode = getStrokeCode(event.stroke, event.isRelay); // position 72
-    const futureUseD0_2 = ''.padEnd(4, ' '); // positions 73-76
+    const eventNumber = (meetEvent.eventNumber.toString()).padStart(4, ' '); // positions 73-76
     const eventAgeCode = getAgeCode(swimmer.ageGroup); // positions 77-80
     const dateOfSwim = meetDate; // positions 81-88
     const seedTimeD0 = (seedTime || 'NTY').padStart(8, ' ');//timeToSdifFormat(seedTime || 'NTY').padStart(8, ' '); // positions 89-96
@@ -41,6 +42,6 @@ export class D0Record {
     const flightStatus = ''.padEnd(1, ' '); // position 145
     const futureUseD0_3 = ''.padEnd(15, ' '); // positions 146-160
     
-    return `D01${futureUseD0_1}${swimmerName}${ussNumber}${attachCode}${citizenCode}${swimmerBirthDate}${swimmerAgeClass}${sexCode}${eventSexCode}${eventDistance}${strokeCode}${futureUseD0_2}${eventAgeCode}${dateOfSwim}${seedTimeD0}${courseCodeD0_1}${prelimTime}${courseCodeD0_2}${swimOffTime}${courseCodeD0_3}${finalsTime}${courseCodeD0_4}${prelimHeat}${prelimLane}${finalsHeat}${finalsLane}${prelimPlace}${finalsPlace}${pointsScored}${eventTimeClass}${flightStatus}${futureUseD0_3}\n`;
+    return `D01${futureUseD0_1}${swimmerName}${ussNumber}${attachCode}${citizenCode}${swimmerBirthDate}${swimmerAgeClass}${sexCode}${eventSexCode}${eventDistance}${strokeCode}${eventNumber}${eventAgeCode}${dateOfSwim}${seedTimeD0}${courseCodeD0_1}${prelimTime}${courseCodeD0_2}${swimOffTime}${courseCodeD0_3}${finalsTime}${courseCodeD0_4}${prelimHeat}${prelimLane}${finalsHeat}${finalsLane}${prelimPlace}${finalsPlace}${pointsScored}${eventTimeClass}${flightStatus}${futureUseD0_3}\n`;
   }
 }

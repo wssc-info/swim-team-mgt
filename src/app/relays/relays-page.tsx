@@ -2,38 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { fetchSwimmers, fetchMeets, createRelayTeam, fetchRelayTeams, updateRelayTeamApi, deleteRelayTeamApi, fetchAllEvents } from '@/lib/api';
-import { SwimEvent } from '@/lib/types';
+import {Meet, RelayTeam, SwimEvent, Swimmer} from '@/lib/types';
 import RelayTeamForm from '@/components/RelayTeamForm';
 import { useAuth } from '@/lib/auth-context';
 
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-}
-
-interface Meet {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  availableEvents: string[];
-  isActive: boolean;
-  createdAt: string;
-}
-
-interface RelayTeam {
-  id: string;
-  meetId: string;
-  eventId: string;
-  name: string;
-  swimmers: string[];
-  ageGroup: string;
-  gender: 'M' | 'F' | 'Mixed';
-}
 
 export default function RelaysPage() {
   const { user } = useAuth();

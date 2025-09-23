@@ -8,47 +8,48 @@ import MeetSelector from '@/components/export/MeetSelector';
 import ExportPreview from '@/components/export/ExportPreview';
 import ExportContent from '@/components/export/ExportContent';
 import ExportInfo from '@/components/export/ExportInfo';
+import {Meet, RelayTeam, Swimmer} from "@/lib/types";
 
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-}
-
-interface Meet {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  availableEvents: string[];
-  isActive: boolean;
-  createdAt: string;
-}
-
-interface RelayTeam {
-  id: string;
-  meetId: string;
-  eventId: string;
-  name: string;
-  swimmers: string[];
-  ageGroup: string;
-  gender: 'M' | 'F' | 'Mixed';
-}
-
-interface IndividualEntry {
-  swimmer: Swimmer;
-  event: any;
-  seedTime: string;
-}
-
-interface RelayEntry {
-  team: RelayTeam;
-  event: any;
-  swimmers: Swimmer[];
-}
+// interface Swimmer {
+//   id: string;
+//   firstName: string;
+//   lastName: string;
+//   dateOfBirth: string;
+//   gender: 'M' | 'F';
+//   ageGroup: string;
+// }
+//
+// interface Meet {
+//   id: string;
+//   name: string;
+//   date: string;
+//   location: string;
+//   availableEvents: string[];
+//   isActive: boolean;
+//   createdAt: string;
+// }
+//
+// interface RelayTeam {
+//   id: string;
+//   meetId: string;
+//   eventId: string;
+//   name: string;
+//   swimmers: string[];
+//   ageGroup: string;
+//   gender: 'M' | 'F' | 'Mixed';
+// }
+//
+// interface IndividualEntry {
+//   swimmer: Swimmer;
+//   event: any;
+//   seedTime: string;
+// }
+//
+// interface RelayEntry {
+//   team: RelayTeam;
+//   event: any;
+//   swimmers: Swimmer[];
+// }
 
 export default function ExportPage() {
   const { user } = useAuth();
@@ -73,15 +74,15 @@ export default function ExportPage() {
           fetchMeets(),
           fetchSwimmers(user?.clubId)
         ]);
-        
+
         // Filter meets to only show those for the user's club
-        const filteredMeets = user?.clubId 
+        const filteredMeets = user?.clubId
           ? meetData.filter(meet => meet.clubId === user.clubId)
           : meetData;
-        
+
         setMeets(filteredMeets);
         setSwimmers(swimmerData);
-        
+
         // Auto-select active meet if available
         const activeMeet = filteredMeets.find(m => m.isActive);
         if (activeMeet) {
@@ -96,7 +97,7 @@ export default function ExportPage() {
         setLoading(false);
       }
     };
-    
+
     if (user) {
       loadData();
     }
@@ -134,10 +135,10 @@ export default function ExportPage() {
         if (meet.availableEvents.includes(team.eventId)) {
           const event = allEvents.find(e => e.id === team.eventId);
           if (event && event.isRelay) {
-            const teamSwimmers = team.swimmers.map(swimmerId => 
+            const teamSwimmers = team.swimmers.map((swimmerId) =>
               swimmerData.find(s => s.id === swimmerId)
             ).filter(Boolean);
-            
+
             meetRelayEntries.push({
               team,
               event,
@@ -146,7 +147,7 @@ export default function ExportPage() {
           }
         }
       });
-      
+
       setPreviewData({
         individual: meetIndividualEntries,
         relays: meetRelayEntries
@@ -166,7 +167,7 @@ export default function ExportPage() {
 
   const handleExport = async () => {
     if (!selectedMeet) return;
-    
+
     setExporting(true);
     try {
       const result = await exportMeetData(selectedMeet.id);
@@ -181,7 +182,7 @@ export default function ExportPage() {
 
   const handleDownload = () => {
     if (!exportData) return;
-    
+
     const blob = new Blob([exportData.content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -195,7 +196,7 @@ export default function ExportPage() {
 
   const handleCopyToClipboard = async () => {
     if (!exportData) return;
-    
+
     try {
       await navigator.clipboard.writeText(exportData.content);
       alert('Content copied to clipboard!');
@@ -222,8 +223,8 @@ export default function ExportPage() {
   return (
     <div className="max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Export Meet Data</h1>
-      
-      <MeetSelector 
+
+      <MeetSelector
         meets={meets}
         selectedMeet={selectedMeet}
         onMeetSelect={handleMeetSelect}

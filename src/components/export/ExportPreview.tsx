@@ -2,35 +2,8 @@
 
 import { DataTable } from '@/components/datatable/dataTable';
 import { ColumnDef } from '@tanstack/react-table';
+import {Meet, RelayTeam, Swimmer} from "@/lib/types";
 
-interface Swimmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: 'M' | 'F';
-  ageGroup: string;
-}
-
-interface Meet {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  availableEvents: string[];
-  isActive: boolean;
-  createdAt: string;
-}
-
-interface RelayTeam {
-  id: string;
-  meetId: string;
-  eventId: string;
-  name: string;
-  swimmers: string[];
-  ageGroup: string;
-  gender: 'M' | 'F' | 'Mixed';
-}
 
 interface IndividualEntry {
   swimmer: Swimmer;

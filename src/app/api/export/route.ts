@@ -4,7 +4,7 @@ import { SwimmerService } from '@/lib/services/swimmer-service';
 import { SwimmerMeetEventService } from '@/lib/services/swimmer-meet-event-service';
 import { RelayTeamService } from '@/lib/services/relay-team-service';
 import { MeetService } from '@/lib/services/meet-service';
-import {RelayTeam} from "@/lib/types";
+import {RelayTeam, SwimmerWithEvents} from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,62 +19,51 @@ export async function POST(request: NextRequest) {
     let selectedMeet = null;
     if (meetId) {
       selectedMeet = await meetService.getMeet(meetId);
-      if (!selectedMeet) {
-        return NextResponse.json({ error: 'Meet not found' }, { status: 404 });
-      }
     }
-    
+    if (!selectedMeet) {
+      return NextResponse.json({ error: 'Meet not found' }, { status: 404 });
+    }
     // Fetch swimmers and their event selections for this meet
-    const swimmers = await swimmerService.getSwimmers();
-    const swimmersWithEvents = [];
-    
-    if (selectedMeet) {
-      for (const swimmer of swimmers) {
-        try {
-          // Fetch swimmer-meet-events for this specific meet
-          const swimmerMeetEvents = await swimmerMeetEventService.getSwimmerMeetEvents(swimmer.id, selectedMeet.id);
-          const selectedEvents = swimmerMeetEvents.map(sme => sme.eventId);
-          const seedTimes = swimmerMeetEvents.reduce((acc: any, sme) => {
-            if (sme.seedTime) {
-              acc[sme.eventId] = sme.seedTime;
-            }
-            return acc;
-          }, {});
-          
+    const swimmers = await swimmerService.getSwimmers(selectedMeet.clubId);
+    const swimmersWithEvents: SwimmerWithEvents[] = [];
+
+    const swimmerMeetEventsForMeet = await swimmerMeetEventService.getSwimmerMeetEvents(null, selectedMeet.id);
+    for (const swimmer of swimmers) {
+      try {
+        // Fetch swimmer-meet-events for this specific meet
+        const swimmerMeetEvents =
+          swimmerMeetEventsForMeet.filter(sme => sme.swimmerId === swimmer.id);
+          //await swimmerMeetEventService.getSwimmerMeetEvents(swimmer.id, selectedMeet.id);
+        // const selectedEvents = swimmerMeetEvents.map(sme => sme.eventId);
+        // const seedTimes = swimmerMeetEvents.reduce((acc: any, sme) => {
+        //   if (sme.seedTime) {
+        //     acc[sme.eventId] = sme.seedTime;
+        //   }
+        //   return acc;
+        // }, {});
+        // if(swimmerMeetEvents.length > 0) {
           swimmersWithEvents.push({
             ...swimmer,
-            selectedEvents,
-            seedTimes
+            selectedEvents: swimmerMeetEvents,
           });
-        } catch (error) {
-          console.error(`Error fetching events for swimmer ${swimmer.id}:`, error);
-          swimmersWithEvents.push({
-            ...swimmer,
-            selectedEvents: [],
-            seedTimes: {}
-          });
-        }
+        // }
+      } catch (error) {
+        console.error(`Error fetching events for swimmer ${swimmer.id}:`, error);
+        swimmersWithEvents.push({
+          ...swimmer,
+          selectedEvents: [],
+        });
       }
-    } else {
-      // No specific meet, add all swimmers with empty selections
-      swimmersWithEvents.push(...swimmers.map(swimmer => ({
-        ...swimmer,
-        selectedEvents: [],
-        seedTimes: {}
-      })));
     }
     
     // Fetch relay teams for this meet
     let relayTeams: RelayTeam[] = [];
-    if (selectedMeet) {
-      try {
-        relayTeams = await relayTeamService.getRelayTeams(selectedMeet.id);
-      } catch (error) {
-        console.error('Error fetching relay teams:', error);
-      }
+    try {
+      relayTeams = await relayTeamService.getRelayTeams(selectedMeet.id);
+    } catch (error) {
+      console.error('Error fetching relay teams:', error);
     }
-    
-    const content = await generateMeetManagerFile(selectedMeet || undefined, swimmersWithEvents, relayTeams);
+    const content = await generateMeetManagerFile(selectedMeet, swimmersWithEvents, relayTeams);
     const fileName = selectedMeet 
       ? `${selectedMeet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${selectedMeet.date.replace(/-/g, '')}.sd3`
       : `swim-meet-entries-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.sd3`;

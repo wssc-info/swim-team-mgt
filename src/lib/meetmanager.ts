@@ -1,6 +1,14 @@
 import {fetchAllEvents} from './api';
 import {SwimClubModel, SwimEventModel} from '@/lib/models';
-import {Meet, MeetManagerEntry, MeetManagerRelay, RelayTeam, Swimmer, SwimmerMeetEvent} from '@/lib/types';
+import {
+  Meet,
+  MeetManagerEntry,
+  MeetManagerRelay,
+  RelayTeam,
+  Swimmer,
+  SwimmerMeetEvent,
+  SwimmerWithEvents
+} from '@/lib/types';
 import {A0Record} from './sdif/records/A0Record';
 import {B1Record} from './sdif/records/B1Record';
 import {C1Record} from './sdif/records/C1Record';
@@ -9,8 +17,9 @@ import {E0Record} from './sdif/records/E0Record';
 import {F0Record} from './sdif/records/F0Record';
 import {Z0Record} from './sdif/records/Z0Record';
 import {SwimmerMeetEventService} from "@/lib/services/swimmer-meet-event-service";
+import {D3Record} from "@/lib/sdif/records/D3Record";
 
-export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swimmer[] = [], relayTeams: RelayTeam[] = []): Promise<string> {
+export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: SwimmerWithEvents[] = [], relayTeams: RelayTeam[] = []): Promise<string> {
   // Get target meet
   const targetMeet = selectedMeet;
   if (!targetMeet) {
@@ -39,10 +48,12 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
 
   const swimmerToEventsMap = new Map<string, SwimmerMeetEvent[]>();
 
+  const swimmerIdsWithD3 = new Set<string>();
+
   // Individual Entries (D0 records) - only for selected meet events
   const swimmerMeetEventService = SwimmerMeetEventService.getInstance();
   for (const swimmer of swimmers) {
-    const swimmerEvents = await swimmerMeetEventService.getSwimmerMeetEvents(swimmer.id, targetMeet.id);
+    const swimmerEvents = swimmer.selectedEvents || [];
     swimmerToEventsMap.set(swimmer.id, swimmerEvents);
     for (const swimmerEvent of swimmerEvents) {
       // Only include events that are in the target meet's meetEvents and match swimmer's age group
@@ -53,7 +64,11 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
       
       if (event && !event.isRelay && meetEvent) {
         const seedTime = swimmerEvent.seedTime || 'NT';
-        content += D0Record.generate(swimmer, event, meetDate, seedTime);
+        content += D0Record.generate(swimmer, event, meetEvent, meetDate, seedTime);
+        if (!swimmerIdsWithD3.has(swimmer.id)) {
+          content += D3Record.generate(swimmer);
+          swimmerIdsWithD3.add(swimmer.id);
+        }
       }
     }
   }
@@ -71,7 +86,7 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
         // Generate E0 record for the relay team
         const numF0Records = team.swimmers.length;
         content += E0Record.generate(team, event, clubAbbrev, meetDate, numF0Records);
-        
+
         // Generate F0 records for each swimmer in the relay team
         for (const swimmerId of team.swimmers) {
           const index = team.swimmers.indexOf(swimmerId);
@@ -79,6 +94,10 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
           if (swimmer) {
             const legOrder = index + 1;
             content += F0Record.generate(swimmer, team, clubAbbrev, legOrder);
+            if (!swimmerIdsWithD3.has(swimmer.id)) {
+              content += D3Record.generate(swimmer);
+              swimmerIdsWithD3.add(swimmer.id);
+            }
           }
         }
       }

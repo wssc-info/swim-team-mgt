@@ -25,7 +25,6 @@ export class SwimmerMeetEventService {
   public async getSwimmerMeetEvents(swimmerId: string | null, meetId: string): Promise<SwimmerMeetEvent[]> {
     await this.ensureInitialized();
     const where = swimmerId ? { swimmerId, meetId } : { meetId };
-    console.log(where);
     try {
       const events = await SwimmerMeetEventModel.findAll({
         where: where
