@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import {fetchMeets, fetchSwimmers, fetchSwimmerMeetEvents, fetchRelayTeams, fetchAllEvents} from '@/lib/api';
 import { exportMeetData } from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
+import { DataTable } from '@/components/datatable/dataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface Swimmer {
   id: string;
@@ -34,8 +36,84 @@ interface RelayTeam {
   gender: 'M' | 'F' | 'Mixed';
 }
 
+interface IndividualEntry {
+  swimmer: Swimmer;
+  event: any;
+  seedTime: string;
+}
+
+interface RelayEntry {
+  team: RelayTeam;
+  event: any;
+  swimmers: Swimmer[];
+}
+
 export default function ExportPage() {
   const { user } = useAuth();
+  
+  // Column definitions for individual entries
+  const individualColumns: ColumnDef<IndividualEntry>[] = [
+    {
+      accessorKey: "swimmer.firstName",
+      header: "First Name",
+      cell: ({ row }) => row.original.swimmer.firstName,
+    },
+    {
+      accessorKey: "swimmer.lastName", 
+      header: "Last Name",
+      cell: ({ row }) => row.original.swimmer.lastName,
+    },
+    {
+      accessorKey: "event.name",
+      header: "Event",
+      cell: ({ row }) => row.original.event.name,
+    },
+    {
+      accessorKey: "seedTime",
+      header: "Seed Time",
+      cell: ({ row }) => row.original.seedTime || 'NT',
+    },
+    {
+      accessorKey: "swimmer.ageGroup",
+      header: "Age Group",
+      cell: ({ row }) => row.original.swimmer.ageGroup,
+    },
+    {
+      accessorKey: "swimmer.gender",
+      header: "Gender",
+      cell: ({ row }) => row.original.swimmer.gender,
+    },
+  ];
+
+  // Column definitions for relay entries
+  const relayColumns: ColumnDef<RelayEntry>[] = [
+    {
+      accessorKey: "team.name",
+      header: "Team Name",
+      cell: ({ row }) => row.original.team.name,
+    },
+    {
+      accessorKey: "event.name",
+      header: "Event",
+      cell: ({ row }) => row.original.event.name,
+    },
+    {
+      accessorKey: "team.ageGroup",
+      header: "Age Group",
+      cell: ({ row }) => row.original.team.ageGroup,
+    },
+    {
+      accessorKey: "team.gender",
+      header: "Gender",
+      cell: ({ row }) => row.original.team.gender,
+    },
+    {
+      accessorKey: "swimmers",
+      header: "Swimmers",
+      cell: ({ row }) => row.original.swimmers.map(s => `${s.firstName} ${s.lastName}`).join(', '),
+    },
+  ];
+
   const [meets, setMeets] = useState<Meet[]>([]);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
@@ -271,7 +349,7 @@ export default function ExportPage() {
             </button>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             {/* Individual Events */}
             <div>
               <h3 className="text-lg font-medium mb-3">
@@ -281,21 +359,10 @@ export default function ExportPage() {
               {previewData.individual.length === 0 ? (
                 <p className="text-gray-500 text-sm">No individual event entries found.</p>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {previewData.individual.map((entry, index) => (
-                    <div key={index} className="border rounded p-3 text-sm">
-                      <div className="font-medium">
-                        {entry.swimmer.firstName} {entry.swimmer.lastName}
-                      </div>
-                      <div className="text-gray-600">
-                        {entry.event.name} • {entry.seedTime || 'NT'}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {entry.swimmer.ageGroup} • {entry.swimmer.gender}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <DataTable 
+                  columns={individualColumns} 
+                  data={previewData.individual}
+                />
               )}
             </div>
 
@@ -308,24 +375,10 @@ export default function ExportPage() {
               {previewData.relays.length === 0 ? (
                 <p className="text-gray-500 text-sm">No relay team entries found.</p>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {previewData.relays.map((relay, index) => (
-                    <div key={index} className="border rounded p-3 text-sm">
-                      <div className="font-medium">
-                        {relay.team.name}
-                      </div>
-                      <div className="text-gray-600">
-                        {relay.event.name}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {relay.team.ageGroup} • {relay.team.gender} • {relay.swimmers.length} swimmers
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {relay.swimmers.map((s: any) => `${s.firstName} ${s.lastName}`).join(', ')}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <DataTable 
+                  columns={relayColumns} 
+                  data={previewData.relays}
+                />
               )}
             </div>
           </div>
