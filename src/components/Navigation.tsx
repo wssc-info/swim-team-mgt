@@ -14,7 +14,7 @@ export default function Navigation() {
   const {user, logout} = useAuth();
 
   if (!user) {
-    logout();
+    // logout();
     return null;
   }
 

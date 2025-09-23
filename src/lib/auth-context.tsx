@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setToken(null);
       } finally {
-        setLoading(false);
+        window.setTimeout( () => setLoading(false), 100);
       }
   }, []);
 
@@ -123,15 +123,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <>
       {loading ? (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-lg">Loading...</div>
         </div>
       ) : (
-        children
+          <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+            {children}
+          </AuthContext.Provider>
       )}
-    </AuthContext.Provider>
+    </>
   );
 }
 

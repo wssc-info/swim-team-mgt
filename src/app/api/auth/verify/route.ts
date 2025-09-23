@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/services/auth-service';
+import {UserModel} from "@/lib/models";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,8 +16,11 @@ export async function POST(request: NextRequest) {
     if (!decoded) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
-
-    return NextResponse.json(decoded);
+    let currentUser = null;
+    if (decoded && typeof decoded !== 'string') {
+      currentUser = await UserModel.findByPk(decoded.userId);
+    }
+    return NextResponse.json(currentUser || decoded);
   } catch (error) {
     console.error('Error verifying token:', error);
     return NextResponse.json({ error: 'Token verification failed' }, { status: 500 });

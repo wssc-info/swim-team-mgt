@@ -55,7 +55,7 @@ export default function ExportPage() {
       try {
         const [meetData, swimmerData] = await Promise.all([
           fetchMeets(),
-          fetchSwimmers()
+          fetchSwimmers(user?.clubId)
         ]);
         
         // Filter meets to only show those for the user's club
@@ -93,27 +93,26 @@ export default function ExportPage() {
       const meetRelayEntries: any[] = [];
 
       const allEvents = await fetchAllEvents();
-      // Individual entries - fetch event selections for each swimmer
-      for (const swimmer of swimmerData) {
+
+      const allEventsForMeet = await fetchSwimmerMeetEvents(meet.id);
+      console.log("All events for meet:", allEventsForMeet);
+
+      swimmerData.map((swimmer) => {
         try {
-          const swimmerMeetEvents = await fetchSwimmerMeetEvents(swimmer.id, meet.id);
-          swimmerMeetEvents.forEach(sme => {
-            if (meet.availableEvents.includes(sme.eventId)) {
-              const event = allEvents.find(e => e.id === sme.eventId);
-              if (event && !event.isRelay) {
-                meetIndividualEntries.push({
-                  swimmer,
-                  event,
-                  seedTime: sme.seedTime
-                });
-              }
-            }
-          });
+          const selectedEvents = allEventsForMeet.filter(sme=> sme.swimmerId === swimmer.id);
+          selectedEvents.forEach(sme=>{
+            const swimEvent = allEvents.find(e => e.id === sme.eventId);
+            meetIndividualEntries.push({
+              swimmer,
+              event: swimEvent,
+              seedTime: sme.seedTime
+            })
+          })
         } catch (error) {
           console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
         }
-      }
-      
+      });
+
       // Relay entries - filter relay teams for events available in this meet
       relayData.forEach(team => {
         if (meet.availableEvents.includes(team.eventId)) {
