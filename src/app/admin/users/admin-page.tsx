@@ -6,6 +6,8 @@ import FamilyAssociationForm from '@/components/FamilyAssociationForm';
 import {User, Swimmer} from '@/lib/types';
 import {authenticatedFetch, fetchSwimmers} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
+import { DataTable } from '@/components/datatable/dataTable';
+import { createUserColumns } from '@/components/admin/users/columns';
 
 interface UserWithAssociations extends User {
   associatedSwimmers?: string[];
@@ -250,14 +252,6 @@ export default function AdminPage() {
     }
   };
 
-  const getSwimmerNames = (swimmerIds: string[]) => {
-    return swimmerIds
-      .map(id => {
-        const swimmer = swimmers.find(s => s.id === id);
-        return swimmer ? `${swimmer.firstName} ${swimmer.lastName}` : 'Unknown';
-      })
-      .join(', ');
-  };
 
   if (loading) {
     return (
@@ -333,103 +327,15 @@ export default function AdminPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                User
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Associated Swimmers
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user.firstName} {user.lastName}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{user.email}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.role === 'admin'
-                        ? 'bg-red-100 text-red-800'
-                        : user.role === 'coach'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role}
-                    </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">
-                    {user.role === 'family' && user.associatedSwimmers ? (
-                      user.associatedSwimmers.length > 0 ? (
-                        <div className="max-w-xs truncate" title={getSwimmerNames(user.associatedSwimmers)}>
-                          {getSwimmerNames(user.associatedSwimmers)}
-                        </div>
-                      ) : (
-                        <span className="text-gray-500 italic">No swimmers assigned</span>
-                      )
-                    ) : (
-                      <span className="text-gray-500">—</span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button
-                    onClick={() => handleEditUser(user)}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Edit
-                  </button>
-                  {user.role === 'family' && (
-                    <button
-                      onClick={() => handleManageAssociations(user)}
-                      className="text-green-600 hover:text-green-900"
-                    >
-                      Manage Swimmers
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDeleteUser(user.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            </tbody>
-          </table>
-
-          {users.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No users found. Create your first user to get started.
-            </div>
-          )}
+          <DataTable
+            columns={createUserColumns({
+              swimmers,
+              onEditUser: handleEditUser,
+              onManageAssociations: handleManageAssociations,
+              onDeleteUser: handleDeleteUser,
+            })}
+            data={users}
+          />
         </div>
 
         {/* User Form Modal */}
