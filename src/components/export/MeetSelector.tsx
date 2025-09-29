@@ -1,6 +1,8 @@
 'use client';
 
 import { Meet } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
+import { useState, useEffect } from 'react';
 
 interface MeetSelectorProps {
   meets: Meet[];
@@ -10,6 +12,30 @@ interface MeetSelectorProps {
 }
 
 export default function MeetSelector({ meets, selectedMeet, onMeetSelect, loading }: MeetSelectorProps) {
+  const { user } = useAuth();
+  const [activeMeetId, setActiveMeetId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchActiveMeet = async () => {
+      if (user?.clubId) {
+        try {
+          const clubResponse = await fetch(`/api/admin/clubs/${user.clubId}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          if (clubResponse.ok) {
+            const clubData = await clubResponse.json();
+            setActiveMeetId(clubData.activeMeetId || null);
+          }
+        } catch (error) {
+          console.error('Error fetching club active meet:', error);
+        }
+      }
+    };
+
+    fetchActiveMeet();
+  }, [user]);
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -45,7 +71,7 @@ export default function MeetSelector({ meets, selectedMeet, onMeetSelect, loadin
                 <div>
                   <h3 className="font-semibold flex items-center">
                     {meet.name}
-                    {meet.isActive && (
+                    {activeMeetId === meet.id && (
                       <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
                         Active
                       </span>

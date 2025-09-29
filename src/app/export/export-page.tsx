@@ -97,8 +97,6 @@ export default function ExportPage() {
               if (clubData.activeMeetId) {
                 const activeMeet = filteredMeets.find(m => m.id === clubData.activeMeetId);
                 if (activeMeet) {
-                  // Mark the meet as active for display purposes
-                  activeMeet.isActive = true;
                   setSelectedMeet(activeMeet);
                   const relayData = await fetchRelayTeams(activeMeet.id);
                   await loadPreviewData(activeMeet, swimmerData, relayData);
