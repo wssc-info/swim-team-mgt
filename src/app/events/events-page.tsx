@@ -51,24 +51,38 @@ export function EventsPage() {
     const loadData = async () => {
       try {
         const [meetData, eventsData] = await Promise.all([
-          fetchMeets(true),
+          fetchMeets(),
           fetchAllEvents()
         ]);
 
-        // Filter meets to only show those for the user's club and find active meet
-        const filteredMeets = user?.clubId 
-          ? meetData.filter(meet => meet.clubId === user.clubId)
-          : meetData;
-
-        const active = filteredMeets.find(m => m.isActive) || null;
-
-        setActiveMeet(active);
         setAllEvents(eventsData);
 
-        if (!active) {
+        // Get active meet from user's club
+        let activeMeetFromClub = null;
+        if (user?.clubId) {
+          try {
+            const clubResponse = await fetch(`/api/admin/clubs/${user.clubId}`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            if (clubResponse.ok) {
+              const clubData = await clubResponse.json();
+              if (clubData.activeMeetId) {
+                activeMeetFromClub = meetData.find(m => m.id === clubData.activeMeetId) || null;
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching club active meet:', error);
+          }
+        }
+
+        setActiveMeet(activeMeetFromClub);
+
+        if (!activeMeetFromClub) {
           return;
         }
-        await loadSwimmerData(active);
+        await loadSwimmerData(activeMeetFromClub);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -153,10 +167,13 @@ export function EventsPage() {
     );
   }
 
-  // Get available events from meetEvents, filtering by age group
-  const getAvailableEventsForSwimmer = (swimmerAgeGroup: string): SwimEvent[] => {
+  // Get available events from meetEvents, filtering by age group and gender
+  const getAvailableEventsForSwimmer = (swimmerAgeGroup: string, swimmerGender: 'M' | 'F'): SwimEvent[] => {
     return activeMeet.meetEvents
-      .filter(meetEvent => meetEvent.ageGroup === swimmerAgeGroup)
+      .filter(meetEvent => 
+        meetEvent.ageGroup === swimmerAgeGroup && 
+        (meetEvent.gender === swimmerGender || meetEvent.gender === 'Mixed')
+      )
       .map(meetEvent => allEvents.find(e => e.id === meetEvent.eventId))
       .filter(Boolean) as SwimEvent[];
   };
@@ -224,7 +241,7 @@ export function EventsPage() {
       id: "eventsAvailable",
       header: "Events Available",
       cell: ({ row }) => {
-        const eligibleEvents = getAvailableEventsForSwimmer(row.original.ageGroup);
+        const eligibleEvents = getAvailableEventsForSwimmer(row.original.ageGroup, row.original.gender);
         return (
           <span className="text-sm text-gray-600">
             {eligibleEvents.length}
@@ -327,7 +344,7 @@ export function EventsPage() {
             <EventSelection
               swimmer={selectedSwimmer}
               meet={activeMeet}
-              availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup)}
+              availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup, selectedSwimmer.gender)}
               onClose={handleEventSelectionClose}
             />
           </div>
