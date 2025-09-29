@@ -156,7 +156,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
   };
 
-  const addMeetEvent = (eventId: string, ageGroup: string) => {
+  const addMeetEvent = (eventId: string, ageGroup: string, gender: 'M' | 'F' | 'Mixed') => {
     const event = allEvents.find(e => e.id === eventId);
     if (!event) return;
 
@@ -164,7 +164,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     
     const newMeetEvent: MeetEvent = {
       eventId,
-      gender: 'M',
+      gender,
       eventNumber: nextEventNumber,
       ageGroup
     };
@@ -184,10 +184,10 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
   };
 
-  const removeMeetEvent = (eventId: string, ageGroup: string) => {
+  const removeMeetEvent = (eventId: string, ageGroup: string, gender: 'M' | 'F' | 'Mixed') => {
     setFormData(prev => {
-      const newMeetEvents = prev.meetEvents.filter(me => !(me.eventId === eventId && me.ageGroup === ageGroup));
-      // Only remove from availableEvents if no other age groups use this event
+      const newMeetEvents = prev.meetEvents.filter(me => !(me.eventId === eventId && me.ageGroup === ageGroup && me.gender === gender));
+      // Only remove from availableEvents if no other age groups/genders use this event
       const stillUsed = newMeetEvents.some(me => me.eventId === eventId);
       const newAvailableEvents = stillUsed ? prev.availableEvents : prev.availableEvents.filter(id => id !== eventId);
       
@@ -199,20 +199,20 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     });
   };
 
-  const updateMeetEventNumber = (eventId: string, ageGroup: string, eventNumber: number) => {
+  const updateMeetEventNumber = (eventId: string, ageGroup: string, gender: 'M' | 'F' | 'Mixed', eventNumber: number) => {
     setFormData(prev => ({
       ...prev,
       meetEvents: prev.meetEvents.map(me => 
-        me.eventId === eventId && me.ageGroup === ageGroup ? { ...me, eventNumber } : me
+        me.eventId === eventId && me.ageGroup === ageGroup && me.gender === gender ? { ...me, eventNumber } : me
       )
     }));
   };
 
-  const updateMeetGender = (eventId: string, ageGroup: string, gender: 'M' | 'F' | 'Mixed') => {
+  const updateMeetGender = (eventId: string, ageGroup: string, oldGender: 'M' | 'F' | 'Mixed', newGender: 'M' | 'F' | 'Mixed') => {
     setFormData(prev => ({
       ...prev,
       meetEvents: prev.meetEvents.map(me =>
-        me.eventId === eventId && me.ageGroup === ageGroup ? { ...me, gender } : me
+        me.eventId === eventId && me.ageGroup === ageGroup && me.gender === oldGender ? { ...me, gender: newGender } : me
       )
     }));
   };
@@ -252,12 +252,25 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
   const filteredEvents = getFilteredEvents();
   
-  // Get events that can still be added (have age groups not yet used)
-  const getAvailableEventAgeGroups = (event: SwimEvent) => {
-    const usedAgeGroups = formData.meetEvents
+  // Get events that can still be added (have age group/gender combinations not yet used)
+  const getAvailableEventCombinations = (event: SwimEvent) => {
+    const usedCombinations = formData.meetEvents
       .filter(me => me.eventId === event.id)
-      .map(me => me.ageGroup);
-    return event.ageGroups.filter(ag => !usedAgeGroups.includes(ag));
+      .map(me => `${me.ageGroup}-${me.gender}`);
+    
+    const availableCombinations: { ageGroup: string; gender: 'M' | 'F' | 'Mixed' }[] = [];
+    const genders: ('M' | 'F' | 'Mixed')[] = event.isRelay ? ['M', 'F', 'Mixed'] : ['M', 'F'];
+    
+    event.ageGroups.forEach(ageGroup => {
+      genders.forEach(gender => {
+        const combination = `${ageGroup}-${gender}`;
+        if (!usedCombinations.includes(combination)) {
+          availableCombinations.push({ ageGroup, gender });
+        }
+      });
+    });
+    
+    return availableCombinations;
   };
 
   // Create columns for the meet events data table
@@ -266,15 +279,12 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       accessorKey: "eventNumber",
       header: "Event #",
       cell: ({ row }) => {
-        const meetEvent = formData.meetEvents.find(me =>
-          me.eventId === row.original.eventId && me.ageGroup === row.original.ageGroup
-        );
         return (
           <input
             type="number"
             min="1"
-            value={meetEvent?.eventNumber || 1}
-            onChange={(e) => updateMeetEventNumber(row.original.eventId, row.original.ageGroup, parseInt(e.target.value) || 1)}
+            value={row.original.eventNumber || 1}
+            onChange={(e) => updateMeetEventNumber(row.original.eventId, row.original.ageGroup, row.original.gender, parseInt(e.target.value) || 1)}
             className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
           />
         );
@@ -283,28 +293,26 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       accessorKey: "gender",
       header: "Gender",
       cell: ({ row }) => {
-        const meetEvent = formData.meetEvents.find(me =>
-          me.eventId === row.original.eventId && me.ageGroup === row.original.ageGroup
-        );
         return (
           <Select
-            value={meetEvent?.gender || 'M'}
+            value={row.original.gender || 'M'}
             onValueChange={(e) => {
               if (e === 'M' || e === 'F' || e === 'Mixed'){
                 updateMeetGender(row.original.eventId,
                                 row.original.ageGroup,
+                                row.original.gender,
                                 e)
               }
             }}
           >
-            <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select a fruit" />
-          </SelectTrigger>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-            <SelectItem value="M">Male</SelectItem>
-            <SelectItem value="F">Female</SelectItem>
-            <SelectItem value="Mixed">Mixed</SelectItem>
+                <SelectItem value="M">Male</SelectItem>
+                <SelectItem value="F">Female</SelectItem>
+                <SelectItem value="Mixed">Mixed</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -341,7 +349,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       cell: ({ row }) => (
         <button
           type="button"
-          onClick={() => removeMeetEvent(row.original.eventId, row.original.ageGroup)}
+          onClick={() => removeMeetEvent(row.original.eventId, row.original.ageGroup, row.original.gender)}
           className="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50"
         >
           Remove
@@ -610,12 +618,12 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
             {/* Available Events to Add */}
             <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
               <div className="text-xs text-gray-600 mb-2">
-                Available to add (by age group):
+                Available to add (by age group and gender):
               </div>
               <div className="grid grid-cols-1 gap-2">
                 {filteredEvents.map((event) => {
-                  const availableAgeGroups = getAvailableEventAgeGroups(event);
-                  if (availableAgeGroups.length === 0) return null;
+                  const availableCombinations = getAvailableEventCombinations(event);
+                  if (availableCombinations.length === 0) return null;
                   
                   return (
                     <div key={event.id} className="border border-gray-100 rounded p-2">
@@ -630,23 +638,29 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {availableAgeGroups.map((ageGroup) => (
+                        {availableCombinations.map((combination) => (
                           <button
-                            key={ageGroup}
+                            key={`${combination.ageGroup}-${combination.gender}`}
                             type="button"
-                            onClick={() => addMeetEvent(event.id, ageGroup)}
-                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                            onClick={() => addMeetEvent(event.id, combination.ageGroup, combination.gender)}
+                            className={`text-xs px-2 py-1 rounded hover:opacity-80 ${
+                              combination.gender === 'M' 
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : combination.gender === 'F'
+                                ? 'bg-pink-600 text-white hover:bg-pink-700'
+                                : 'bg-purple-600 text-white hover:bg-purple-700'
+                            }`}
                           >
-                            Add {ageGroup}
+                            Add {combination.ageGroup} {combination.gender === 'Mixed' ? 'Mixed' : combination.gender}
                           </button>
                         ))}
                       </div>
                     </div>
                   );
                 })}
-                {filteredEvents.every(event => getAvailableEventAgeGroups(event).length === 0) && (
+                {filteredEvents.every(event => getAvailableEventCombinations(event).length === 0) && (
                   <div className="text-sm text-gray-500 text-center py-4">
-                    No more events/age groups available to add with current filters
+                    No more events/age groups/genders available to add with current filters
                   </div>
                 )}
               </div>
