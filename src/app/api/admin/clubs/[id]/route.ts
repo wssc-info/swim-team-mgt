@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SwimClubModel, initializeDatabase } from '@/lib/models';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await initializeDatabase();
+    
+    const { id } = await params;
+    
+    const club = await SwimClubModel.findByPk(id);
+    if (!club) {
+      return NextResponse.json({ error: 'Swim club not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json(club);
+  } catch (error) {
+    console.error('Error fetching swim club:', error);
+    return NextResponse.json({ error: 'Failed to fetch swim club' }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

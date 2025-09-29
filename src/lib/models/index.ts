@@ -500,6 +500,7 @@ interface SwimClubAttributes {
   email?: string;
   website?: string;
   isActive: boolean;
+  activeMeetId?: string;
 }
 
 type SwimClubCreationAttributes = Optional<SwimClubAttributes, 'id'>
@@ -517,6 +518,7 @@ export class SwimClubModel extends Model<SwimClubAttributes, SwimClubCreationAtt
   declare email?: string;
   declare website?: string;
   declare isActive: boolean;
+  declare activeMeetId?: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -569,6 +571,16 @@ SwimClubModel.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    activeMeetId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      references: {
+        model: 'meets',
+        key: 'id'
+      },
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE'
     },
   },
   {

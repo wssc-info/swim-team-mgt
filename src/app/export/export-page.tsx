@@ -84,14 +84,30 @@ export default function ExportPage() {
         setSwimmers(swimmerData);
 
         // Auto-select active meet if available
-        // Note: Active meet is now determined by the club's activeMeetId
-        // We'll need to fetch this from the club data or API
-        const activeMeet = filteredMeets.find(m => m.isActive);
-        if (activeMeet) {
-          setSelectedMeet(activeMeet);
-          const relayData = await fetchRelayTeams(activeMeet.id);
-          // setRelayTeams(relayData);
-          await loadPreviewData(activeMeet, swimmerData, relayData);
+        // Active meet is now determined by the club's activeMeetId
+        if (user?.clubId) {
+          try {
+            const clubResponse = await fetch(`/api/admin/clubs/${user.clubId}`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            if (clubResponse.ok) {
+              const clubData = await clubResponse.json();
+              if (clubData.activeMeetId) {
+                const activeMeet = filteredMeets.find(m => m.id === clubData.activeMeetId);
+                if (activeMeet) {
+                  // Mark the meet as active for display purposes
+                  activeMeet.isActive = true;
+                  setSelectedMeet(activeMeet);
+                  const relayData = await fetchRelayTeams(activeMeet.id);
+                  await loadPreviewData(activeMeet, swimmerData, relayData);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching club active meet:', error);
+          }
         }
       } catch (error) {
         console.error('Error loading data:', error);
