@@ -84,6 +84,8 @@ export default function ExportPage() {
         setSwimmers(swimmerData);
 
         // Auto-select active meet if available
+        // Note: Active meet is now determined by the club's activeMeetId
+        // We'll need to fetch this from the club data or API
         const activeMeet = filteredMeets.find(m => m.isActive);
         if (activeMeet) {
           setSelectedMeet(activeMeet);
