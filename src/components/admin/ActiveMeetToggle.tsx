@@ -6,13 +6,36 @@ import { useAuth } from '@/lib/auth-context';
 interface ActiveMeetToggleProps {
   meetId: string;
   meetName: string;
-  isActive: boolean;
   onToggle: () => void;
 }
 
-export default function ActiveMeetToggle({ meetId, meetName, isActive, onToggle }: ActiveMeetToggleProps) {
+export default function ActiveMeetToggle({ meetId, meetName, onToggle }: ActiveMeetToggleProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+
+  // Check if this meet is active for the user's club
+  useState(() => {
+    const checkActiveStatus = async () => {
+      if (user?.clubId) {
+        try {
+          const clubResponse = await fetch(`/api/admin/clubs/${user.clubId}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          if (clubResponse.ok) {
+            const clubData = await clubResponse.json();
+            setIsActive(clubData.activeMeetId === meetId);
+          }
+        } catch (error) {
+          console.error('Error checking active meet status:', error);
+        }
+      }
+    };
+
+    checkActiveStatus();
+  });
 
   const handleToggle = async () => {
     if (!user || (user.role !== 'admin' && user.role !== 'coach')) {
@@ -31,6 +54,7 @@ export default function ActiveMeetToggle({ meetId, meetName, isActive, onToggle 
       });
 
       if (response.ok) {
+        setIsActive(!isActive);
         onToggle();
       } else {
         const error = await response.json();

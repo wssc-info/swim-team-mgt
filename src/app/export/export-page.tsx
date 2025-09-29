@@ -147,8 +147,12 @@ export default function ExportPage() {
       });
 
       // Relay entries - filter relay teams for events available in this meet
+      const availableEventsArray = typeof meet.availableEvents === 'string' 
+        ? JSON.parse(meet.availableEvents) 
+        : meet.availableEvents;
+        
       relayData.forEach(team => {
-        if (meet.availableEvents.includes(team.eventId)) {
+        if (availableEventsArray.includes(team.eventId)) {
           const event = allEvents.find(e => e.id === team.eventId);
           if (event && event.isRelay) {
             const teamSwimmers = team.swimmers.map((swimmerId) =>

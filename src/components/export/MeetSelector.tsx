@@ -81,7 +81,9 @@ export default function MeetSelector({ meets, selectedMeet, onMeetSelect, loadin
                     {new Date(meet.date).toLocaleDateString()} • {meet.location}
                   </p>
                   <p className="text-gray-500 text-xs mt-1">
-                    {meet.availableEvents.length} events available
+                    {typeof meet.availableEvents === 'string' 
+                      ? JSON.parse(meet.availableEvents).length 
+                      : meet.availableEvents.length} events available
                   </p>
                 </div>
                 <div className="flex items-center">
