@@ -66,7 +66,7 @@ export default function MeetsPage() {
 
   const handleSetActive = async (id: string) => {
     try {
-      await activateMeet(id);
+      await activateMeet(id, user?.clubId);
       const updatedMeets = await fetchMeets();
       // Filter meets to only show those for the user's club
       const filteredMeets = user?.clubId 

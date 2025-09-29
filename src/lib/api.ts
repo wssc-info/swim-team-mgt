@@ -98,9 +98,10 @@ export async function deleteMeetApi(id: string): Promise<void> {
   }
 }
 
-export async function activateMeet(id: string): Promise<void> {
-  const response = await authenticatedFetch(`/api/meets/${id}/activate`, {
-    method: 'POST',
+export async function activateMeet(id: string, clubId?: string): Promise<void> {
+  const response = await authenticatedFetch(`/api/meets/${id}/active`, {
+    method: 'PUT',
+    body: JSON.stringify({ clubId }),
   });
   if (!response.ok) {
     throw new Error('Failed to activate meet');
