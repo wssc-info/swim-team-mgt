@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import {SwimEvent, Swimmer, TimeRecord} from '@/lib/types';
 import {authenticatedFetch, fetchAllEvents} from '@/lib/api';
 import { DataTable } from '@/components/datatable/dataTable';
-import { createTimeRecordsColumns } from '@/app/my-swimmers/time-records-columns';
+import { createTimeRecordsColumns } from './time-records-columns';
 import {getAllEvents} from "@/lib/events";
 
 interface SwimmerWithTimes extends Swimmer {

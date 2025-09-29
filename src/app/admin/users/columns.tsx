@@ -115,6 +115,7 @@ export const createUserColumns = ({
   },
   {
     id: "actions",
+    header: "Actions",
     cell: ({row}) => {
       return (
         <DropdownMenu>
@@ -130,12 +131,14 @@ export const createUserColumns = ({
             >
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onManageAssociations(row.original)}
-              className="text-green-600 hover:text-green-900"
-            >
-              Manage Swimmers
-            </DropdownMenuItem>
+            {row.original.role === 'family' && (
+              <DropdownMenuItem
+                onClick={() => onManageAssociations(row.original)}
+                className="text-green-600 hover:text-green-900"
+              >
+                Manage Swimmers
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator/>
             <DropdownMenuItem onClick={() => onDeleteUser(row.original.id)}>
               <div className={'text-red-500'}>Delete</div>
