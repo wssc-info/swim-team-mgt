@@ -11,13 +11,52 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {Checkbox} from "@/components/ui/checkbox";
+import {buildSort} from "@/components/datatable/buildSort";
+import {buildFilter, buildTextFilter} from "@/components/datatable/buildFilter";
+import {AGE_GROUPS} from "@/lib/constants";
 
 export const getColumns = (editFunction: (swimmer:Swimmer) => void,
-                           deleteFunction: (id:string) => void): ColumnDef<Swimmer>[] => {
+                           deleteFunction: (id:string) => void,
+                           swimmers: Swimmer[]): ColumnDef<Swimmer>[] => {
   return [
     {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       accessorKey: "ageGroup",
-      header: "Age Group",
+      header: ({column, table}) => {
+        return (
+          <div>
+            Age Group
+            {buildFilter(column,
+              [
+                {value: '', text: 'All'},
+                ...AGE_GROUPS.map((ageGroup) => ({value: ageGroup, text: ageGroup}))
+              ]
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "firstName",
@@ -25,15 +64,13 @@ export const getColumns = (editFunction: (swimmer:Swimmer) => void,
     },
     {
       accessorKey: "lastName",
-      header: ({column}) => {
+      header: ({column, table}) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+          <div>
             Last Name
-            <ArrowUpDown className="ml-2 h-4 w-4"/>
-          </Button>
+            {buildSort(column)}
+            {buildTextFilter(column, '', (value) => {})}
+          </div>
         );
       }
     },
@@ -44,6 +81,26 @@ export const getColumns = (editFunction: (swimmer:Swimmer) => void,
     {
       accessorKey: "dateOfBirth",
       header: "Date of Birth",
+    },
+    {
+      accessorKey: "externalId",
+      header: "External Id",
+    },
+    {
+      accessorKey: "active",
+      header: ({column, table}) => {
+        return (
+          <div>
+            Active
+            {buildFilter(column,
+              [
+                {value: true, text: 'Active'},
+                {value: false, text: 'In-Active'},
+              ]
+            )}
+          </div>
+        );
+      },
     },
     {
       id: "actions",

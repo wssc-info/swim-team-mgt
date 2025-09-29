@@ -7,8 +7,13 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const swimmerId = searchParams.get('swimmerId');
+    const eventId = searchParams.get('eventId');
+    const meetDate = searchParams.get('meetDate');
     
-    const records = await timeRecordService.getTimeRecords(swimmerId || undefined);
+    const records = await timeRecordService.getTimeRecords(
+      swimmerId || undefined,
+      eventId || undefined,
+      meetDate || undefined);
     return NextResponse.json(records);
   } catch (error) {
     console.error('Error fetching time records:', error);

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SwimmerService } from '@/lib/services/swimmer-service';
+import {Swimmer} from "@/lib/types";
+import {generateSwimmerExternalId} from "@/lib/utils";
 
 const swimmerService = SwimmerService.getInstance();
 
@@ -9,7 +11,10 @@ export async function PUT(
 ) {
   const {id} = await params;
   try {
-    const body = await request.json();
+    const body: Partial<Swimmer> = await request.json();
+    if (!body.externalId) {
+      body.externalId = generateSwimmerExternalId(body)
+    }
     await swimmerService.updateSwimmer(id, body);
     return NextResponse.json({ success: true });
   } catch (error) {

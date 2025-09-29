@@ -22,10 +22,16 @@ export class TimeRecordService {
     }
   }
 
-  public async getTimeRecords(swimmerId?: string): Promise<TimeRecord[]> {
+  public async getTimeRecords(swimmerId?: string, eventId?: string, meetDate?:string): Promise<TimeRecord[]> {
     await this.ensureInitialized();
     try {
       const whereClause = swimmerId ? { swimmerId } : {};
+      if (eventId) {
+        Object.assign(whereClause, { eventId });
+      }
+      if (meetDate) {
+        Object.assign(whereClause, { meetDate });
+      }
       const records = await TimeRecordModel.findAll({ 
         where: whereClause,
         order: [['meetDate', 'DESC'], ['createdAt', 'DESC']]

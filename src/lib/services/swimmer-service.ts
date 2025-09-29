@@ -1,6 +1,7 @@
 import {v4 as uuidv4} from 'uuid';
 import {SwimmerModel, FamilySwimmerAssociationModel, initializeDatabase} from '../models';
 import {Swimmer} from '../types';
+import {generateSwimmerExternalId} from "@/lib/utils";
 
 export class SwimmerService {
   private static instance: SwimmerService;
@@ -23,18 +24,32 @@ export class SwimmerService {
     }
   }
 
-  public async getSwimmers(clubId?: string): Promise<Swimmer[]> {
+  public async getSwimmers(clubId?: string, active?: boolean): Promise<Swimmer[]> {
     await this.ensureInitialized();
+    const where = clubId ? {clubId} : {};
+    if (active !== undefined) {
+      Object.assign(where, {active});
+    }
     try {
-      const swimmers = await SwimmerModel.findAll(clubId ? {where: {clubId}} : {});
+      const swimmers = await SwimmerModel.findAll({
+          where,
+          order:
+            [
+              ['lastName', 'ASC'],
+              ['firstName', 'ASC']
+            ]
+      });
       return swimmers.map(swimmer => ({
         id: swimmer.id,
         firstName: swimmer.firstName,
+        middleInitial: swimmer.middleInitial,
         lastName: swimmer.lastName,
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         ageGroup: swimmer.ageGroup,
         clubId: swimmer.clubId,
+        externalId: swimmer.externalId,
+        active: swimmer.active
       }));
     } catch (error) {
       console.error('Error fetching swimmers:', error);
@@ -67,17 +82,22 @@ export class SwimmerService {
       return swimmers.map(swimmer => ({
         id: swimmer.id,
         firstName: swimmer.firstName,
+        middleInitial: swimmer.middleInitial,
         lastName: swimmer.lastName,
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         ageGroup: swimmer.ageGroup,
         clubId: swimmer.clubId,
+        externalId: swimmer.externalId,
+        active: swimmer.active
       }));
     } catch (error) {
       console.error('Error fetching associated swimmers:', error);
       return [];
     }
   }
+
+
 
   public async addSwimmer(swimmer: Omit<Swimmer, 'id' | 'ageGroup'>): Promise<Swimmer> {
     await this.ensureInitialized();
@@ -91,11 +111,14 @@ export class SwimmerService {
       await SwimmerModel.create({
         id: newSwimmer.id,
         firstName: newSwimmer.firstName,
+        middleInitial: newSwimmer.middleInitial,
         lastName: newSwimmer.lastName,
         dateOfBirth: newSwimmer.dateOfBirth,
         gender: newSwimmer.gender,
         ageGroup: newSwimmer.ageGroup,
         clubId: newSwimmer.clubId,
+        externalId: newSwimmer.externalId || generateSwimmerExternalId(newSwimmer),
+        active: newSwimmer.active
       });
 
       return newSwimmer;

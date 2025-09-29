@@ -21,8 +21,8 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
 }
 
 // Swimmers API
-export async function fetchSwimmers(clubId?: string): Promise<Swimmer[]> {
-  const response = await authenticatedFetch('/api/swimmers?' + (clubId ? `clubId=${clubId}` : ''));
+export async function fetchSwimmers(clubId?: string, includeInactive?: boolean): Promise<Swimmer[]> {
+  const response = await authenticatedFetch('/api/swimmers?' + (clubId ? `clubId=${clubId}` : '') + (includeInactive ? `showInactive=${includeInactive}` : ''));
   if (!response.ok) {
     throw new Error('Failed to fetch swimmers');
   }

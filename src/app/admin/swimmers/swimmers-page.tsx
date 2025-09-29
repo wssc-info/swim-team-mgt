@@ -11,6 +11,8 @@ import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {processTeamUnifyFile} from '@/lib/team-unify-import';
 import {useAuth} from '@/lib/auth-context';
+import {Button} from "@/components/ui/button";
+import {Table} from "@tanstack/table-core";
 
 // Helper function to properly parse CSV lines with quoted fields
 function parseCSVLine(line: string): string[] {
@@ -65,7 +67,7 @@ export default function SwimmersPage() {
     const loadData = async () => {
       try {
         const [swimmerData, eventsData] = await Promise.all([
-          fetchSwimmers(),
+          fetchSwimmers(undefined, true),
           fetch('/api/admin/events').then(res => res.json())
         ]);
         setSwimmers(swimmerData);
@@ -271,63 +273,54 @@ export default function SwimmersPage() {
     }
   };
 
-  // const groupedSwimmers = swimmers.reduce((groups, swimmer) => {
-  //   const group = groups[swimmer.ageGroup] || [];
-  //   group.push(swimmer);
-  //   groups[swimmer.ageGroup] = group;
-  //   return groups;
-  // }, {} as Record<string, Swimmer[]>);
-
   if (loading) {
     return <div className={'items-center text-center'}>
       <Spinner size={64} variant={'circle'} speed={1} className={'mr-auto ml-auto my-5'}/>
     </div>;
   }
 
-  const createFilters = (table: any) => {
+  const setActiveFlag = async (swimmerIds: string[], activeFlag: boolean) => {
+    try {
+      console.log('Setting swimmers as active:', swimmerIds);
+      const response = await fetch('/api/swimmers/active', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ swimmerIds, activeFlag: activeFlag }),
+      });
+      if (response.ok) {
+        const updatedSwimmers = await fetchSwimmers();
+        setSwimmers(updatedSwimmers);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to set swimmers as active');
+      }
+    } catch (error) {
+      console.error('Error setting swimmers as active:', error);
+      alert('Failed to set swimmers as active');
+    }
+  }
+
+  const createFilters = (table: Table<any>) => {
     return (
       <>
-        <Input
-          placeholder="Filter Last Name..."
-          value={(table.getColumn("lastName")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("lastName")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <Select value={(table.getColumn("ageGroup")?.getFilterValue() as string) ?? "ALL"}
-                onValueChange={(value) => {
-                  if (value === "ALL") {
-                    table.getColumn("ageGroup")?.setFilterValue(undefined);
-                  } else {
-                    table.getColumn("ageGroup")?.setFilterValue(value);
-                  }
-                }}>
-          <SelectTrigger className="ml-4">
-            <SelectValue placeholder="Filter Age Group..."/>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={"8&U"}>
-              8 & Under
-            </SelectItem>
-            <SelectItem value={"9-10"}>
-              9-10
-            </SelectItem>
-            <SelectItem value={"11-12"}>
-              11-12
-            </SelectItem>
-            <SelectItem value={"13-14"}>
-              13-14
-            </SelectItem>
-            <SelectItem value={"15-18"}>
-              15-18
-            </SelectItem>
-            <SelectItem value={"ALL"}>
-              All Age Groups
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex-1"></div>
+        <Button
+          disabled={!(table.getIsSomeRowsSelected() || table.getIsAllPageRowsSelected() || table.getIsAllRowsSelected())}
+          onClick={() => {
+            setActiveFlag(table.getSelectedRowModel().flatRows.map(r => r.original.id), true);
+          }}
+        >Activate ({table.getSelectedRowModel().rows.length})</Button>
+        <Button
+            className="ml-2"
+            disabled={!(table.getIsSomeRowsSelected() || table.getIsAllPageRowsSelected() || table.getIsAllRowsSelected())}
+            onClick={() => {
+              setActiveFlag(table.getSelectedRowModel().flatRows.map(r => r.original.id), false);
+            }}
+        >Deactivate ({table.getSelectedRowModel().rows.length})</Button>
       </>
+
     );
   }
 
@@ -405,10 +398,10 @@ export default function SwimmersPage() {
         <div className="mb-6 bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-3">Import Results</h3>
           <div className="space-y-2">
-            <p className="text-green-600">Successfully imported: {uploadResults.success} swimmers and {uploadResults.successTimeRecords} time records</p>
+            <p className="text-green-600">Successfully created: {uploadResults.success} swimmers and {uploadResults.successTimeRecords} time records</p>
             {uploadResults.info.length > 0 && (
               <div>
-                <p className="text-green-600 font-medium">Errors ({uploadResults.info.length}):</p>
+                <p className="text-green-600 font-medium">Info ({uploadResults.info.length}):</p>
                 <ul className="text-sm text-green-600 ml-4 max-h-32 overflow-y-auto">
                   {uploadResults.info.map((info, index) => (
                     <li key={index} className="list-disc">{info}</li>
@@ -439,7 +432,7 @@ export default function SwimmersPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+          <div className="bg-white p-6 rounded-lg max-w-lg w-full mx-4">
             <SwimmerForm
               swimmer={editingSwimmer}
               onClose={handleFormClose}
@@ -448,7 +441,12 @@ export default function SwimmersPage() {
         </div>
       )}
 
-      <DataTable columns={getColumns(handleEditSwimmer, handleDeleteSwimmer)} data={swimmers} filters={createFilters}/>
+      <DataTable
+        columns={getColumns(handleEditSwimmer, handleDeleteSwimmer, swimmers)}
+        data={swimmers}
+        aboveTable={createFilters}
+        pageSizeOptions={[10, 20, 50, 100, 200, 400, 9999]}
+      />
 
 
       {/* Import Format Help */}

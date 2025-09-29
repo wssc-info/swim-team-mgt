@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const clubId = searchParams.get('clubId');
+    const showInactive = searchParams.get('showInactive') === 'true';
     
     if (userId) {
       // Fetch swimmers associated with the specific user (family)
@@ -26,11 +27,11 @@ export async function GET(request: NextRequest) {
       if (user.role !== 'admin' && clubId !== user.clubId) {
         return NextResponse.json({ error: 'You can only access swimmers from your own club' }, { status: 403 });
       }
-      const swimmers = await swimmerService.getSwimmers(clubId);
+      const swimmers = await swimmerService.getSwimmers(clubId, showInactive? undefined : true);
       return NextResponse.json(swimmers);
     } else {
       // Fetch all swimmers (for coaches) - defaults to user's club
-      const swimmers = await swimmerService.getSwimmers(user.clubId);
+      const swimmers = await swimmerService.getSwimmers(user.clubId, showInactive? undefined : true);
       return NextResponse.json(swimmers);
     }
   } catch (error) {

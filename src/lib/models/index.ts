@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import DatabaseConnection from '../db-connection';
+import {DataType} from "csstype";
 
 const dbConnection = DatabaseConnection.getInstance();
 const sequelize = dbConnection.getSequelize();
@@ -8,12 +9,14 @@ const sequelize = dbConnection.getSequelize();
 interface SwimmerAttributes {
   id: string;
   firstName: string;
+  middleInitial: string;
   lastName: string;
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
   clubId?: string;
   externalId?: string;
+  active: boolean;
 }
 
 type SwimmerCreationAttributes = Optional<SwimmerAttributes, 'id'>
@@ -22,12 +25,14 @@ export class SwimmerModel extends Model<SwimmerAttributes, SwimmerCreationAttrib
   implements SwimmerAttributes {
   declare id: string;
   declare firstName: string;
+  declare middleInitial: string;
   declare lastName: string;
   declare dateOfBirth: string;
   declare gender: 'M' | 'F';
   declare ageGroup: string;
   declare clubId?: string;
   declare externalId?: string;
+  declare active: boolean;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -42,6 +47,9 @@ SwimmerModel.init(
     firstName: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    middleInitial: {
+      type: DataTypes.STRING,
     },
     lastName: {
       type: DataTypes.STRING,
@@ -74,6 +82,11 @@ SwimmerModel.init(
       allowNull: true,
       unique: false,
     },
+    active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    }
   },
   {
     sequelize,
@@ -654,6 +667,11 @@ SwimClubModel.hasMany(MeetModel, { foreignKey: 'againstClubId', as: 'awayMeets' 
 // Initialize database function
 export async function initializeDatabase() {
   await dbConnection.initialize();
+}
+
+export async function syncModels() {
+  await initializeDatabase();
+  await sequelize.sync({ alter: true });
 }
 
 export { sequelize, dbConnection };

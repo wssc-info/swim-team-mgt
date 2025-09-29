@@ -5,7 +5,9 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {Button} from "@/components/ui/button";
-import {FilterIcon, FilterXIcon} from "lucide-react";
+import {CircleXIcon, EraserIcon, FilterIcon, FilterXIcon, XIcon} from "lucide-react";
+import {Input} from "@/components/ui/input";
+import {Column} from "@tanstack/react-table";
 
 export const buildFilter = (column: any, filters: { value: any, text: string }[]) => {
   return (
@@ -37,6 +39,45 @@ export const buildFilter = (column: any, filters: { value: any, text: string }[]
           );
         })
         }
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+export const buildTextFilter = (column: Column<any>, value: string, setValue: (value: string) => void) => {
+  let dropdownMenuRef: any;
+  return (
+    <DropdownMenu >
+      <DropdownMenuTrigger asChild ref={(ref) => {
+        dropdownMenuRef = ref;
+        return dropdownMenuRef;
+      }}>
+        <Button variant="ghost" className="px-1!">
+          <FilterIcon className="h-2 w-2" fill={column.getFilterValue()?'#000000':'none'} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <div className="flex items-center">
+          <Input
+            placeholder="Type to filter..."
+            // value={value || ''}
+            value={(column.getFilterValue()  || '') as string}
+            onChange={(e) => {
+              // setValue(e.target.value);
+              column?.setFilterValue(e.target.value || undefined);
+            }}
+            onKeyUp={(e) => {
+              if (e.key === 'Enter') {
+                dropdownMenuRef?.close(); // Close the dropdown menu
+              }
+            }}
+          />
+          <EraserIcon
+            className="cursor-pointer"
+            aria-label="Clear filter"
+            color="gray"
+            onClick={() => column?.setFilterValue(undefined)}></EraserIcon>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )

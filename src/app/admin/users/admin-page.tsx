@@ -7,7 +7,7 @@ import {User, Swimmer} from '@/lib/types';
 import {authenticatedFetch, fetchSwimmers} from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
 import { DataTable } from '@/components/datatable/dataTable';
-import { createUserColumns } from '@/components/admin/users/columns';
+import { createUserColumns } from '@/app/admin/users/columns';
 
 interface UserWithAssociations extends User {
   associatedSwimmers?: string[];

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { Swimmer, TimeRecord } from '@/lib/types';
-import { authenticatedFetch } from '@/lib/api';
+import {SwimEvent, Swimmer, TimeRecord} from '@/lib/types';
+import {authenticatedFetch, fetchAllEvents} from '@/lib/api';
 import { DataTable } from '@/components/datatable/dataTable';
-import { createTimeRecordsColumns } from '@/components/my-swimmers/time-records-columns';
+import { createTimeRecordsColumns } from '@/app/my-swimmers/time-records-columns';
+import {getAllEvents} from "@/lib/events";
 
 interface SwimmerWithTimes extends Swimmer {
   timeRecords: TimeRecord[];
@@ -14,12 +15,14 @@ interface SwimmerWithTimes extends Swimmer {
 export default function MySwimmersPage() {
   const { user } = useAuth();
   const [swimmers, setSwimmers] = useState<SwimmerWithTimes[]>([]);
+  const [events, setEvents] = useState<SwimEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPersonalBestsOnly, setShowPersonalBestsOnly] = useState(false);
   const [expandedSwimmers, setExpandedSwimmers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadSwimmersAndTimes();
+    fetchAllEvents().then(r => setEvents(r));
   }, [user]);
 
   const loadSwimmersAndTimes = async () => {
@@ -38,7 +41,7 @@ export default function MySwimmersPage() {
       const swimmersWithTimes = await Promise.all(
         swimmersData.map(async (swimmer: Swimmer) => {
           try {
-            const timesResponse = await authenticatedFetch(`/api/swimmers/${swimmer.id}/times`);
+            const timesResponse = await authenticatedFetch(`/api/times?swimmerId=${swimmer.id}`);
             if (timesResponse.ok) {
               const timeRecords = await timesResponse.json();
               return { ...swimmer, timeRecords };
@@ -185,7 +188,7 @@ export default function MySwimmersPage() {
                         </div>
                       </div>
                       <DataTable
-                        columns={createTimeRecordsColumns()}
+                        columns={createTimeRecordsColumns(events)}
                         data={filteredRecords}
                         defaultPageSize={10}
                       />

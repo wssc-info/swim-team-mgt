@@ -1,12 +1,14 @@
 export interface Swimmer {
   id: string;
   firstName: string;
+  middleInitial: string;
   lastName: string;
   dateOfBirth: string;
   gender: 'M' | 'F';
   ageGroup: string;
   clubId?: string;
   externalId?: string;
+  active: boolean;
 }
 export interface SwimmerWithEvents extends Swimmer {
   selectedEvents?: SwimmerMeetEvent[];

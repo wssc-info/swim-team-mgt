@@ -3,6 +3,7 @@
 import {useState, useEffect, useCallback} from 'react';
 import {User, Swimmer} from '@/lib/types';
 import {fetchSwimmers} from "@/lib/api";
+import {Input} from "@/components/ui/input";
 
 interface FamilyAssociationFormProps {
   user: User;
@@ -15,6 +16,8 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
+  const [swimmerFilter, setSwimmerFilter] = useState(user?.lastName);
+
 
 
   const loadAssociations = useCallback( async () => {
@@ -25,10 +28,23 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
           fetchSwimmers(user.clubId),
         ]
       );
-      setSwimmers(swimmers);
       if (response.ok) {
         const associations = await response.json();
         setAssociatedSwimmers(associations);
+        swimmers.sort((s1,s2) => {
+            if (associations.includes(s1.id) && !associations.includes(s2.id)) {
+              return -1;
+            }
+            if (!associations.includes(s1.id) && associations.includes(s2.id)) {
+              return 1;
+            }
+            const lastNameComp = s1.lastName.localeCompare(s2.lastName);
+            if (lastNameComp !== 0) return lastNameComp;
+            return s1.firstName.localeCompare(s2.firstName);
+          });
+        setSwimmers(swimmers);
+      } else {
+        setSwimmers(swimmers);
       }
     } catch (error) {
       console.error('Error loading associations:', error);
@@ -110,36 +126,46 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
           Select which swimmers this family account can manage:
         </p>
       </div>
-
+      <Input placeholder="Filter Swimmers" value={swimmerFilter}
+             onChange={(e) => setSwimmerFilter(e.target.value)}
+      />
       <div className="max-h-64 overflow-y-auto border border-gray-300 rounded-md">
         {swimmers.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             No swimmers available
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
-            {swimmers.map((swimmer) => (
-              <div key={swimmer.id} className="p-3 hover:bg-gray-50">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={associatedSwimmers.includes(swimmer.id)}
-                    onChange={() => handleSwimmerToggle(swimmer.id)}
-                    className="rounded"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">
-                      {swimmer.firstName} {swimmer.lastName}
+          <>
+
+            <div className="divide-y divide-gray-200">
+              {swimmers
+                .filter((swimmer) => {
+                  const fullName = `${swimmer.firstName} ${swimmer.lastName}`.toLowerCase();
+                  return fullName.includes(swimmerFilter.toLowerCase());
+                })
+                .map((swimmer) => (
+                <div key={swimmer.id} className="p-3 hover:bg-gray-50">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={associatedSwimmers.includes(swimmer.id)}
+                      onChange={() => handleSwimmerToggle(swimmer.id)}
+                      className="rounded"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        {swimmer.firstName} {swimmer.lastName}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {swimmer.gender} • Age Group: {swimmer.ageGroup} •
+                        Born: {new Date(swimmer.dateOfBirth).toLocaleDateString()}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      {swimmer.gender} • Age Group: {swimmer.ageGroup} •
-                      Born: {new Date(swimmer.dateOfBirth).toLocaleDateString()}
-                    </div>
-                  </div>
-                </label>
-              </div>
-            ))}
-          </div>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

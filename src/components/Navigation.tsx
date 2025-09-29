@@ -88,6 +88,11 @@ export default function Navigation() {
           <Link href="/events" className="hover:underline cursor-pointer">
             Events
           </Link>
+          {(user.role === 'family') && (
+            <Link href="/my-swimmers" className="hover:underline cursor-pointer">
+              Swimmer Times
+            </Link>
+          )}
           <div className="flex items-center space-x-2">
             <span className="text-sm">
               {user.firstName} {user.lastName} ({user.role})

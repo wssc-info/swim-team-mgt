@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { db } from '@/lib/db';
+import {UserModel} from "@/lib/models";
+import {AuthService} from "@/lib/services/auth-service";
+import {SwimmerService} from "@/lib/services/swimmer-service";
+
+const swimmerService = SwimmerService.getInstance();
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,21 +12,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded || decoded.role !== 'family') {
+    const user: UserModel | null = await AuthService.getInstance().getUser(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Must be logged in.' }, { status: 401 });
+    }
+    if (user.role !== 'family') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get swimmers associated with this family user
-    const query = `
-      SELECT s.* 
-      FROM swimmers s
-      INNER JOIN family_swimmer_associations fsa ON s.id = fsa.swimmer_id
-      WHERE fsa.user_id = ?
-      ORDER BY s.first_name, s.last_name
-    `;
-
-    const swimmers = await db.all(query, [decoded.userId]);
+    const swimmers = await swimmerService.getAssociatedSwimmers(user.id);
 
     return NextResponse.json(swimmers);
   } catch (error) {

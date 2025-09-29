@@ -50,8 +50,8 @@ class DatabaseConnection {
       console.log('Database connection established successfully - authDone.');
       
       // Sync all models
-      await this.sequelize.sync({ alter: true });
-      console.log('Database synchronized successfully.');
+      // await this.sequelize.sync({ alter: true });
+      // console.log('Database synchronized successfully.');
       
       this.isInitialized = true;
     } catch (error) {

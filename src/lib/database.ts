@@ -1,96 +1,6 @@
 import {DataTypes, Model, Optional} from 'sequelize';
 import DatabaseConnection from "@/lib/db-connection";
-// Database configuration
-// const sequelize = new Sequelize({
-//   dialect: "mysql",
-//
-//     dialectModule: mysql2,
-//   host: process.env.DB_HOST || 'localhost',
-//   port: parseInt(process.env.DB_PORT || '3306'),
-//   database: process.env.DB_NAME || 'swim_team_db',
-//   username: process.env.DB_USER || 'root',
-//   password: process.env.DB_PASSWORD || '',
-//   logging: process.env.DB_LOGGING === 'true' ? console.log : false,
-//   pool: {
-//     max: 5,
-//     min: 0,
-//     acquire: 30000,
-//     idle: 10000
-//   }
-// });
 
-// Swimmer Model
-interface SwimmerAttributes {
-    id: string;
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    gender: 'M' | 'F';
-    ageGroup: string;
-    selectedEvents: string;
-    seedTimes: string;
-}
-
-type SwimmerCreationAttributes = Optional<SwimmerAttributes, 'id'>
-
-export class SwimmerModel extends Model<SwimmerAttributes, SwimmerCreationAttributes>
-    implements SwimmerAttributes {
-    declare id: string;
-    declare firstName: string;
-    declare lastName: string;
-    declare dateOfBirth: string;
-    declare gender: 'M' | 'F';
-    declare ageGroup: string;
-    declare selectedEvents: string;
-    declare seedTimes: string;
-
-    declare readonly createdAt: Date;
-    declare readonly updatedAt: Date;
-}
-
-SwimmerModel.init(
-    {
-        id: {
-            type: DataTypes.STRING,
-            primaryKey: true,
-        },
-        firstName: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        lastName: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        dateOfBirth: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        gender: {
-            type: DataTypes.ENUM('M', 'F'),
-            allowNull: false,
-        },
-        ageGroup: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        selectedEvents: {
-            type: DataTypes.TEXT,
-            allowNull: false,
-            defaultValue: '[]',
-        },
-        seedTimes: {
-            type: DataTypes.TEXT,
-            allowNull: false,
-            defaultValue: '{}',
-        },
-    },
-    {
-        sequelize: DatabaseConnection.getInstance().getSequelize(),
-        modelName: 'Swimmer',
-        tableName: 'swimmers',
-    }
-);
 
 // Meet Model
 interface MeetAttributes {
@@ -287,8 +197,8 @@ export async function initializeDatabase() {
         console.log('Database connection established successfully.');
 
         // Sync all models
-        await sequelize.sync({alter: true});
-        console.log('Database synchronized successfully.');
+        // await sequelize.sync({alter: true});
+        // console.log('Database synchronized successfully.');
     } catch (error) {
         console.error('Unable to connect to the database:', error);
     }

@@ -348,7 +348,7 @@ export function EventsPage() {
           <DataTable 
             columns={swimmerColumns} 
             data={swimmers.sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))}
-            filters={createFilters}
+            aboveTable={createFilters}
           />
         </div>
       </div>

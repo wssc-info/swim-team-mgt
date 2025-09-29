@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createSwimmer, updateSwimmerApi } from '@/lib/api';
-import { Swimmer } from '@/lib/types';
-import { useAuth } from '@/lib/auth-context';
+import {useEffect, useState} from 'react';
+import {createSwimmer, updateSwimmerApi} from '@/lib/api';
+import {Swimmer} from '@/lib/types';
+import {useAuth} from '@/lib/auth-context';
+import {generateSwimmerExternalId} from "@/lib/utils";
+import {SquarePenIcon} from "lucide-react";
+import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
+import {Checkbox} from "@/components/ui/checkbox";
+
 // Calculate age group based on birth date
 function calculateAgeGroup(dateOfBirth: string): string {
   const birthDate = new Date(dateOfBirth);
@@ -37,11 +42,13 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
   const { user: currentUser } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
+    middleInitial: '',
     lastName: '',
     dateOfBirth: '',
     gender: 'M' as 'M' | 'F',
     clubId: '',
     externalId: '',
+    active: true,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,11 +63,13 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
     if (swimmer) {
       setFormData({
         firstName: swimmer.firstName,
+        middleInitial: swimmer.middleInitial || '',
         lastName: swimmer.lastName,
         dateOfBirth: swimmer.dateOfBirth,
         gender: swimmer.gender,
         clubId: swimmer.clubId || '',
         externalId: swimmer.externalId || '',
+        active: swimmer.active || true,
       });
     } else if (currentUser?.clubId && currentUser.role !== 'admin') {
       // Auto-assign current user's club for non-admin users
@@ -131,9 +140,10 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    const inputValue = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: inputValue
     }));
 
     // Clear error when user starts typing
@@ -146,6 +156,16 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
   };
 
   const predictedAgeGroup = formData.dateOfBirth ? calculateAgeGroup(formData.dateOfBirth) : '';
+
+  const generateExternalId = () => {
+    try {
+      const externalId = generateSwimmerExternalId(formData);
+      setFormData(prev => ({ ...prev, externalId }));
+    } catch (error) {
+      console.error('Error generating external ID:', error);
+      alert('First name, last name, and date of birth are required to generate external ID');
+    }
+  }
 
   return (
     <div>
@@ -179,6 +199,25 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
           />
           {errors.firstName && (
             <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor="middleInitial" className="block text-sm font-medium text-gray-700 mb-1">
+            Middle Initial
+          </label>
+          <input
+            type="text"
+            id="middleInitial"
+            name="middleInitial"
+            value={formData.middleInitial}
+            onChange={handleInputChange}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.middleInitial ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Enter middle initial"
+          />
+          {errors.middleInitial && (
+            <p className="text-red-500 text-sm mt-1">{errors.middleInitial}</p>
           )}
         </div>
 
@@ -244,7 +283,15 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
 
         <div>
           <label htmlFor="externalId" className="block text-sm font-medium text-gray-700 mb-1">
-            External ID (Optional)
+            External ID <Tooltip>
+              <TooltipTrigger asChild>
+                <SquarePenIcon onClick={generateExternalId} className="inline"/>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Generate a unique ID</p>
+              </TooltipContent>
+            </Tooltip>
+
           </label>
           <input
             type="text"
@@ -252,56 +299,64 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
             name="externalId"
             value={formData.externalId}
             onChange={handleInputChange}
+            maxLength={12}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="e.g., USA Swimming ID, Team Manager ID"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Optional identifier from external systems (USA Swimming, Team Manager, etc.)
+            Identifier from external systems (USA Swimming, Team Manager, etc.)
           </p>
         </div>
 
-        <div>
-          <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
-            Club
-          </label>
-          {loadingClubs ? (
-            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
-              Loading clubs...
-            </div>
-          ) : (
-            <select
-              id="clubId"
-              name="clubId"
-              value={formData.clubId}
-              onChange={handleInputChange}
-              disabled={currentUser?.role !== 'admin'}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">No Club</option>
-              {currentUser?.role === 'admin' ? (
-                clubs.map((club) => (
-                  <option key={club.id} value={club.id}>
-                    {club.name} ({club.abbreviation})
-                  </option>
-                ))
-              ) : (
-                clubs
-                  .filter(club => club.id === currentUser?.clubId)
-                  .map((club) => (
+        <div className="flex space-x-6">
+          <div className="text-center items-center">
+            <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-1">
+              Active
+            </label>
+            <input type="checkbox"
+                   id="active"
+                   name="active"
+                   checked={formData.active}
+                   onChange={handleInputChange}
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+              Club
+            </label>
+            {loadingClubs ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                Loading clubs...
+              </div>
+            ) : (
+              <select
+                id="clubId"
+                name="clubId"
+                value={formData.clubId}
+                onChange={handleInputChange}
+                disabled={currentUser?.role !== 'admin'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">No Club</option>
+                {currentUser?.role === 'admin' ? (
+                  clubs.map((club) => (
                     <option key={club.id} value={club.id}>
                       {club.name} ({club.abbreviation})
                     </option>
                   ))
-              )}
-            </select>
-          )}
-          {currentUser?.role !== 'admin' && (
-            <p className="text-xs text-gray-500 mt-1">
-              Non-admin users can only assign swimmers to their own club
-            </p>
-          )}
+                ) : (
+                  clubs
+                    .filter(club => club.id === currentUser?.clubId)
+                    .map((club) => (
+                      <option key={club.id} value={club.id}>
+                        {club.name} ({club.abbreviation})
+                      </option>
+                    ))
+                )}
+              </select>
+            )}
+          </div>
         </div>
-
         <div className="flex space-x-3 pt-4">
           <button
             type="submit"

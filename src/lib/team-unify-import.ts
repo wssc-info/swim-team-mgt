@@ -71,6 +71,7 @@ function mapTeamUnifyEventToId(eventName: string, course: string, allEvents: any
 
 interface SwimmerInfo {
   firstName: string;
+  middleInitial: string;
   lastName: string;
   dateOfBirth: string;
   gender: 'M' | 'F';
@@ -95,8 +96,11 @@ function parseSwimmerInfo(swimmerInfoStr: string): SwimmerInfo | null {
   // Normalize gender
   const normalizedGender = gender.toLowerCase().startsWith('boy') || gender.toLowerCase() === 'm' ? 'M' : 'F';
 
+  const middleInitial = (externalId || '').length > 9 ? externalId.charAt(9) : '';
+
   return {
     firstName: firstName.trim(),
+    middleInitial,
     lastName: lastName.trim(),
     dateOfBirth,
     gender: normalizedGender,
@@ -131,13 +135,14 @@ async function createSwimmer(swimmerData: SwimmerInfo & { clubId?: string }, res
 }
 
 // Check if a time record already exists
-async function checkTimeRecordExists(swimmerId: string, eventId: string, time: string, meetDate: string): Promise<boolean> {
+async function checkTimeRecordExists(swimmerId: string, eventId: string, meetDate: string): Promise<boolean> {
   try {
-    const response = await fetch(`/api/times?swimmerId=${swimmerId}&eventId=${eventId}&time=${encodeURIComponent(time)}&meetDate=${meetDate}`);
+    const response = await fetch(`/api/times?swimmerId=${swimmerId}&eventId=${eventId}&meetDate=${meetDate}`);
     if (!response.ok) {
       return false; // If we can't check, assume it doesn't exist and try to create
     }
     const timeRecords = await response.json();
+    console.log(timeRecords);
     return timeRecords.length > 0;
   } catch (error) {
     return false; // If we can't check, assume it doesn't exist and try to create
@@ -155,7 +160,6 @@ async function createTimeRecord(timeRecordData: any,
     const exists = await checkTimeRecordExists(
       timeRecordData.swimmerId,
       timeRecordData.eventId,
-      timeRecordData.time,
       timeRecordData.meetDate
     );
 
@@ -290,6 +294,19 @@ export async function processTeamUnifyFile(
       }
       continue;
     }
+    if (values[0] === '' || !values[0]) {
+      // Skip blank row
+      if (onProgress) {
+        onProgress({
+          currentRow: i + 1,
+          totalRows,
+          currentAction: 'Skipping blank row',
+          errors: [...results.errors]
+        });
+      }
+      continue;
+    }
+
 
     if (values[0] !== '1') {
       // This is swimmer data
@@ -408,7 +425,6 @@ export async function processTeamUnifyFile(
 
   // Add summary of time records created
   const timeRecordsCreated = results.success;
-  results.errors.unshift(`Successfully processed ${timeRecordsCreated} swimmers with their time records`);
 
   return results;
 }
