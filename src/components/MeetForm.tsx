@@ -2,30 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { createMeet, updateMeetApi, fetchAllEvents, fetchClubs } from '@/lib/api';
-import { SwimEvent, SwimClub } from "@/lib/types";
+import {SwimEvent, SwimClub, Meet, MeetEvent} from "@/lib/types";
 import { useAuth } from '@/lib/auth-context';
 import { DataTable } from "@/components/datatable/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
-interface MeetEvent {
-  eventId: string;
-  eventNumber: number;
-  ageGroup: string;
-}
 
-interface Meet {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  course: 'SCY' | 'SCM' | 'LCM';
-  availableEvents: string[];
-  meetEvents: MeetEvent[];
-  isActive: boolean;
-  clubId: string;
-  againstClubId?: string;
-  createdAt: string;
-}
+
 
 interface MeetFormProps {
   meet?: Meet | null;
@@ -131,6 +115,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
 
     setErrors(newErrors);
+    console.log(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -179,6 +164,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     
     const newMeetEvent: MeetEvent = {
       eventId,
+      gender: 'M',
       eventNumber: nextEventNumber,
       ageGroup
     };
@@ -221,6 +207,17 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       )
     }));
   };
+
+  const updateMeetGender = (eventId: string, ageGroup: string, gender: 'M' | 'F' | 'Mixed') => {
+    setFormData(prev => ({
+      ...prev,
+      meetEvents: prev.meetEvents.map(me =>
+        me.eventId === eventId && me.ageGroup === ageGroup ? { ...me, gender } : me
+      )
+    }));
+  };
+
+  console.log('Form Data:', formData);
 
   const getFilteredEvents = (): SwimEvent[] => {
     return allEvents.filter(event => {
@@ -269,7 +266,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       accessorKey: "eventNumber",
       header: "Event #",
       cell: ({ row }) => {
-        const meetEvent = formData.meetEvents.find(me => 
+        const meetEvent = formData.meetEvents.find(me =>
           me.eventId === row.original.eventId && me.ageGroup === row.original.ageGroup
         );
         return (
@@ -280,6 +277,37 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
             onChange={(e) => updateMeetEventNumber(row.original.eventId, row.original.ageGroup, parseInt(e.target.value) || 1)}
             className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
           />
+        );
+      },
+    },{
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => {
+        const meetEvent = formData.meetEvents.find(me =>
+          me.eventId === row.original.eventId && me.ageGroup === row.original.ageGroup
+        );
+        return (
+          <Select
+            value={meetEvent?.gender || 'M'}
+            onValueChange={(e) => {
+              if (e === 'M' || e === 'F' || e === 'Mixed'){
+                updateMeetGender(row.original.eventId,
+                                row.original.ageGroup,
+                                e)
+              }
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a fruit" />
+          </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+            <SelectItem value="M">Male</SelectItem>
+            <SelectItem value="F">Female</SelectItem>
+            <SelectItem value="Mixed">Mixed</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         );
       },
     },
