@@ -45,12 +45,15 @@ export default function ActiveMeetToggle({ meetId, meetName, onToggle }: ActiveM
     setLoading(true);
     try {
       const method = isActive ? 'DELETE' : 'PUT';
+      const requestBody = method === 'PUT' ? { clubId: user.clubId } : undefined;
+      
       const response = await fetch(`/api/meets/${meetId}/active`, {
         method,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
         },
+        ...(requestBody && { body: JSON.stringify(requestBody) }),
       });
 
       if (response.ok) {

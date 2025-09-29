@@ -10,6 +10,9 @@ export async function PUT(
     await initializeDatabase();
     
     const { id: meetId } = await params;
+    const body = await request.json();
+    const { clubId: requestedClubId } = body;
+    
     const user = await AuthService.getInstance().getUser(request);
     
     if (!user) {
@@ -27,14 +30,25 @@ export async function PUT(
     }
 
     // Determine which club should have this as active meet
-    let targetClubId = meet.clubId;
+    let targetClubId = requestedClubId || meet.clubId;
     
-    // If user is from the against club, set it active for their club
-    if (user.clubId === meet.againstClubId) {
-      targetClubId = meet.againstClubId;
+    // If no specific club requested, determine based on user's club
+    if (!requestedClubId) {
+      if (user.clubId === meet.againstClubId) {
+        targetClubId = meet.againstClubId;
+      } else {
+        targetClubId = meet.clubId;
+      }
     }
 
-    // Check if user has access to this meet's club
+    // Validate that the meet involves the target club
+    if (targetClubId !== meet.clubId && targetClubId !== meet.againstClubId) {
+      return NextResponse.json({ 
+        error: 'Club is not involved in this meet' 
+      }, { status: 400 });
+    }
+
+    // Check if user has access to set active meet for this club
     if (user.role === 'coach' && user.clubId !== targetClubId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
