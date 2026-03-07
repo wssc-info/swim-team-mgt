@@ -9,7 +9,7 @@ class DatabaseConnection {
   private isInitialized: boolean = false;
 
   private constructor() {
-    this.sequelize = new Sequelize({
+    let dbconfig = {
       dialect: 'mysql',
       dialectModule: mysql2,
       // dialect: 'postgres',
@@ -26,7 +26,9 @@ class DatabaseConnection {
         acquire: 30000,
         idle: 10000
       }
-    });
+    };
+    console.log(dbconfig);
+    this.sequelize = new Sequelize(dbconfig);
   }
 
   public static getInstance(): DatabaseConnection {
