@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const meetId = searchParams.get('meetId');
+    const clubId = searchParams.get('clubId');
     
     const relayTeams = await relayTeamService.getRelayTeams(meetId || undefined);
     return NextResponse.json(relayTeams);

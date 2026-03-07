@@ -188,6 +188,7 @@ interface RelayTeamAttributes {
   id: string;
   meetId: string;
   eventId: string;
+  clubId: string;
   name: string;
   swimmers: string;
   ageGroup: string;
@@ -201,6 +202,7 @@ export class RelayTeamModel extends Model<RelayTeamAttributes, RelayTeamCreation
   declare id: string;
   declare meetId: string;
   declare eventId: string;
+  declare clubId: string;
   declare name: string;
   declare swimmers: string;
   declare ageGroup: string;
@@ -493,7 +495,7 @@ interface SwimClubAttributes {
   email?: string;
   website?: string;
   isActive: boolean;
-  activeMeetId?: string;
+  activeMeetId?: string | null;
 }
 
 type SwimClubCreationAttributes = Optional<SwimClubAttributes, 'id'>
@@ -511,7 +513,7 @@ export class SwimClubModel extends Model<SwimClubAttributes, SwimClubCreationAtt
   declare email?: string;
   declare website?: string;
   declare isActive: boolean;
-  declare activeMeetId?: string;
+  declare activeMeetId?: string | null;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;

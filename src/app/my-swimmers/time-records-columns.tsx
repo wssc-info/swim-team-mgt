@@ -2,6 +2,8 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import {SwimEvent, TimeRecord} from '@/lib/types';
+import {Badge} from "@/components/ui/badge";
+import {buildSort} from "@/components/datatable/buildSort";
 
 export const createTimeRecordsColumns = (events: SwimEvent[]): ColumnDef<TimeRecord>[] => {
   const eventMap = new Map(events.map(event => [event.id, event]));
@@ -22,8 +24,12 @@ export const createTimeRecordsColumns = (events: SwimEvent[]): ColumnDef<TimeRec
         accessorKey: "time",
         header: "Time",
         cell: ({row}) => (
-          <div className="font-mono font-medium">
+          <div>
             {row.original.time}
+            {row.original.isPersonalBest && (
+            <Badge variant="outline" className="ml-4 border-green-800 bg-green-100 text-green-800"
+              >PB</Badge>
+             )}
           </div>
         ),
       },
@@ -32,32 +38,21 @@ export const createTimeRecordsColumns = (events: SwimEvent[]): ColumnDef<TimeRec
         header: "Meet",
         cell: ({row}) => (
           <div>
-            <div className="font-medium">{row.original.meetName}</div>
-            <div className="text-sm text-gray-500">
-              {new Date(row.original.meetDate).toLocaleDateString()}
-            </div>
+            {row.original.meetName}
           </div>
         ),
       },
       {
-        accessorKey: "isPersonalBest",
-        header: "PB",
-        cell: ({row}) => (
-          <div className="text-center">
-            {row.original.isPersonalBest && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                PB
-              </span>
-            )}
+        accessorKey: "meetDate",
+        header: ({column}) => {
+          return <div>
+            Date
+            {buildSort(column)}
           </div>
-        ),
-      },
-      {
-        accessorKey: "createdAt",
-        header: "Recorded",
+        },
         cell: ({row}) => (
           <div className="text-sm text-gray-600">
-            {new Date(row.original.createdAt).toLocaleDateString()}
+            {new Date(row.original.meetDate).toLocaleDateString()}
           </div>
         ),
       },

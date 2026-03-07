@@ -1,14 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchSwimmers, fetchMeets, createRelayTeam, fetchRelayTeams, updateRelayTeamApi, deleteRelayTeamApi, fetchAllEvents } from '@/lib/api';
-import {Meet, RelayTeam, SwimEvent, Swimmer} from '@/lib/types';
+import {
+  fetchSwimmers,
+  fetchMeets,
+  createRelayTeam,
+  fetchRelayTeams,
+  updateRelayTeamApi,
+  deleteRelayTeamApi,
+  fetchAllEvents,
+  fetchClub
+} from '@/lib/api';
+import {Meet, RelayTeam, SwimClub, SwimEvent, Swimmer} from '@/lib/types';
 import RelayTeamForm from '@/components/RelayTeamForm';
 import { useAuth } from '@/lib/auth-context';
+import {getClubId} from "@/lib/utils";
 
 
 export default function RelaysPage() {
   const { user } = useAuth();
+  const [club, setClub] = useState<SwimClub>();
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
   const [relayTeams, setRelayTeams] = useState<RelayTeam[]>([]);
@@ -20,21 +31,24 @@ export default function RelaysPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [swimmerData, meetData, eventsData] = await Promise.all([
-          fetchSwimmers(),
+        const clubId = getClubId(user);
+        console.log(clubId);
+        const [swimmerData, meetData, eventsData, userClub] = await Promise.all([
+          fetchSwimmers(clubId),
           fetchMeets(),
-          fetchAllEvents()
+          fetchAllEvents(),
+          fetchClub(clubId)
         ]);
         
         setSwimmers(swimmerData);
         setAllEvents(eventsData);
         
         // Filter meets to only show those for the user's club and find active meet
-        const filteredMeets = user?.clubId 
-          ? meetData.filter(meet => meet.clubId === user.clubId)
-          : meetData;
-        
-        const active = filteredMeets.find(m => m.isActive) || null;
+        const filteredMeets = meetData;
+
+        setClub(userClub);
+
+        const active = filteredMeets.find(m => m.id == userClub?.activeMeetId) || null;
         setActiveMeet(active);
         
         // Load relay teams for the active meet
@@ -102,7 +116,7 @@ export default function RelaysPage() {
     );
   }
 
-  if (!user?.clubId) {
+  if (!club) {
     return (
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Relay Teams</h1>

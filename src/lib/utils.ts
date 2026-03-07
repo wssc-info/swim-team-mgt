@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import {Swimmer} from "@/lib/types";
+import {Swimmer, User} from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -19,6 +19,17 @@ export function generateSwimmerExternalId(swimmer: Partial<Swimmer>): string {
     swimmer.lastName.substring(0, 4).toUpperCase().padEnd(4, '*');
   console.log('Generated external ID:', externalId);
   return externalId;
-
 }
 
+export function getClubId(user: Partial<User> | null): string{
+  if(user?.clubId) {
+    return user.clubId;
+  }
+  if(user?.role === "admin"){
+    const clubId = localStorage.getItem('adminClubId');
+    if (clubId) {
+      return clubId;
+    }
+  }
+  throw new Error("Unable to determine Club");
+}

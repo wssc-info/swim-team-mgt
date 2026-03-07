@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { MeetModel, initializeDatabase } from '../models';
 import { Meet } from '../types';
+import {Op, Sequelize} from "sequelize";
 
 export class MeetService {
   private static instance: MeetService;
@@ -36,7 +37,6 @@ export class MeetService {
         course: meet.course,
         availableEvents: JSON.parse(meet.availableEvents || '[]'),
         meetEvents: JSON.parse(meet.meetEvents || '[]'),
-        isActive: meet.isActive,
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
         createdAt: (meet.createdAt || new Date()).toISOString(),
@@ -47,7 +47,8 @@ export class MeetService {
     try {
       const whereClause = activeOnly ? { isActive: true } : {};
       if(clubId) {
-        Object.assign(whereClause, { clubId });
+        //Object.assign(whereClause, { clubId });
+        Object.assign(whereClause, { [Op.or]: [{ clubId }, { againstClubId: clubId }] });
       }
       const meets = await MeetModel.findAll({
         order: [['date', 'DESC']],
@@ -61,7 +62,6 @@ export class MeetService {
         course: meet.course,
         availableEvents: JSON.parse(meet.availableEvents || '[]'),
         meetEvents: JSON.parse(meet.meetEvents || '[]'),
-        isActive: meet.isActive,
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
         createdAt: (meet.createdAt || new Date()).toISOString(),
@@ -76,11 +76,6 @@ export class MeetService {
     await this.ensureInitialized();
     
     try {
-      // If this meet is being set as active, deactivate all others in the same club
-      if (meetData.isActive && meetData.clubId) {
-        await MeetModel.update({ isActive: false }, { where: { clubId: meetData.clubId } });
-      }
-      
       const meet = await MeetModel.create({
         id: uuidv4(),
         name: meetData.name,
@@ -89,7 +84,6 @@ export class MeetService {
         course: meetData.course,
         availableEvents: JSON.stringify(meetData.availableEvents || []),
         meetEvents: JSON.stringify(meetData.meetEvents || []),
-        isActive: meetData.isActive,
         clubId: meetData.clubId,
         againstClubId: meetData.againstClubId || undefined,
       });
@@ -102,7 +96,6 @@ export class MeetService {
         course: meet.course,
         availableEvents: JSON.parse(meet.availableEvents),
         meetEvents: JSON.parse(meet.meetEvents || '[]'),
-        isActive: meet.isActive,
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
         createdAt: meet.createdAt.toISOString(),
@@ -116,15 +109,6 @@ export class MeetService {
   public async updateMeet(id: string, updates: Partial<Meet>): Promise<void> {
     await this.ensureInitialized();
     try {
-      // If setting this meet as active, deactivate all others in the same club
-      if (updates.isActive) {
-        // First get the meet to find its clubId
-        const meet = await MeetModel.findByPk(id);
-        if (meet && meet.clubId) {
-          await MeetModel.update({ isActive: false }, { where: { clubId: meet.clubId } });
-        }
-      }
-      
       const updateData: any = { ...updates };
       
       if (updates.availableEvents) {
@@ -152,50 +136,4 @@ export class MeetService {
     }
   }
 
-  public async getActiveMeet(): Promise<Meet | null> {
-    await this.ensureInitialized();
-    try {
-      const meet = await MeetModel.findOne({ where: { isActive: true } });
-      if (!meet) return null;
-      
-      return {
-        id: meet.id,
-        name: meet.name,
-        date: meet.date,
-        location: meet.location,
-        course: meet.course,
-        availableEvents: JSON.parse(meet.availableEvents || '[]'),
-        meetEvents: JSON.parse(meet.meetEvents || '[]'),
-        isActive: meet.isActive,
-        createdAt: meet.createdAt.toISOString(),
-        clubId: meet.clubId,
-      };
-    } catch (error) {
-      console.error('Error fetching active meet:', error);
-      return null;
-    }
-  }
-
-  public async activateMeet(id: string): Promise<void> {
-    await this.ensureInitialized();
-    try {
-      // First, get the meet to find its clubId
-      const meet = await MeetModel.findByPk(id);
-      if (!meet) {
-        throw new Error('Meet not found');
-      }
-      
-      // Deactivate all meets for the same club only
-      await MeetModel.update({ isActive: false }, { where: { clubId: meet.clubId } });
-      // Then activate the specified meet
-      await MeetModel.update({ isActive: true }, { where: { id } });
-    } catch (error) {
-      console.error('Error activating meet:', error);
-      throw error;
-    }
-  }
-
-  public async setActiveMeet(id: string): Promise<void> {
-    await this.activateMeet(id);
-  }
 }

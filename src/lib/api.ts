@@ -99,7 +99,7 @@ export async function deleteMeetApi(id: string): Promise<void> {
 }
 
 export async function activateMeet(id: string, clubId?: string): Promise<void> {
-  const response = await authenticatedFetch(`/api/meets/${id}/active`, {
+  const response = await authenticatedFetch(`/api/meets/${id}/activate`, {
     method: 'PUT',
     body: JSON.stringify({ clubId }),
   });
@@ -262,6 +262,15 @@ export async function seedEventsApi(): Promise<void> {
 // Clubs API
 export async function fetchClubs(): Promise<SwimClub[]> {
   const response = await authenticatedFetch('/api/admin/clubs');
+  if (!response.ok) {
+    throw new Error('Failed to fetch clubs');
+  }
+  return response.json();
+}
+
+// Clubs API
+export async function fetchClub(clubId: string): Promise<SwimClub> {
+  const response = await authenticatedFetch(`/api/admin/clubs/${clubId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch clubs');
   }

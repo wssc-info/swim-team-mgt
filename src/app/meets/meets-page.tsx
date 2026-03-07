@@ -1,41 +1,46 @@
 'use client';
 
 import {useState, useEffect} from 'react';
-import {fetchMeets, deleteMeetApi, activateMeet, fetchAllEvents} from '@/lib/api';
+import {fetchMeets, deleteMeetApi, activateMeet, fetchAllEvents, fetchClubs, fetchClub} from '@/lib/api';
 import MeetForm from '@/components/MeetForm';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
-import {SwimEvent} from "@/lib/types";
+import {SwimClub, SwimEvent} from "@/lib/types";
 import {Meet} from "@/lib/types";
 import {useAuth} from '@/lib/auth-context';
+import {SwimClubModel} from "@/lib/models";
+import {DataTable} from "@/components/datatable/dataTable";
+import {createMeetsColumns} from "@/app/meets/meets-columns";
 
 export default function MeetsPage() {
   const { user } = useAuth();
+  const [club, setClub] = useState<SwimClub>();
   const [loading, setLoading] = useState<boolean>(true);
   const [meets, setMeets] = useState<Meet[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingMeet, setEditingMeet] = useState<Meet | null>(null);
+  const [editingMeet, setEditingMeet] = useState<Partial<Meet> | null>(null);
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
     const loadMeets = async () => {
       try {
         const meetData = await fetchMeets();
-        // Filter meets to only show those for the user's club
-        const filteredMeets = user?.clubId 
-          ? meetData.filter(meet => meet.clubId === user.clubId)
-          : meetData;
-        return setMeets(filteredMeets);
+        return setMeets(meetData);
 
       } catch (error) {
         console.error('Error loading meets:', error);
       }
     };
     
-    if (user) {
-      fetchAllEvents().then(allEvents => setAllEvents(allEvents)).then(() => {
-        loadMeets().then(() => setLoading(false));
-      });
+    if (user?.clubId) {
+      fetchClub(user.clubId).then(cl=> setClub(cl)).then(() => {
+        fetchAllEvents().then(allEvents => setAllEvents(allEvents)).then(() => {
+          loadMeets().then(() => setLoading(false));
+        });
+      })
+    } else {
+      setLoading(false);
     }
+
   }, [user]);
 
   const handleAddMeet = () => {
@@ -48,16 +53,29 @@ export default function MeetsPage() {
     setShowForm(true);
   };
 
+  const handleCloneMeet = (meet: Meet) => {
+    setEditingMeet({meetEvents: meet.meetEvents, course: meet.course});
+    setShowForm(true);
+  };
+
+  const handleMeetFunctions = (action: string, meet: Meet) => {
+    if ("edit" === action) {
+      handleEditMeet(meet);
+    } else if ("delete" === action && meet.id) {
+      handleDeleteMeet(meet.id);
+    } else if ("clone" === action) {
+      handleCloneMeet(meet);
+    } else if ("activate" === action && meet?.id && club?.id) {
+      handleSetActive(meet?.id);
+    }
+  }
+
   const handleDeleteMeet = async (id: string) => {
     if (confirm('Are you sure you want to delete this meet?')) {
       try {
         await deleteMeetApi(id);
         const updatedMeets = await fetchMeets();
-        // Filter meets to only show those for the user's club
-        const filteredMeets = user?.clubId 
-          ? updatedMeets.filter(meet => meet.clubId === user.clubId)
-          : updatedMeets;
-        setMeets(filteredMeets);
+        setMeets(updatedMeets);
       } catch (error) {
         console.error('Error deleting meet:', error);
       }
@@ -67,12 +85,7 @@ export default function MeetsPage() {
   const handleSetActive = async (id: string) => {
     try {
       await activateMeet(id, user?.clubId);
-      const updatedMeets = await fetchMeets();
-      // Filter meets to only show those for the user's club
-      const filteredMeets = user?.clubId 
-        ? updatedMeets.filter(meet => meet.clubId === user.clubId)
-        : updatedMeets;
-      setMeets(filteredMeets);
+      setClub(prevState => ({...prevState, activeMeetId: id} as SwimClub));
     } catch (error) {
       console.error('Error setting active meet:', error);
     }
@@ -83,20 +96,24 @@ export default function MeetsPage() {
     setEditingMeet(null);
     try {
       const updatedMeets = await fetchMeets();
-      // Filter meets to only show those for the user's club
-      const filteredMeets = user?.clubId 
-        ? updatedMeets.filter(meet => meet.clubId === user.clubId)
-        : updatedMeets;
-      setMeets(filteredMeets);
+      setMeets(updatedMeets);
     } catch (error) {
       console.error('Error loading meets:', error);
     }
   };
 
-  const activeMeet = meets.find(m => m.isActive);
-  const upcomingMeets = meets.filter(m => !m.isActive).sort((a, b) =>
+  const activeMeet = meets.find(m => m.id === club?.activeMeetId);
+  const now = new Date();
+  const upcomingMeets = meets
+    .filter(m =>  now.getTime() < new Date(m.date).getTime())
+    .sort((a, b) =>
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+  const pastMeets = meets
+    .filter(m =>  now.getTime() > new Date(m.date).getTime())
+    .sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
   if (loading) {
     return <div className={'items-center text-center'}>
       <Spinner size={64} variant={'circle'} speed={1} className={'mr-auto ml-auto my-5'}/>
@@ -165,7 +182,7 @@ export default function MeetsPage() {
                         .map(meetEvent => {
                           const event = allEvents.find(e => e.id === meetEvent.eventId);
                           return event ? (
-                            <span key={`${meetEvent.eventId}-${meetEvent.ageGroup}`} className="text-xs bg-green-100 px-2 py-1 rounded">
+                            <span key={`${meetEvent.eventNumber}-${meetEvent.eventId}-${meetEvent.ageGroup}`} className="text-xs bg-green-100 px-2 py-1 rounded">
                               Event #{meetEvent.eventNumber}: {event.name} - {meetEvent.ageGroup}
                             </span>
                           ) : null;
@@ -186,24 +203,21 @@ export default function MeetsPage() {
           </div>
         </div>
       )}
+      {!activeMeet && (
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800">
+            <strong>Note:</strong> No active meet is set. Swimmers won't be able to register for events until you set a
+            meet as active.
+          </p>
+        </div>
+      )}
 
       {/* Upcoming Meets Section */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">
-          {activeMeet ? 'Upcoming Meets' : 'All Meets'}
+           Upcoming Meets
         </h2>
-
-        {meets.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">No meets created yet.</p>
-            <button
-              onClick={handleAddMeet}
-              className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
-            >
-              Create Your First Meet
-            </button>
-          </div>
-        ) : upcomingMeets.length === 0 && activeMeet ? (
+        {upcomingMeets.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-lg">
             <p className="text-gray-500 mb-4">No upcoming meets scheduled.</p>
             <button
@@ -215,76 +229,33 @@ export default function MeetsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {upcomingMeets.map((meet) => (
-              <div
-                key={meet.id}
-                className="bg-white border rounded-lg p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold">{meet.name}</h3>
-                    <p className="text-gray-600 mt-1">
-                      {new Date(meet.date).toLocaleDateString()} • {meet.location} • {meet.course}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      {meet.meetEvents.length} event entries configured
-                    </p>
-                    <div className="mt-3">
-                      <details className="text-sm">
-                        <summary className="cursor-pointer text-gray-600 hover:text-gray-800">
-                          View Meet Events ({meet.meetEvents.length})
-                        </summary>
-                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {meet.meetEvents
-                            .sort((a, b) => a.eventNumber - b.eventNumber)
-                            .map(meetEvent => {
-                              const event = allEvents.find(e => e.id === meetEvent.eventId);
-                              return event ? (
-                                <span key={`${meetEvent.eventId}-${meetEvent.ageGroup}`} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                  Event #{meetEvent.eventNumber}: {event.name} - {meetEvent.ageGroup}
-                                </span>
-                              ) : null;
-                            })}
-                        </div>
-                      </details>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2 ml-4">
-                    <button
-                      onClick={() => handleSetActive(meet.id)}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                      title="Set as active meet for swimmer registration"
-                    >
-                      Set Active
-                    </button>
-                    <button
-                      onClick={() => handleEditMeet(meet)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMeet(meet.id)}
-                      className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <DataTable
+                columns={createMeetsColumns(handleMeetFunctions, activeMeet)}
+                data={upcomingMeets}
+                defaultPageSize={20}
+                pageSizeOptions={[10,20,50]}
+            />
           </div>
         )}
       </div>
 
-      {!activeMeet && meets.length > 0 && (
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800">
-            <strong>Note:</strong> No active meet is set. Swimmers won't be able to register for events until you set a
-            meet as active.
-          </p>
+      <div>
+      <h2 className="text-2xl font-semibold mb-4">
+        Past Meets
+      </h2>
+      {pastMeets.length > 0 && (
+        <div className="space-y-4">
+          <DataTable
+            columns={createMeetsColumns(handleMeetFunctions, activeMeet)}
+            data={pastMeets}
+            defaultPageSize={20}
+            pageSizeOptions={[10,20,50]}
+          />
         </div>
       )}
+      </div>
+
+
     </div>
   );
 }

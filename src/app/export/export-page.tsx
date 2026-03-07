@@ -10,47 +10,6 @@ import ExportContent from '@/components/export/ExportContent';
 import ExportInfo from '@/components/export/ExportInfo';
 import {Meet, RelayTeam, Swimmer} from "@/lib/types";
 
-// interface Swimmer {
-//   id: string;
-//   firstName: string;
-//   lastName: string;
-//   dateOfBirth: string;
-//   gender: 'M' | 'F';
-//   ageGroup: string;
-// }
-//
-// interface Meet {
-//   id: string;
-//   name: string;
-//   date: string;
-//   location: string;
-//   availableEvents: string[];
-//   isActive: boolean;
-//   createdAt: string;
-// }
-//
-// interface RelayTeam {
-//   id: string;
-//   meetId: string;
-//   eventId: string;
-//   name: string;
-//   swimmers: string[];
-//   ageGroup: string;
-//   gender: 'M' | 'F' | 'Mixed';
-// }
-//
-// interface IndividualEntry {
-//   swimmer: Swimmer;
-//   event: any;
-//   seedTime: string;
-// }
-//
-// interface RelayEntry {
-//   team: RelayTeam;
-//   event: any;
-//   swimmers: Swimmer[];
-// }
-
 export default function ExportPage() {
   const { user } = useAuth();
   const [meets, setMeets] = useState<Meet[]>([]);
@@ -75,12 +34,7 @@ export default function ExportPage() {
           fetchSwimmers(user?.clubId)
         ]);
 
-        // Filter meets to only show those for the user's club
-        const filteredMeets = user?.clubId
-          ? meetData.filter(meet => meet.clubId === user.clubId)
-          : meetData;
-
-        setMeets(filteredMeets);
+        setMeets(meetData);
         setSwimmers(swimmerData);
 
         // Auto-select active meet if available
@@ -95,11 +49,10 @@ export default function ExportPage() {
             if (clubResponse.ok) {
               const clubData = await clubResponse.json();
               if (clubData.activeMeetId) {
-                const activeMeet = filteredMeets.find(m => m.id === clubData.activeMeetId);
+                const activeMeet = meetData.find(m => m.id === clubData.activeMeetId);
                 if (activeMeet) {
                   setSelectedMeet(activeMeet);
-                  const relayData = await fetchRelayTeams(activeMeet.id);
-                  await loadPreviewData(activeMeet, swimmerData, relayData);
+                  await loadPreviewData(activeMeet, swimmerData);
                 }
               }
             }
@@ -119,8 +72,9 @@ export default function ExportPage() {
     }
   }, [user]);
 
-  const loadPreviewData = async (meet: Meet, swimmerData: Swimmer[], relayData: RelayTeam[]) => {
+  const loadPreviewData = async (meet: Meet, swimmerData: Swimmer[]) => {
     try {
+      const relayData = await fetchRelayTeams(meet.id);
       // Create preview data from swimmers and their meet event selections
       const meetIndividualEntries: any[] = [];
       const meetRelayEntries: any[] = [];
@@ -180,9 +134,7 @@ export default function ExportPage() {
 
   const handleMeetSelect = async (meet: Meet) => {
     setSelectedMeet(meet);
-    const relayData = await fetchRelayTeams(meet.id);
-    // setRelayTeams(relayData);
-    await loadPreviewData(meet, swimmers, relayData);
+    await loadPreviewData(meet, swimmers);
   };
 
   const handleExport = async () => {

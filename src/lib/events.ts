@@ -1,5 +1,5 @@
 import { SwimEventModel, initializeDatabase } from './models';
-import { SwimEvent } from './types';
+import {MeetEvent, SwimEvent} from './types';
 
 // Default USA Swimming events data for seeding
 export const USA_SWIMMING_EVENTS_SEED : SwimEvent[] = [
@@ -100,20 +100,25 @@ export const USA_SWIMMING_EVENTS_SEED : SwimEvent[] = [
   { id: '200-free-relay-scy', name: '200 Freestyle Relay', distance: 200, stroke: 'freestyle', course: 'SCY', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-free-relay-scy', name: '400 Freestyle Relay', distance: 400, stroke: 'freestyle', course: 'SCY', isRelay: true, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
   { id: '800-free-relay-scy', name: '800 Freestyle Relay', distance: 800, stroke: 'freestyle', course: 'SCY', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
+  { id: '100-medley-relay-scy', name: '100 Medley Relay', distance: 100, stroke: 'medley', course: 'SCY', isRelay: true, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '200-medley-relay-scy', name: '200 Medley Relay', distance: 200, stroke: 'medley', course: 'SCY', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-medley-relay-scy', name: '400 Medley Relay', distance: 400, stroke: 'medley', course: 'SCY', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
 
   // SCM Relay Events
+  { id: '100-free-relay-scm', name: '100 Freestyle Relay', distance: 100, stroke: 'freestyle', course: 'SCM', isRelay: true, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '200-free-relay-scm', name: '200 Freestyle Relay', distance: 200, stroke: 'freestyle', course: 'SCM', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-free-relay-scm', name: '400 Freestyle Relay', distance: 400, stroke: 'freestyle', course: 'SCM', isRelay: true, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
   { id: '800-free-relay-scm', name: '800 Freestyle Relay', distance: 800, stroke: 'freestyle', course: 'SCM', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
+  { id: '100-medley-relay-scm', name: '100 Medley Relay', distance: 100, stroke: 'medley', course: 'SCM', isRelay: true, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '200-medley-relay-scm', name: '200 Medley Relay', distance: 200, stroke: 'medley', course: 'SCM', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-medley-relay-scm', name: '400 Medley Relay', distance: 400, stroke: 'medley', course: 'SCM', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
 
-  // SCM Relay Events
+  // LCM Relay Events
+  { id: '100-free-relay-lcm', name: '100 Freestyle Relay', distance: 100, stroke: 'freestyle', course: 'LCM', isRelay: true, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '200-free-relay-lcm', name: '200 Freestyle Relay', distance: 200, stroke: 'freestyle', course: 'LCM', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-free-relay-lcm', name: '400 Freestyle Relay', distance: 400, stroke: 'freestyle', course: 'LCM', isRelay: true, ageGroups: ['11-12', '13-14', '15-18'], isActive: true },
   { id: '800-free-relay-lcm', name: '800 Freestyle Relay', distance: 800, stroke: 'freestyle', course: 'LCM', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
+  { id: '100-medley-relay-lcm', name: '100 Medley Relay', distance: 100, stroke: 'medley', course: 'LCM', isRelay: true, ageGroups: ['8&U', '9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '200-medley-relay-lcm', name: '200 Medley Relay', distance: 200, stroke: 'medley', course: 'LCM', isRelay: true, ageGroups: ['9-10', '11-12', '13-14', '15-18'], isActive: true },
   { id: '400-medley-relay-lcm', name: '400 Medley Relay', distance: 400, stroke: 'medley', course: 'LCM', isRelay: true, ageGroups: ['13-14', '15-18'], isActive: true },
 ];
@@ -169,3 +174,10 @@ export async function seedEvents(): Promise<void> {
     }
   }
 }
+
+
+const defaultMeetEvents: MeetEvent[] = [
+    {eventId:"100-free-relay-scm", gender: "F", eventNumber:1, ageGroup:"8&U"},
+    {eventId:"100-free-relay-scm", gender: "M", eventNumber:1, ageGroup:"8&U"},
+
+];

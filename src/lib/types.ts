@@ -26,6 +26,7 @@ export interface RelayTeam {
   id: string;
   meetId: string;
   eventId: string;
+  clubId: string;
   name: string;
   swimmers: string[]; // Swimmer IDs in order
   ageGroup: string;
@@ -35,6 +36,7 @@ export interface RelayTeam {
 export interface MeetEvent {
   eventId: string;
   eventNumber: number;
+  gender: 'M' | 'F' | 'Mixed';
   ageGroup: string; // Single age group for this event number
 }
 
@@ -46,7 +48,6 @@ export interface Meet {
   course: 'SCY' | 'SCM' | 'LCM'; // Course type for the meet
   availableEvents: string[]; // Event IDs that swimmers can participate in (deprecated)
   meetEvents: MeetEvent[]; // Event numbers and age group assignments
-  isActive: boolean; // Only one meet can be active at a time
   clubId: string; // The club this meet is for (required)
   againstClubId?: string; // The club this meet is against (optional)
   createdAt: string;
@@ -104,6 +105,7 @@ export interface SwimClub {
   email?: string;
   website?: string;
   isActive: boolean;
+  activeMeetId?: string;
 }
 
 

@@ -8,11 +8,8 @@ import { DataTable } from "@/components/datatable/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
-
-
-
 interface MeetFormProps {
-  meet?: Meet | null;
+  meet?: Partial<Meet> | null;
   onClose: () => void;
 }
 
@@ -25,7 +22,6 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     course: 'SCY' as 'SCY' | 'SCM' | 'LCM',
     availableEvents: [] as string[],
     meetEvents: [] as MeetEvent[],
-    isActive: false,
     clubId: '',
     againstClubId: ''
   });
@@ -71,14 +67,13 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
   useEffect(() => {
     if (meet) {
       setFormData({
-        name: meet.name,
-        date: meet.date,
-        location: meet.location,
-        course: meet.course,
+        name: meet.name || '',
+        date: meet.date || '',
+        location: meet.location || '',
+        course: meet.course || 'SCM',
         availableEvents: meet.availableEvents || [],
         meetEvents: meet.meetEvents || [],
-        isActive: meet.isActive,
-        clubId: meet.clubId,
+        clubId: meet.clubId || '',
         againstClubId: meet.againstClubId || ''
       });
     }
@@ -115,7 +110,6 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
 
     setErrors(newErrors);
-    console.log(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -127,7 +121,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
     }
 
     try {
-      if (meet) {
+      if (meet?.id) {
         await updateMeetApi(meet.id, formData);
       } else {
         await createMeet(formData);
@@ -259,10 +253,11 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       .map(me => `${me.ageGroup}-${me.gender}`);
     
     const availableCombinations: { ageGroup: string; gender: 'M' | 'F' | 'Mixed' }[] = [];
-    const genders: ('M' | 'F' | 'Mixed')[] = event.isRelay ? ['M', 'F', 'Mixed'] : ['M', 'F'];
-    
-    event.ageGroups.forEach(ageGroup => {
-      genders.forEach(gender => {
+    const genders: ('M' | 'F' | 'Mixed')[] =
+        event.isRelay ? ['M', 'F', 'Mixed'] : ['M', 'F'];
+
+    genders.forEach(gender => {
+      event.ageGroups.forEach(ageGroup => {
         const combination = `${ageGroup}-${gender}`;
         if (!usedCombinations.includes(combination)) {
           availableCombinations.push({ ageGroup, gender });
@@ -289,34 +284,18 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
           />
         );
       },
-    },{
+    },
+    {
+      accessorKey: "ageGroup",
+      header: "Age Group",
+    },
+    {
       accessorKey: "gender",
       header: "Gender",
       cell: ({ row }) => {
         return (
-          <Select
-            value={row.original.gender || 'M'}
-            onValueChange={(e) => {
-              if (e === 'M' || e === 'F' || e === 'Mixed'){
-                updateMeetGender(row.original.eventId,
-                                row.original.ageGroup,
-                                row.original.gender,
-                                e)
-              }
-            }}
-          >
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="M">Male</SelectItem>
-                <SelectItem value="F">Female</SelectItem>
-                <SelectItem value="Mixed">Mixed</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        );
+          {M:'Male',F:'Female',Mixed:'Mixed'}[row.original.gender]
+        )
       },
     },
     {
@@ -329,10 +308,6 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
           </span>
         </div>
       ),
-    },
-    {
-      accessorKey: "ageGroup",
-      header: "Age Group",
     },
     {
       accessorKey: "eventDetails",
@@ -528,22 +503,6 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
             </select>
           </div>
         </div>
-
-        <div>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleInputChange}
-              className="mr-2"
-            />
-            <span className="text-sm font-medium text-gray-700">
-              Set as active meet (swimmers can register for this meet)
-            </span>
-          </label>
-        </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Meet Events * ({formData.meetEvents.length} events added)
@@ -616,7 +575,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
             </div>
 
             {/* Available Events to Add */}
-            <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
+            <div className="max-h-80 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
               <div className="text-xs text-gray-600 mb-2">
                 Available to add (by age group and gender):
               </div>
@@ -628,7 +587,7 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
                   return (
                     <div key={event.id} className="border border-gray-100 rounded p-2">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex-1">
+                        <div className="">
                           <span className={`text-sm font-medium ${event.isRelay ? 'text-purple-700' : ''}`}>
                             {event.name}
                           </span>
@@ -636,25 +595,28 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
                             {event.course} • {event.distance}m {event.stroke}
                           </div>
                         </div>
+                        <div className="flex-1 ml-4">
+                          <div className="flex flex-wrap gap-1">
+                          {availableCombinations.map((combination) => (
+                            <button
+                              key={`${combination.ageGroup}-${combination.gender}`}
+                              type="button"
+                              onClick={() => addMeetEvent(event.id, combination.ageGroup, combination.gender)}
+                              className={`text-xs px-2 py-1 rounded hover:opacity-80 ${
+                                combination.gender === 'M'
+                                  ? 'bg-blue-400 text-white hover:bg-blue-700'
+                                  : combination.gender === 'F'
+                                    ? 'bg-pink-400 text-white hover:bg-pink-700'
+                                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                              }`}
+                            >
+                              {combination.ageGroup} {combination.gender}
+                            </button>
+                          ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-1">
-                        {availableCombinations.map((combination) => (
-                          <button
-                            key={`${combination.ageGroup}-${combination.gender}`}
-                            type="button"
-                            onClick={() => addMeetEvent(event.id, combination.ageGroup, combination.gender)}
-                            className={`text-xs px-2 py-1 rounded hover:opacity-80 ${
-                              combination.gender === 'M' 
-                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                : combination.gender === 'F'
-                                ? 'bg-pink-600 text-white hover:bg-pink-700'
-                                : 'bg-purple-600 text-white hover:bg-purple-700'
-                            }`}
-                          >
-                            Add {combination.ageGroup} {combination.gender === 'Mixed' ? 'Mixed' : combination.gender}
-                          </button>
-                        ))}
-                      </div>
+
                     </div>
                   );
                 })}

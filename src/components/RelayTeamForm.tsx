@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { createRelayTeam, updateRelayTeamApi } from '@/lib/api';
 import {AGE_GROUPS} from "@/lib/constants";
 import {Swimmer, SwimEvent, RelayTeam} from "@/lib/types";
+import {useAuth} from "@/lib/auth-context";
+import {getClubId} from "@/lib/utils";
 
 interface RelayTeamFormProps {
   team?: RelayTeam | null;
@@ -21,6 +23,7 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
     ageGroup: '',
     gender: 'Mixed' as 'M' | 'F' | 'Mixed'
   });
+  const user = useAuth();
   const [saving, setSaving] = useState(false);
   const [ageGroupFilter, setAgeGroupFilter] = useState('all');
   const [genderFilter, setGenderFilter] = useState('all');
@@ -53,9 +56,9 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
     setSaving(true);
     try {
       if (team) {
-        await updateRelayTeamApi(team.id, formData);
+        await updateRelayTeamApi(team.id, {...formData, clubId: getClubId(user.user)});
       } else {
-        await createRelayTeam({ ...formData, meetId });
+        await createRelayTeam({ ...formData, meetId, clubId: getClubId(user.user)});
       }
       onClose();
     } catch (error) {

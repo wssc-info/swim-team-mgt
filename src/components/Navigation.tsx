@@ -9,22 +9,68 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import Image from "next/image";
+import React, {ChangeEvent, useEffect, useState} from "react";
+import {fetchClubs} from "@/lib/api";
+import {SwimClub} from "@/lib/types";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 export default function Navigation() {
   const {user, logout} = useAuth();
+  const [clubs, setClubs] = useState<SwimClub[]>()
+
+  const [activeClub, setActiveClub] = useState<string>()
+
+  useEffect(()=>{
+    if(user?.role === 'admin'){
+      fetchClubs().then(setClubs);
+      setActiveClub(localStorage.getItem('adminClubId') || '');
+    }
+  }, [user])
+
+  const adminClubChange = (value: string)=> {
+    if("---" === value){
+      localStorage.removeItem('adminClubId')
+    } else {
+      localStorage.setItem('adminClubId', value);
+    }
+    window.location.reload();
+  }
 
   if (!user) {
     // logout();
     return null;
   }
 
+
   return (
     <nav className="bg-blue-600 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className="text-xl font-bold">
-          Swim Team Management
+          <Image src={'/stm-logo-sm.png'} alt={'Swim Team Management Logo'}
+                 width={60} height={60}
+                 className="inline mr-5"
+                 />
         </Link>
         <div className="flex items-center space-x-4">
+          {(user.role === 'admin' && !!clubs) && (
+            <>
+              <Select value={activeClub || "---"}
+                      onValueChange={adminClubChange}>
+                <SelectTrigger className="ml-4 max-w-sm">
+                  <SelectValue className="text-white" placeholder="Club to Use..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="---">No Club</SelectItem>
+                  {
+                    clubs.map((club) => {
+                      return <SelectItem value={club.id} key={club.id}>{club.name}</SelectItem>
+                    })
+                  }
+                </SelectContent>
+              </Select>
+            </>
+          )}
           {(user.role === 'coach' || user.role === 'admin') && (
             <>
               <DropdownMenu>
