@@ -11,7 +11,6 @@ class DatabaseConnection {
   private constructor() {
     const dbconfig:any = {
       dialect: 'mysql',
-      dialectModule: mysql2,
       // dialect: 'postgres',
       // dialectModule: pg,
       host: process.env.DB_HOST || 'localhost',
@@ -28,7 +27,7 @@ class DatabaseConnection {
       }
     };
     console.log(dbconfig);
-    this.sequelize = new Sequelize(dbconfig);
+    this.sequelize = new Sequelize({...dbconfig, dialectModule: mysql2});
   }
 
   public static getInstance(): DatabaseConnection {
