@@ -9,7 +9,7 @@ class DatabaseConnection {
   private isInitialized: boolean = false;
 
   private constructor() {
-    let dbconfig = {
+    const dbconfig:any = {
       dialect: 'mysql',
       dialectModule: mysql2,
       // dialect: 'postgres',
