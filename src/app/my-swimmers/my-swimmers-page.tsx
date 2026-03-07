@@ -20,47 +20,52 @@ export default function MySwimmersPage() {
   const [showPersonalBestsOnly, setShowPersonalBestsOnly] = useState(false);
   const [expandedSwimmers, setExpandedSwimmers] = useState<Set<string>>(new Set());
 
+
+
   useEffect(() => {
-    loadSwimmersAndTimes();
-    fetchAllEvents().then(r => setEvents(r));
-  }, [user, loadSwimmersAndTimes]);
 
-  const loadSwimmersAndTimes = async () => {
-    if (!user) return;
+    const loadSwimmersAndTimes = async () => {
+      if (!user) return;
 
-    setLoading(true);
-    try {
-      // Get swimmers associated with this family user
-      const swimmersResponse = await authenticatedFetch(`/api/family/swimmers`);
-      if (!swimmersResponse.ok) {
-        throw new Error('Failed to fetch swimmers');
-      }
-      const swimmersData = await swimmersResponse.json();
+      setLoading(true);
+      try {
+        // Get swimmers associated with this family user
+        const swimmersResponse = await authenticatedFetch(`/api/family/swimmers`);
+        if (!swimmersResponse.ok) {
+          throw new Error('Failed to fetch swimmers');
+        }
+        const swimmersData = await swimmersResponse.json();
 
-      // Get time records for each swimmer
-      const swimmersWithTimes = await Promise.all(
-        swimmersData.map(async (swimmer: Swimmer) => {
-          try {
-            const timesResponse = await authenticatedFetch(`/api/times?swimmerId=${swimmer.id}`);
-            if (timesResponse.ok) {
-              const timeRecords = await timesResponse.json();
-              return { ...swimmer, timeRecords };
+        // Get time records for each swimmer
+        const swimmersWithTimes = await Promise.all(
+          swimmersData.map(async (swimmer: Swimmer) => {
+            try {
+              const timesResponse = await authenticatedFetch(`/api/times?swimmerId=${swimmer.id}`);
+              if (timesResponse.ok) {
+                const timeRecords = await timesResponse.json();
+                return { ...swimmer, timeRecords };
+              }
+              return { ...swimmer, timeRecords: [] };
+            } catch (error) {
+              console.error(`Error loading times for swimmer ${swimmer.id}:`, error);
+              return { ...swimmer, timeRecords: [] };
             }
-            return { ...swimmer, timeRecords: [] };
-          } catch (error) {
-            console.error(`Error loading times for swimmer ${swimmer.id}:`, error);
-            return { ...swimmer, timeRecords: [] };
-          }
-        })
-      );
+          })
+        );
 
-      setSwimmers(swimmersWithTimes);
-    } catch (error) {
-      console.error('Error loading swimmers and times:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSwimmers(swimmersWithTimes);
+      } catch (error) {
+        console.error('Error loading swimmers and times:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSwimmersAndTimes();
+  }, [user]);
+
+  useEffect(() => {
+    fetchAllEvents().then(r => setEvents(r));
+  }, []);
 
   const toggleSwimmerExpansion = (swimmerId: string) => {
     const newExpanded = new Set(expandedSwimmers);
