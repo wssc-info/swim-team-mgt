@@ -23,7 +23,7 @@ export default function MySwimmersPage() {
   useEffect(() => {
     loadSwimmersAndTimes();
     fetchAllEvents().then(r => setEvents(r));
-  }, [user]);
+  }, [user, loadSwimmersAndTimes]);
 
   const loadSwimmersAndTimes = async () => {
     if (!user) return;

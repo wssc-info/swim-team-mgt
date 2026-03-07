@@ -222,6 +222,10 @@ RelayTeamModel.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    clubId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     eventId: {
       type: DataTypes.STRING,
       allowNull: false,
