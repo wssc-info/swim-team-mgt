@@ -8,7 +8,7 @@ export class A0Record {
     const orgCode = '1'; // position 3, ORG Code 001
     const sdifVersion = 'V3      '; // positions 4-11, SDIF version number (8 chars)
     const fileCode = '01'; // positions 12-13, FILE Code 003 (01 = meet results)
-    const futureUse1 = ''.padEnd(30, ' '); // positions 14-43, future use
+    const futureUse1 = 'Meet Results'.padEnd(30, ' '); // positions 14-43, future use
     const softwareName = 'Swim Team Management'.padEnd(20, ' ').substring(0, 20); // positions 44-63
     const softwareVersion = '1.0'.padEnd(10, ' ').substring(0, 10); // positions 64-73
     const contactName = 'Team Manager'.padEnd(20, ' ').substring(0, 20); // positions 74-93

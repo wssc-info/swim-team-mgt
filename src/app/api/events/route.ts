@@ -1,9 +1,8 @@
-import {NextRequest, NextResponse} from 'next/server';
+import {NextResponse} from 'next/server';
 import { getAllEvents } from '@/lib/events';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const clubId = request.nextUrl.searchParams.get('clubId');
     const events = await getAllEvents();
     return NextResponse.json(events);
   } catch (error) {

@@ -234,7 +234,7 @@ export async function updateSwimmerMeetEvents(
 }
 
 // Events API
-export async function fetchEvents(): Promise<SwimmerMeetEvent[]> {
+export async function fetchEvents(): Promise<SwimEvent[]> {
   const response = await authenticatedFetch('/api/events');
   if (!response.ok) {
     throw new Error('Failed to fetch events');
@@ -268,7 +268,6 @@ export async function fetchClubs(): Promise<SwimClub[]> {
   return response.json();
 }
 
-// Clubs API
 export async function fetchClub(clubId: string): Promise<SwimClub> {
   const response = await authenticatedFetch(`/api/admin/clubs/${clubId}`);
   if (!response.ok) {

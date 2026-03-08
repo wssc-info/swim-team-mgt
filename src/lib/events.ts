@@ -1,5 +1,5 @@
 import { SwimEventModel, initializeDatabase } from './models';
-import {MeetEvent, SwimEvent} from './types';
+import {SwimEvent} from './types';
 
 // Default USA Swimming events data for seeding
 export const USA_SWIMMING_EVENTS_SEED : SwimEvent[] = [
@@ -174,10 +174,3 @@ export async function seedEvents(): Promise<void> {
     }
   }
 }
-
-
-const defaultMeetEvents: MeetEvent[] = [
-    {eventId:"100-free-relay-scm", gender: "F", eventNumber:1, ageGroup:"8&U"},
-    {eventId:"100-free-relay-scm", gender: "M", eventNumber:1, ageGroup:"8&U"},
-
-];

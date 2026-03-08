@@ -4,28 +4,10 @@ import {useEffect, useState} from 'react';
 import {createSwimmer, updateSwimmerApi} from '@/lib/api';
 import {Swimmer} from '@/lib/types';
 import {useAuth} from '@/lib/auth-context';
-import {generateSwimmerExternalId} from "@/lib/utils";
+import {generateSwimmerExternalId, calculateAgeGroup} from "@/lib/utils";
 import {SquarePenIcon} from "lucide-react";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {Checkbox} from "@/components/ui/checkbox";
-
-// Calculate age group based on birth date
-function calculateAgeGroup(dateOfBirth: string): string {
-  const birthDate = new Date(dateOfBirth);
-  const today = new Date();
-  const age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  
-  const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) 
-    ? age - 1 
-    : age;
-
-  if (actualAge <= 8) return '8&U';
-  if (actualAge <= 10) return '9-10';
-  if (actualAge <= 12) return '11-12';
-  if (actualAge <= 14) return '13-14';
-  return '15-18';
-}
 
 interface SwimClub {
   id: string;

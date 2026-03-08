@@ -1,7 +1,7 @@
 import {v4 as uuidv4} from 'uuid';
 import {SwimmerModel, FamilySwimmerAssociationModel, initializeDatabase} from '../models';
 import {Swimmer} from '../types';
-import {generateSwimmerExternalId} from "@/lib/utils";
+import {generateSwimmerExternalId, calculateAgeGroup} from "@/lib/utils";
 
 export class SwimmerService {
   private static instance: SwimmerService;
@@ -104,7 +104,7 @@ export class SwimmerService {
     const newSwimmer: Swimmer = {
       ...swimmer,
       id: uuidv4(),
-      ageGroup: this.calculateAgeGroup(swimmer.dateOfBirth),
+      ageGroup: calculateAgeGroup(swimmer.dateOfBirth),
     };
 
     try {
@@ -134,7 +134,7 @@ export class SwimmerService {
       const updateData: any = {...updates};
 
       if (updates.dateOfBirth) {
-        updateData.ageGroup = this.calculateAgeGroup(updates.dateOfBirth);
+        updateData.ageGroup = calculateAgeGroup(updates.dateOfBirth);
       }
 
       await SwimmerModel.update(updateData, {where: {id}});
@@ -154,20 +154,4 @@ export class SwimmerService {
     }
   }
 
-  private calculateAgeGroup(dateOfBirth: string): string {
-    const birthDate = new Date(dateOfBirth);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())
-      ? age - 1
-      : age;
-
-    if (actualAge <= 8) return '8&U';
-    if (actualAge <= 10) return '9-10';
-    if (actualAge <= 12) return '11-12';
-    if (actualAge <= 14) return '13-14';
-    return '15-18';
-  }
 }

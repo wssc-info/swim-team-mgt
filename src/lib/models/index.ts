@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import DatabaseConnection from '../db-connection';
-import {DataType} from "csstype";
 
 const dbConnection = DatabaseConnection.getInstance();
 const sequelize = dbConnection.getSequelize();

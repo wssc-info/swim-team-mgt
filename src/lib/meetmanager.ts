@@ -1,9 +1,6 @@
-import {fetchAllEvents} from './api';
 import {SwimClubModel, SwimEventModel} from '@/lib/models';
 import {
   Meet,
-  MeetManagerEntry,
-  MeetManagerRelay,
   RelayTeam,
   Swimmer,
   SwimmerMeetEvent,
@@ -165,43 +162,3 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   // Return the content instead of downloading
   return content;
 }
-//
-// export async function getMeetEntries(swimmers: Swimmer[] = [], relayTeams: RelayTeam[] = []): Promise<{ individual: MeetManagerEntry[], relays: MeetManagerRelay[] }> {
-//   const individual: MeetManagerEntry[] = [];
-//   const relays: MeetManagerRelay[] = [];
-//
-//   // Fetch all events from database
-//   const allEvents = await fetchAllEvents();
-//
-//   // Individual entries
-//   swimmers.forEach(swimmer => {
-//     swimmer.selectedEvents.forEach(eventId => {
-//       const event = allEvents.find(e => e.id === eventId);
-//       if (event && !event.isRelay) {
-//         individual.push({
-//           swimmer,
-//           event,
-//           seedTime: swimmer.seedTimes[eventId]
-//         });
-//       }
-//     });
-//   });
-//
-//   // Relay entries
-//   relayTeams.forEach(team => {
-//     const event = allEvents.find(e => e.id === team.eventId);
-//     if (event) {
-//       const teamSwimmers = team.swimmers
-//         .map(id => swimmers.find(s => s.id === id))
-//         .filter(Boolean) as Swimmer[];
-//
-//       relays.push({
-//         team,
-//         event,
-//         swimmers: teamSwimmers
-//       });
-//     }
-//   });
-//
-//   return { individual, relays };
-// }
