@@ -17,7 +17,14 @@ export default function TimesPage() {
   const [editingRecord, setEditingRecord] = useState<TimeRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [uploadResults, setUploadResults] = useState<{ success: number, errors: string[] } | null>(null);
+  const [uploadResults, setUploadResults] = useState<{
+    success: number;
+    created?: number;
+    skipped?: number;
+    duplicates?: number;
+    errors: string[];
+    meetName?: string;
+  } | null>(null);
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
@@ -223,6 +230,53 @@ export default function TimesPage() {
     }
   };
 
+  const handleSdifImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadResults(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/times/import', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Import failed');
+        return;
+      }
+
+      setUploadResults({
+        success: data.imported,
+        created: data.created,
+        skipped: data.skipped,
+        duplicates: data.duplicates,
+        errors: [
+          ...data.errors,
+          ...(data.parseErrors?.length ? [`Parse warnings: ${data.parseErrors.join('; ')}`] : []),
+        ],
+        meetName: data.meetName,
+      });
+
+      await handleSwimmerChange(selectedSwimmer);
+    } catch (error) {
+      console.error('Error importing SDIF file:', error);
+      alert('Error processing file. Please check the file format.');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  };
+
   const filteredRecords = selectedSwimmer
     ? timeRecords.filter(record => record.swimmerId === selectedSwimmer)
     : timeRecords;
@@ -252,6 +306,16 @@ export default function TimesPage() {
               className="hidden"
             />
           </label>
+          <label className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 cursor-pointer">
+            {uploading ? 'Uploading...' : 'Import Results (SDIF/ZIP)'}
+            <input
+              type="file"
+              accept=".zip,.cl2,.sd3,.sdif"
+              onChange={handleSdifImport}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
           <button
             onClick={handleAddRecord}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -265,12 +329,24 @@ export default function TimesPage() {
       {uploadResults && (
         <div className="mb-6 bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-3">Import Results</h3>
-          <div className="space-y-2">
-            <p className="text-green-600">Successfully imported: {uploadResults.success} records</p>
+          {uploadResults.meetName && (
+            <p className="text-gray-700 mb-2 font-medium">Meet: {uploadResults.meetName}</p>
+          )}
+          <div className="space-y-1">
+            <p className="text-green-600">✓ Imported: {uploadResults.success} records</p>
+            {(uploadResults.created ?? 0) > 0 && (
+              <p className="text-blue-600">+ New swimmers created: {uploadResults.created}</p>
+            )}
+            {(uploadResults.duplicates ?? 0) > 0 && (
+              <p className="text-gray-500">⟳ Duplicates skipped: {uploadResults.duplicates}</p>
+            )}
+            {(uploadResults.skipped ?? 0) > 0 && (
+              <p className="text-gray-500">— Skipped (no time / relay): {uploadResults.skipped}</p>
+            )}
             {uploadResults.errors.length > 0 && (
-              <div>
-                <p className="text-red-600 font-medium">Errors ({uploadResults.errors.length}):</p>
-                <ul className="text-sm text-red-600 ml-4 max-h-32 overflow-y-auto">
+              <div className="mt-2">
+                <p className="text-red-600 font-medium">Unmatched / Errors ({uploadResults.errors.length}):</p>
+                <ul className="text-sm text-red-600 ml-4 max-h-40 overflow-y-auto mt-1">
                   {uploadResults.errors.map((error, index) => (
                     <li key={index} className="list-disc">{error}</li>
                   ))}
@@ -287,15 +363,25 @@ export default function TimesPage() {
         </div>
       )}
 
-      {/* CSV Format Help */}
-      <div className="mb-6 bg-blue-50 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-800 mb-2">CSV Import Format</h3>
-        <p className="text-sm text-blue-700 mb-2">
-          Your CSV file should have these columns: <code>swimmer, event, time, meet, date</code>
-        </p>
-        <p className="text-xs text-blue-600">
-          Example: &#34;John Smith, 50 Free, 25.43, Summer Championships, 2024-07-15&#34;
-        </p>
+      {/* Import Format Help */}
+      <div className="mb-6 bg-blue-50 rounded-lg p-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-blue-800 mb-1">CSV Import Format</h3>
+          <p className="text-sm text-blue-700">
+            Columns required: <code>swimmer, event, time, meet, date</code>
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Example: &#34;John Smith, 50 Freestyle SCY, 25.43, Summer Championships, 2024-07-15&#34;
+          </p>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-blue-800 mb-1">SDIF / ZIP Import</h3>
+          <p className="text-sm text-blue-700">
+            Upload a Hy-Tek meet results file (<code>.cl2</code>, <code>.sd3</code>, <code>.sdif</code>)
+            or a <code>.zip</code> containing one. Finals times are imported; DQ/NS entries are skipped.
+            Swimmers are matched by name and date of birth.
+          </p>
+        </div>
       </div>
 
       {/* Time Record Form Modal */}

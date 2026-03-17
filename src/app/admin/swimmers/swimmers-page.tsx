@@ -1,9 +1,9 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {deleteSwimmerApi, fetchSwimmers} from '@/lib/api';
+import {deleteSwimmerApi, fetchClubs, fetchSwimmers} from '@/lib/api';
 import SwimmerForm from '@/components/SwimmerForm';
-import {Swimmer} from '@/lib/types';
+import {Swimmer, SwimClub} from '@/lib/types';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {DataTable} from "@/components/datatable/dataTable";
 import {getColumns} from "@/app/admin/swimmers/columns";
@@ -13,6 +13,13 @@ import {processTeamUnifyFile} from '@/lib/team-unify-import';
 import {useAuth} from '@/lib/auth-context';
 import {Button} from "@/components/ui/button";
 import {Table} from "@tanstack/table-core";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Helper function to properly parse CSV lines with quoted fields
 function parseCSVLine(line: string): string[] {
@@ -62,16 +69,19 @@ export default function SwimmersPage() {
   const [uploadResults, setUploadResults] = useState<{ success: number, successTimeRecords: number, info: string[], errors: string[] } | null>(null);
   const [importProgress, setImportProgress] = useState<{ currentRow: number, totalRows: number, currentAction: string, errors: string[] } | null>(null);
   const [allEvents, setAllEvents] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<SwimClub[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [swimmerData, eventsData] = await Promise.all([
+        const [swimmerData, eventsData, clubsData] = await Promise.all([
           fetchSwimmers(undefined, true),
-          fetch('/api/admin/events').then(res => res.json())
+          fetch('/api/admin/events').then(res => res.json()),
+          fetchClubs(),
         ]);
         setSwimmers(swimmerData);
         setAllEvents(eventsData);
+        setClubs(clubsData);
         setLoading(false);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -95,7 +105,7 @@ export default function SwimmersPage() {
     if (confirm('Are you sure you want to delete this swimmer?')) {
       try {
         await deleteSwimmerApi(id);
-        const updatedSwimmers = await fetchSwimmers();
+        const updatedSwimmers = await fetchSwimmers(undefined, true);
         setSwimmers(updatedSwimmers);
         setLoading(false);
       } catch (error) {
@@ -108,7 +118,7 @@ export default function SwimmersPage() {
     setShowForm(false);
     setEditingSwimmer(null);
     try {
-      const updatedSwimmers = await fetchSwimmers();
+      const updatedSwimmers = await fetchSwimmers(undefined, true);
       setSwimmers(updatedSwimmers);
     } catch (error) {
       console.error('Error loading swimmers:', error);
@@ -141,7 +151,7 @@ export default function SwimmersPage() {
       setUploadResults(results);
       
       // Reload swimmers to show newly imported ones
-      const updatedSwimmers = await fetchSwimmers();
+      const updatedSwimmers = await fetchSwimmers(undefined, true);
       setSwimmers(updatedSwimmers);
     } catch (error) {
       console.error('Error processing Team Unify file:', error);
@@ -261,7 +271,7 @@ export default function SwimmersPage() {
 
       setUploadResults({successTimeRecords: 0, info: [], ...results});
       // Reload swimmers to show newly imported ones
-      const updatedSwimmers = await fetchSwimmers();
+      const updatedSwimmers = await fetchSwimmers(undefined, true);
       setSwimmers(updatedSwimmers);
     } catch (error) {
       console.error('Error processing file:', error);
@@ -290,7 +300,7 @@ export default function SwimmersPage() {
         body: JSON.stringify({ swimmerIds, activeFlag: activeFlag }),
       });
       if (response.ok) {
-        const updatedSwimmers = await fetchSwimmers();
+        const updatedSwimmers = await fetchSwimmers(undefined, true);
         setSwimmers(updatedSwimmers);
       } else {
         const errorData = await response.json();
@@ -302,10 +312,59 @@ export default function SwimmersPage() {
     }
   }
 
+  const assignToClub = async (swimmerIds: string[], clubId: string | null) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/swimmers/club', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ swimmerIds, clubId }),
+      });
+      if (response.ok) {
+        const updatedSwimmers = await fetchSwimmers(undefined, true);
+        setSwimmers(updatedSwimmers);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to assign club');
+      }
+    } catch (error) {
+      console.error('Error assigning club:', error);
+      alert('Failed to assign club');
+    }
+  };
+
   const createFilters = (table: Table<any>) => {
+    const selectedIds = table.getSelectedRowModel().flatRows.map(r => r.original.id);
+    const hasSelection = selectedIds.length > 0;
     return (
       <>
         <div className="flex-1"></div>
+        {user?.role === 'admin' && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="mr-2" disabled={!hasSelection}>
+                Assign Club ({selectedIds.length})
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {clubs.map(club => (
+                <DropdownMenuItem
+                  key={club.id}
+                  onClick={() => assignToClub(selectedIds, club.id)}
+                >
+                  {club.abbreviation || club.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => assignToClub(selectedIds, null)}>
+                <span className="text-gray-500">Remove Club Assignment</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <Button
           disabled={!(table.getIsSomeRowsSelected() || table.getIsAllPageRowsSelected() || table.getIsAllRowsSelected())}
           onClick={() => {
@@ -442,7 +501,7 @@ export default function SwimmersPage() {
       )}
 
       <DataTable
-        columns={getColumns(handleEditSwimmer, handleDeleteSwimmer, swimmers)}
+        columns={getColumns(handleEditSwimmer, handleDeleteSwimmer, swimmers, clubs, user?.role === 'admin')}
         data={swimmers}
         aboveTable={createFilters}
         pageSizeOptions={[10, 20, 50, 100, 200, 400, 9999]}

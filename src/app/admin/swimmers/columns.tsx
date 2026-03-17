@@ -1,7 +1,7 @@
 "use client"
 
 import {ColumnDef} from "@tanstack/react-table"
-import {Swimmer} from "@/lib/types";
+import {Swimmer, SwimClub} from "@/lib/types";
 import {ArrowUpDown, MoreHorizontal} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {
@@ -18,7 +18,30 @@ import {AGE_GROUPS} from "@/lib/constants";
 
 export const getColumns = (editFunction: (swimmer:Swimmer) => void,
                            deleteFunction: (id:string) => void,
-                           swimmers: Swimmer[]): ColumnDef<Swimmer>[] => {
+                           swimmers: Swimmer[],
+                           clubs: SwimClub[] = [],
+                           isAdmin: boolean = false): ColumnDef<Swimmer>[] => {
+  const clubColumn: ColumnDef<Swimmer> = {
+    accessorKey: "clubId",
+    filterFn: (row, _columnId, filterValue) => {
+      if (filterValue === 'none') return !row.original.clubId;
+      return row.original.clubId === filterValue;
+    },
+    header: ({ column }) => (
+      <div>
+        Club
+        {buildFilter(column, [
+          { value: 'none', text: 'No Club' },
+          ...clubs.map(c => ({ value: c.id, text: c.abbreviation || c.name })),
+        ])}
+      </div>
+    ),
+    cell: ({ row }) => {
+      const club = clubs.find(c => c.id === row.original.clubId);
+      return club ? (club.abbreviation || club.name) : '—';
+    },
+  };
+
   return [
     {
       id: "select",
@@ -102,6 +125,7 @@ export const getColumns = (editFunction: (swimmer:Swimmer) => void,
         );
       },
     },
+    ...(isAdmin ? [clubColumn] : []),
     {
       id: "actions",
       cell: ({row}) => {
