@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import {buildFilter} from "@/components/datatable/buildFilter";
+import {buildDateRangeFilter, buildFilter, buildTextFilter} from "@/components/datatable/buildFilter";
 import {buildSort} from "@/components/datatable/buildSort";
 
 export function timeToLong(timeString: string): number {
@@ -152,10 +152,18 @@ export const getColumns = (
     },
     {
       accessorKey: "meetDate",
+      filterFn: (row, columnId, filterValue: { from?: string; to?: string }) => {
+        const date = row.getValue<string>(columnId);
+        if (!date) return true;
+        if (filterValue?.from && date < filterValue.from) return false;
+        if (filterValue?.to && date > filterValue.to) return false;
+        return true;
+      },
       header: ({column}) => (
         <>
           Date
           {buildSort(column)}
+          {buildDateRangeFilter(column)}
         </>
       ),
     },

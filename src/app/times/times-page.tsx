@@ -418,7 +418,10 @@ export default function TimesPage() {
             swimmers,
             allEvents,
             timeRecords)}
-          data={timeRecords}></DataTable>
+          data={timeRecords}
+          pageSizeOptions={[10,20,50,100,200,9999]}
+          defaultPageSize={50}
+        ></DataTable>
 
       )}
     </div>

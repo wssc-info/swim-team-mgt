@@ -11,7 +11,7 @@ export class D0Record {
     
     const futureUseD0_1 = ''.padEnd(8, ' '); // positions 4-11
     const swimmerName = `${lastName}${firstName}`.padEnd(28, ' ').substring(0, 28); // positions 12-39
-    const ussNumber = swimmer.id.substring(0, 12).padEnd(12, ' '); // positions 40-51
+    const ussNumber = (swimmer.externalId||swimmer.id).substring(0, 12).padEnd(12, ' '); // positions 40-51
     const attachCode = ''.padEnd(1, ' '); // position 52
     const citizenCode = ''.padEnd(3, ' '); // positions 53-55
     const swimmerBirthDate = birthDate; // positions 56-63

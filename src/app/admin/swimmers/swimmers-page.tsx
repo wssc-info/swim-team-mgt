@@ -3,12 +3,10 @@
 import {useEffect, useState} from 'react';
 import {deleteSwimmerApi, fetchClubs, fetchSwimmers} from '@/lib/api';
 import SwimmerForm from '@/components/SwimmerForm';
-import {Swimmer, SwimClub} from '@/lib/types';
+import {SwimClub, Swimmer} from '@/lib/types';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {DataTable} from "@/components/datatable/dataTable";
 import {getColumns} from "@/app/admin/swimmers/columns";
-import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {processTeamUnifyFile} from '@/lib/team-unify-import';
 import {useAuth} from '@/lib/auth-context';
 import {Button} from "@/components/ui/button";
@@ -232,7 +230,7 @@ export default function SwimmersPage() {
             new Date(s.dateOfBirth).getTime() === dateOfBirth.getTime()
           );
 
-          if (existingSwimmer) {
+            if (existingSwimmer) {
             results.errors.push(`Row ${i}: Swimmer "${row.firstname} ${row.lastname}" with this birth date already exists`);
             continue;
           }

@@ -44,6 +44,55 @@ export const buildFilter = (column: any, filters: { value: any, text: string }[]
   )
 }
 
+export const buildDateRangeFilter = (column: Column<any>) => {
+  const filterValue = column.getFilterValue() as { from?: string; to?: string } | undefined;
+  const hasFilter = filterValue?.from || filterValue?.to;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="px-1!">
+          <FilterIcon className="h-2 w-2" fill={hasFilter ? '#000000' : 'none'} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="p-2">
+        <div className="flex flex-col gap-2 w-52">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-7">From</span>
+            <Input
+              type="date"
+              className="h-7 text-xs"
+              value={filterValue?.from ?? ''}
+              onChange={e =>
+                column.setFilterValue({ ...filterValue, from: e.target.value || undefined })
+              }
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-7">To</span>
+            <Input
+              type="date"
+              className="h-7 text-xs"
+              value={filterValue?.to ?? ''}
+              onChange={e =>
+                column.setFilterValue({ ...filterValue, to: e.target.value || undefined })
+              }
+            />
+          </div>
+          {hasFilter && (
+            <Button
+              variant="ghost"
+              className="h-6 text-xs"
+              onClick={() => column.setFilterValue(undefined)}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export const buildTextFilter = (column: Column<any>, value: string, setValue: (value: string) => void) => {
   let dropdownMenuRef: any;
   return (

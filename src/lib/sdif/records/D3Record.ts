@@ -22,7 +22,7 @@ import {SwimEventModel} from "@/lib/models";
 // 43/118                  future use
 export class D3Record {
   static generate(swimmer: Swimmer): string {
-    const ussNumber = swimmer.id.substring(0, 14).padEnd(14, ' '); // positions 3-16
+    const ussNumber = (swimmer.externalId || swimmer.id).substring(0, 14).padEnd(14, ' '); // positions 3-16
     const firstName = swimmer.firstName.padEnd(20, ' ').substring(0, 20);
     const ethnicityCode = ''.padEnd(2, ' '); // positions 32-33
     const JuniorHighSchool = 'F';
