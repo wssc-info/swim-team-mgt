@@ -73,6 +73,7 @@ export interface User {
   firstName: string;
   lastName: string;
   clubId?: string;
+  phoneNumber?: string;
   createdAt: string;
 }
 

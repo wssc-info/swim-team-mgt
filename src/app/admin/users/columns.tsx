@@ -47,6 +47,13 @@ export const createUserColumns = ({
     ),
   },
   {
+    accessorKey: "phoneNumber",
+    header: "Phone",
+    cell: ({ row }) => (
+      <div className="text-sm text-gray-900">{row.original.phoneNumber || '—'}</div>
+    ),
+  },
+  {
     accessorKey: "role",
     header: "Role",
     cell: ({ row }) => (

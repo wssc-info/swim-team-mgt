@@ -16,7 +16,14 @@ import {Z0Record} from './sdif/records/Z0Record';
 import {SwimmerMeetEventService} from "@/lib/services/swimmer-meet-event-service";
 import {D3Record} from "@/lib/sdif/records/D3Record";
 
-export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: SwimmerWithEvents[] = [], relayTeams: RelayTeam[] = [], exportingClubId?: string): Promise<string> {
+export async function generateMeetManagerFile(
+  selectedMeet?: Meet,
+  swimmers: SwimmerWithEvents[] = [],
+  relayTeams: RelayTeam[] = [],
+  exportingClubId?: string,
+  contactName?: string,
+  contactPhone?: string,
+): Promise<string> {
   // Get target meet
   const targetMeet = selectedMeet;
   if (!targetMeet) {
@@ -35,7 +42,7 @@ export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: Swi
   const meetDate = targetMeet.date.replace(/-/g, '');
 
   // Generate SDIF records using utility classes
-  content += A0Record.generate("Meet Entries");
+  content += A0Record.generate("Meet Entries", contactName, contactPhone);
   content += B1Record.generate(targetMeet);
   content += await C1Record.generate(targetMeet, clubId);
 

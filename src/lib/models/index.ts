@@ -335,6 +335,7 @@ interface UserAttributes {
   firstName: string;
   lastName: string;
   clubId?: string;
+  phoneNumber?: string;
 }
 
 type UserCreationAttributes = Optional<UserAttributes, 'id'>
@@ -348,6 +349,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes>
   declare firstName: string;
   declare lastName: string;
   declare clubId?: string;
+  declare phoneNumber?: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -388,6 +390,10 @@ UserModel.init(
         model: 'swim_clubs',
         key: 'id'
       }
+    },
+    phoneNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

@@ -25,6 +25,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
     password: '',
     role: 'family' as 'admin' | 'coach' | 'family',
     clubId: '',
+    phoneNumber: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,6 +45,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
         password: '', // Don't populate password for editing
         role: user.role,
         clubId: user.clubId || '',
+        phoneNumber: user.phoneNumber || '',
       });
     }
   }, [user]);
@@ -164,6 +166,21 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
             value={formData.email}
             onChange={handleChange}
             required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            id="phoneNumber"
+            name="phoneNumber"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            placeholder="e.g. 555-123-4567"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

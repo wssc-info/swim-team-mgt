@@ -171,7 +171,8 @@ export default function AdminPage() {
             firstName: row.firstname,
             lastName: row.lastname,
             role: role,
-            clubId: currentUser?.role === 'admin' ? row.clubId || null : currentUser?.clubId || null,
+            clubId: currentUser?.role === 'admin' ? row.clubid || null : currentUser?.clubId || null,
+            phoneNumber: row.phonenumber || undefined,
           };
 
           const userResponse = await authenticatedFetch('/api/admin/users', {
@@ -316,13 +317,13 @@ export default function AdminPage() {
         <div className="mb-6 bg-blue-50 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-blue-800 mb-2">CSV Import Format</h3>
           <p className="text-sm text-blue-700 mb-2">
-            Your CSV file should have these columns: <code>email, password, firstname, lastname, role</code>
+            Required columns: <code>email, password, firstname, lastname, role</code>
           </p>
           <p className="text-sm text-blue-700 mb-2">
-            Optional column: <code>swimmers</code> (semicolon-separated swimmer names for family users)
+            Optional columns: <code>phonenumber</code>, <code>clubid</code>, <code>swimmers</code> (semicolon-separated swimmer names for family users)
           </p>
           <p className="text-xs text-blue-600">
-            Example: &#34;john@example.com, password123, John, Smith, family, Jane Smith;Bob Smith&#34;
+            Example: &#34;john@example.com, password123, John, Smith, family, 555-123-4567, Jane Smith;Bob Smith&#34;
           </p>
         </div>
 

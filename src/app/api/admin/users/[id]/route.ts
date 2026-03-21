@@ -12,7 +12,7 @@ export async function PUT(
     
     const updates = await request.json();
     let { clubId } = updates;
-    const { firstName, lastName, email, password, role } = updates;
+    const { firstName, lastName, email, password, role, phoneNumber } = updates;
 
     // Normalize clubId - convert empty string to null for admin users
     if (!clubId || clubId.trim() === '') {
@@ -38,6 +38,7 @@ export async function PUT(
       email,
       role,
       clubId,
+      phoneNumber: phoneNumber || null,
     };
 
     // Only update password if provided

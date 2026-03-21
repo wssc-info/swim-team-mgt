@@ -4,6 +4,8 @@ import { SwimmerService } from '@/lib/services/swimmer-service';
 import { SwimmerMeetEventService } from '@/lib/services/swimmer-meet-event-service';
 import { RelayTeamService } from '@/lib/services/relay-team-service';
 import { MeetService } from '@/lib/services/meet-service';
+import { AuthService } from '@/lib/services/auth-service';
+import { SwimClubModel } from '@/lib/models';
 import {RelayTeam, SwimmerWithEvents} from "@/lib/types";
 
 export async function POST(request: NextRequest) {
@@ -16,6 +18,10 @@ export async function POST(request: NextRequest) {
     const swimmerMeetEventService = SwimmerMeetEventService.getInstance();
     const relayTeamService = RelayTeamService.getInstance();
 
+    // Get the authenticated user so we can use their name as contact and their
+    // club (JWT-verified for coaches; admin supplies it via requestClubId).
+    const authUser = await AuthService.getInstance().getUser(request);
+
     let selectedMeet = null;
     if (meetId) {
       selectedMeet = await meetService.getMeet(meetId);
@@ -25,10 +31,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine which club is generating this export.
-    // Use the clubId passed by the client (from getClubId(user)) so that
-    // against-club coaches export their own swimmers, not the host club's.
-    // Fall back to selectedMeet.clubId if none supplied.
-    const exportingClubId = requestClubId || selectedMeet.clubId;
+    // For coaches/family the JWT clubId is authoritative (tamper-proof).
+    // For admins (no clubId in JWT) fall back to the clubId from the request body.
+    // Final fallback: the meet's home club.
+    const exportingClubId = authUser?.clubId || requestClubId || selectedMeet.clubId;
+
+    // Build contact info from the authenticated user and their club.
+    const contactName = authUser
+      ? `${authUser.firstName} ${authUser.lastName}`.trim()
+      : undefined;
+    const exportingClub = exportingClubId
+      ? await SwimClubModel.findByPk(exportingClubId)
+      : null;
+    const contactPhone = authUser?.phoneNumber || (exportingClub?.phone ?? undefined);
 
     // Fetch swimmers and their event selections for this meet
     const swimmers = await swimmerService.getSwimmers(exportingClubId);
@@ -70,7 +85,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Error fetching relay teams:', error);
     }
-    const content = await generateMeetManagerFile(selectedMeet, swimmersWithEvents, relayTeams, exportingClubId);
+    const content = await generateMeetManagerFile(selectedMeet, swimmersWithEvents, relayTeams, exportingClubId, contactName, contactPhone);
     const fileName = selectedMeet 
       ? `${selectedMeet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${selectedMeet.date.replace(/-/g, '')}.sd3`
       : `swim-meet-entries-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.sd3`;

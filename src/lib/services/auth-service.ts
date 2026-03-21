@@ -81,6 +81,7 @@ export class AuthService {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         clubId: userData.clubId,
+        phoneNumber: userData.phoneNumber,
       });
 
       return {
@@ -90,6 +91,7 @@ export class AuthService {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         clubId: userData.clubId,
+        phoneNumber: userData.phoneNumber,
         createdAt: newUser.createdAt,
       };
     } catch (error) {

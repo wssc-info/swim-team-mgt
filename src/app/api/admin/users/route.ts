@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
           firstName: user.firstName,
           lastName: user.lastName,
           clubId: user.clubId,
+          phoneNumber: user.phoneNumber,
           club: club ? {
             id: club.id,
             name: club.name,

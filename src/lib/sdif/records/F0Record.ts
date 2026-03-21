@@ -10,7 +10,7 @@ export class F0Record {
     const teamCode = clubAbbrev.padEnd(6, ' ').substring(0, 6); // positions 16-21
     const relayTeamName = team.name.substring(0, 1).padEnd(1, ' '); // position 22, one alpha char
     const swimmerName = `${swimmer.lastName.padEnd(20, ' ').substring(0, 20)}${swimmer.firstName.padEnd(8, ' ').substring(0, 8)}`.padEnd(28, ' ').substring(0, 28); // positions 23-50
-    const ussNumber = swimmer.id.substring(0, 12).padEnd(12, ' '); // positions 51-62
+    const ussNumber = (swimmer.externalId || swimmer.id).substring(0, 12).padEnd(12, ' '); // positions 51-62
     const citizenCode = ''.padEnd(3, ' '); // positions 63-65
     const birthDate = swimmer.dateOfBirth.replace(/-/g, ''); // positions 66-73
     const ageClass = ''.padEnd(2, ' '); // positions 74-75
@@ -21,7 +21,7 @@ export class F0Record {
     const legTime = ''.padEnd(8, ' '); // positions 80-87
     const courseCode = ''.padEnd(1, ' '); // position 88
     const takeOffTime = ''.padEnd(4, ' '); // positions 89-92
-    const ussNumberNew = swimmer.id.substring(0, 14).padEnd(14, ' '); // positions 93-106
+    const ussNumberNew = (swimmer.externalId || swimmer.id).substring(0, 14).padEnd(14, ' '); // positions 93-106
     const preferredFirstName = swimmer.firstName.padEnd(15, ' ').substring(0, 15); // positions 107-121
     const futureUse2 = ''.padEnd(39, ' '); // positions 122-160, future use
     
