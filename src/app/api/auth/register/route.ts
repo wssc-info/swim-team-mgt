@@ -5,18 +5,14 @@ export async function POST(request: NextRequest) {
   try {
     const userData = await request.json();
     
-    const { email, password, role, firstName, lastName } = userData;
-    
-    if (!email || !password || !role || !firstName || !lastName) {
+    const { email, password, firstName, lastName, clubId } = userData;
+
+    if (!email || !password || !firstName || !lastName || !clubId) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
-    if (!['coach', 'family'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-    }
-
     const authService = AuthService.getInstance();
-    const user = await authService.register(userData);
+    const user = await authService.register({ ...userData, role: 'family', clubId });
     
     return NextResponse.json(user);
   } catch (error) {

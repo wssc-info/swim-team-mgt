@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { SwimClub } from '@/lib/types';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -11,12 +12,20 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'family' as 'coach' | 'family',
+    clubId: '',
   });
+  const [clubs, setClubs] = useState<SwimClub[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/clubs')
+      .then(res => res.json())
+      .then(data => setClubs(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -28,7 +37,6 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -44,23 +52,19 @@ export default function RegisterPage() {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           password: formData.password,
-          role: formData.role,
+          clubId: formData.clubId || undefined,
         }),
       });
 
       if (response.ok) {
         setSuccess(true);
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
+        setTimeout(() => router.push('/login'), 2000);
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Registration failed');
@@ -162,23 +166,24 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-              Account Type *
+            <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+              Club *
             </label>
             <select
-              id="role"
-              name="role"
-              value={formData.role}
+              id="clubId"
+              name="clubId"
+              value={formData.clubId}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="family">Family Account</option>
-              <option value="coach">Coach Account</option>
+              <option value="">Select a club</option>
+              {clubs.map(club => (
+                <option key={club.id} value={club.id}>
+                  {club.name}{club.abbreviation ? ` (${club.abbreviation})` : ''}
+                </option>
+              ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Family accounts can manage swimmer event selections. Coach accounts have full system access.
-            </p>
           </div>
 
           <div>
@@ -195,9 +200,7 @@ export default function RegisterPage() {
               minLength={6}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Must be at least 6 characters long
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters long</p>
           </div>
 
           <div>
@@ -236,7 +239,7 @@ export default function RegisterPage() {
 
         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
           <p className="text-xs text-blue-700">
-            <strong>Note:</strong> After creating a family account, a coach will need to associate swimmers with your account 
+            <strong>Note:</strong> After creating your account, a coach will need to associate swimmers with your account
             before you can manage event selections. Contact your team coach for assistance.
           </p>
         </div>

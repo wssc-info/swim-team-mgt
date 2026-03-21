@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
         // Token invalid, continue without current user
       }
     }
-
     const userData = await request.json();
 
     const {email, password, firstName, lastName} = userData;

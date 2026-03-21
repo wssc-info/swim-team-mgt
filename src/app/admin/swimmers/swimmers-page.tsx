@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {deleteSwimmerApi, fetchClubs, fetchSwimmers} from '@/lib/api';
+import {authenticatedFetch, deleteSwimmerApi, fetchClubs, fetchSwimmers} from '@/lib/api';
 import SwimmerForm from '@/components/SwimmerForm';
 import {SwimClub, Swimmer} from '@/lib/types';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
@@ -312,13 +312,8 @@ export default function SwimmersPage() {
 
   const assignToClub = async (swimmerIds: string[], clubId: string | null) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/swimmers/club', {
+      const response = await authenticatedFetch('/api/swimmers/club', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ swimmerIds, clubId }),
       });
       if (response.ok) {
@@ -364,18 +359,14 @@ export default function SwimmersPage() {
           </DropdownMenu>
         )}
         <Button
-          disabled={!(table.getIsSomeRowsSelected() || table.getIsAllPageRowsSelected() || table.getIsAllRowsSelected())}
-          onClick={() => {
-            setActiveFlag(table.getSelectedRowModel().flatRows.map(r => r.original.id), true);
-          }}
-        >Activate ({table.getSelectedRowModel().rows.length})</Button>
+          disabled={!hasSelection}
+          onClick={() => setActiveFlag(selectedIds, true)}
+        >Activate ({selectedIds.length})</Button>
         <Button
             className="ml-2"
-            disabled={!(table.getIsSomeRowsSelected() || table.getIsAllPageRowsSelected() || table.getIsAllRowsSelected())}
-            onClick={() => {
-              setActiveFlag(table.getSelectedRowModel().flatRows.map(r => r.original.id), false);
-            }}
-        >Deactivate ({table.getSelectedRowModel().rows.length})</Button>
+            disabled={!hasSelection}
+            onClick={() => setActiveFlag(selectedIds, false)}
+        >Deactivate ({selectedIds.length})</Button>
       </>
 
     );

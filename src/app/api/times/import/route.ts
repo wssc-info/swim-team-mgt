@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import AdmZip from 'adm-zip';
+import { Op } from 'sequelize';
 import { parseSdifContent, SdifIndividualResult } from '@/lib/sdif/parser';
 import { SwimmerModel, SwimEventModel, initializeDatabase, TimeRecordModel } from '@/lib/models';
 import { TimeRecordService } from '@/lib/services/time-record-service';
@@ -101,18 +102,6 @@ function middleInitialFromUssNum(ussNumLong: string): string {
   return '';
 }
 
-/** Check whether a time record already exists (prevents duplicates on re-import). */
-async function isDuplicate(
-  swimmerId: string,
-  eventId: string,
-  time: string,
-  meetDate: string
-): Promise<boolean> {
-  const existing = await TimeRecordModel.findOne({
-    where: { swimmerId, eventId, time, meetDate },
-  });
-  return existing !== null;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -159,8 +148,7 @@ export async function POST(request: NextRequest) {
     const parseResult = parseSdifContent(sdifContent);
 
     // Load existing swimmers for this club into a lightweight working list
-    const swimmerWhere: Record<string, unknown> = {};
-    if (user.clubId) swimmerWhere.clubId = user.clubId;
+    const swimmerWhere = user.clubId ? { clubId: user.clubId } : {};
     const swimmerModels = await SwimmerModel.findAll({ where: swimmerWhere });
     const knownSwimmers: WorkingSwimmer[] = swimmerModels.map(s => ({
       id: s.id,
@@ -171,6 +159,18 @@ export async function POST(request: NextRequest) {
 
     // Load all active events
     const events = await SwimEventModel.findAll({ where: { isActive: true } });
+
+    // Bulk-load existing time record keys for O(1) duplicate detection
+    const initialSwimmerIds = knownSwimmers.map(s => s.id);
+    const existingRecords = initialSwimmerIds.length > 0
+      ? await TimeRecordModel.findAll({
+          where: { swimmerId: { [Op.in]: initialSwimmerIds } },
+          attributes: ['swimmerId', 'eventId', 'time', 'meetDate'],
+        })
+      : [];
+    const seenKeys = new Set(
+      existingRecords.map(r => `${r.swimmerId}|${r.eventId}|${r.time}|${r.meetDate}`)
+    );
 
     const meetName = parseResult.meet?.meetName || file.name.replace(/\.[^.]+$/, '');
     const timeRecordService = TimeRecordService.getInstance();
@@ -185,20 +185,8 @@ export async function POST(request: NextRequest) {
     };
 
     for (const result of parseResult.results) {
-      // Skip relay entries
-      if (result.isRelay) {
-        summary.skipped++;
-        continue;
-      }
-
-      // Skip entries with no valid time
-      if (!result.bestTime) {
-        summary.skipped++;
-        continue;
-      }
-
-      // Skip entries with no date of swim
-      if (!result.dateOfSwim) {
+      // Skip relays and entries with no time or date
+      if (result.isRelay || !result.bestTime || !result.dateOfSwim) {
         summary.skipped++;
         continue;
       }
@@ -224,14 +212,8 @@ export async function POST(request: NextRequest) {
           });
 
           // Add to working list so subsequent results for this swimmer match
-          const working: WorkingSwimmer = {
-            id: newSwimmer.id,
-            firstName: newSwimmer.firstName,
-            lastName: newSwimmer.lastName,
-            dateOfBirth: newSwimmer.dateOfBirth,
-          };
-          knownSwimmers.push(working);
-          swimmer = working;
+          knownSwimmers.push(newSwimmer);
+          swimmer = newSwimmer;
           summary.created++;
         } catch (err) {
           summary.errors.push(
@@ -252,14 +234,9 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Duplicate check
-      const duplicate = await isDuplicate(
-        swimmer.id,
-        event.id,
-        result.bestTime,
-        result.dateOfSwim
-      );
-      if (duplicate) {
+      // Duplicate check (O(1) in-memory)
+      const key = `${swimmer.id}|${event.id}|${result.bestTime}|${result.dateOfSwim}`;
+      if (seenKeys.has(key)) {
         summary.duplicates++;
         continue;
       }
@@ -273,6 +250,7 @@ export async function POST(request: NextRequest) {
           meetName,
           meetDate: result.dateOfSwim,
         });
+        seenKeys.add(key);
         summary.imported++;
       } catch (err) {
         summary.errors.push(

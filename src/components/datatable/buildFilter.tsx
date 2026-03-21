@@ -56,28 +56,19 @@ export const buildDateRangeFilter = (column: Column<any>) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="p-2">
         <div className="flex flex-col gap-2 w-52">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 w-7">From</span>
-            <Input
-              type="date"
-              className="h-7 text-xs"
-              value={filterValue?.from ?? ''}
-              onChange={e =>
-                column.setFilterValue({ ...filterValue, from: e.target.value || undefined })
-              }
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 w-7">To</span>
-            <Input
-              type="date"
-              className="h-7 text-xs"
-              value={filterValue?.to ?? ''}
-              onChange={e =>
-                column.setFilterValue({ ...filterValue, to: e.target.value || undefined })
-              }
-            />
-          </div>
+          {(['from', 'to'] as const).map(bound => (
+            <div key={bound} className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 w-7">{bound === 'from' ? 'From' : 'To'}</span>
+              <Input
+                type="date"
+                className="h-7 text-xs"
+                value={filterValue?.[bound] ?? ''}
+                onChange={e =>
+                  column.setFilterValue({ ...filterValue, [bound]: e.target.value || undefined })
+                }
+              />
+            </div>
+          ))}
           {hasFilter && (
             <Button
               variant="ghost"
