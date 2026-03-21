@@ -18,7 +18,7 @@ export class E0Record {
     const eventAgeCode = getAgeCode(team.ageGroup); // positions 31-34
     const totalAge = ''.padEnd(3, ' '); // positions 35-37, total age of all athletes
     const dateOfSwim = meetDate; // positions 38-45
-    const seedTime = ''.padEnd(8, ' '); // positions 46-53, seed time
+    const seedTime = (team.seedTime || 'NTS').padEnd(8, ' '); // positions 46-53, seed time
     const courseCode1 = ''.padEnd(1, ' '); // position 54
     const prelimTime = ''.padEnd(8, ' '); // positions 55-62
     const courseCode2 = ''.padEnd(1, ' '); // position 63

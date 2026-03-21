@@ -192,6 +192,7 @@ interface RelayTeamAttributes {
   swimmers: string;
   ageGroup: string;
   gender: 'M' | 'F' | 'Mixed';
+  seedTime?: string;
 }
 
 type RelayTeamCreationAttributes = Optional<RelayTeamAttributes, 'id'>
@@ -206,6 +207,7 @@ export class RelayTeamModel extends Model<RelayTeamAttributes, RelayTeamCreation
   declare swimmers: string;
   declare ageGroup: string;
   declare gender: 'M' | 'F' | 'Mixed';
+  declare seedTime?: string;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -245,6 +247,10 @@ RelayTeamModel.init(
     gender: {
       type: DataTypes.ENUM('M', 'F', 'Mixed'),
       allowNull: false,
+    },
+    seedTime: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

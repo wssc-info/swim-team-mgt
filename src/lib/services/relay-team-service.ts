@@ -22,10 +22,12 @@ export class RelayTeamService {
     }
   }
 
-  public async getRelayTeams(meetId?: string): Promise<RelayTeam[]> {
+  public async getRelayTeams(meetId?: string, clubId?: string): Promise<RelayTeam[]> {
     await this.ensureInitialized();
     try {
-      const whereClause = meetId ? { meetId } : {};
+      const whereClause: Record<string, string> = {};
+      if (meetId) whereClause.meetId = meetId;
+      if (clubId) whereClause.clubId = clubId;
       const relayTeams = await RelayTeamModel.findAll({ where: whereClause });
       return relayTeams.map(team => ({
         id: team.id,
@@ -36,6 +38,7 @@ export class RelayTeamService {
         swimmers: JSON.parse(team.swimmers || '[]'),
         ageGroup: team.ageGroup,
         gender: team.gender,
+        seedTime: team.seedTime ?? undefined,
       }));
     } catch (error) {
       console.error('Error fetching relay teams:', error);
@@ -60,6 +63,7 @@ export class RelayTeamService {
         swimmers: JSON.stringify(newTeam.swimmers),
         ageGroup: newTeam.ageGroup,
         gender: newTeam.gender,
+        seedTime: newTeam.seedTime,
       });
       
       return newTeam;

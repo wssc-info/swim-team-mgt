@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RelayTeamService } from '@/lib/services/relay-team-service';
+import { AuthService } from '@/lib/services/auth-service';
 
 const relayTeamService = RelayTeamService.getInstance();
 
@@ -7,9 +8,13 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const meetId = searchParams.get('meetId');
-    const clubId = searchParams.get('clubId');
-    
-    const relayTeams = await relayTeamService.getRelayTeams(meetId || undefined);
+    const clubIdParam = searchParams.get('clubId');
+
+    // Prefer explicit clubId param, otherwise scope to the authenticated user's club
+    const user = await AuthService.getInstance().getUser(request);
+    const clubId = clubIdParam || user?.clubId || undefined;
+
+    const relayTeams = await relayTeamService.getRelayTeams(meetId || undefined, clubId);
     return NextResponse.json(relayTeams);
   } catch (error) {
     console.error('Error fetching relay teams:', error);

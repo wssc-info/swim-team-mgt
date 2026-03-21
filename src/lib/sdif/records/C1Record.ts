@@ -3,7 +3,7 @@ import {Meet} from '@/lib/types';
 
 // C1 -- Team Id Record
 export class C1Record {
-  static async generate(meet: Meet): Promise<string> {
+  static async generate(meet: Meet, clubId?: string): Promise<string> {
     let clubAbbrev = 'TEAM';
     let clubName = 'Team Name';
     let clubAddress = '';
@@ -11,7 +11,7 @@ export class C1Record {
     let clubState = '';
     let clubZipCode = '';
 
-    const club = await SwimClubModel.findByPk(meet.clubId);
+    const club = await SwimClubModel.findByPk(clubId || meet.clubId);
     if (club) {
       clubName = club.name;
       clubAbbrev = club.abbreviation;

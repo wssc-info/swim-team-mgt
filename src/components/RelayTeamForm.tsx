@@ -21,7 +21,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
     eventId: '',
     swimmers: [] as string[],
     ageGroup: '',
-    gender: 'Mixed' as 'M' | 'F' | 'Mixed'
+    gender: 'Mixed' as 'M' | 'F' | 'Mixed',
+    seedTime: '',
   });
   const user = useAuth();
   const [saving, setSaving] = useState(false);
@@ -35,7 +36,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
         eventId: team.eventId,
         swimmers: [...team.swimmers],
         ageGroup: team.ageGroup,
-        gender: team.gender
+        gender: team.gender,
+        seedTime: team.seedTime ?? '',
       });
     }
   }, [team]);
@@ -54,11 +56,16 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
     }
 
     setSaving(true);
+    const payload = {
+      ...formData,
+      seedTime: formData.seedTime.trim() || undefined,
+      clubId: getClubId(user.user),
+    };
     try {
       if (team) {
-        await updateRelayTeamApi(team.id, {...formData, clubId: getClubId(user.user)});
+        await updateRelayTeamApi(team.id, payload);
       } else {
-        await createRelayTeam({ ...formData, meetId, clubId: getClubId(user.user)});
+        await createRelayTeam({ ...payload, meetId });
       }
       onClose();
     } catch (error) {
@@ -198,7 +205,7 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
         </div>
 
         {/* Team Info (Auto-calculated) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Age Group (Auto-calculated)
@@ -220,6 +227,19 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
               value={formData.gender}
               className="w-full p-2 border rounded-md bg-gray-100"
               readOnly
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Seed Time
+            </label>
+            <input
+              type="text"
+              value={formData.seedTime}
+              onChange={(e) => setFormData(prev => ({ ...prev, seedTime: e.target.value }))}
+              className="w-full p-2 border rounded-md"
+              placeholder="e.g. 1:45.23"
             />
           </div>
         </div>

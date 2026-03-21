@@ -9,13 +9,13 @@ import {RelayTeam, SwimmerWithEvents} from "@/lib/types";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { meetId } = body;
-    
+    const { meetId, clubId: requestClubId } = body;
+
     const meetService = MeetService.getInstance();
     const swimmerService = SwimmerService.getInstance();
     const swimmerMeetEventService = SwimmerMeetEventService.getInstance();
     const relayTeamService = RelayTeamService.getInstance();
-    
+
     let selectedMeet = null;
     if (meetId) {
       selectedMeet = await meetService.getMeet(meetId);
@@ -23,8 +23,15 @@ export async function POST(request: NextRequest) {
     if (!selectedMeet) {
       return NextResponse.json({ error: 'Meet not found' }, { status: 404 });
     }
+
+    // Determine which club is generating this export.
+    // Use the clubId passed by the client (from getClubId(user)) so that
+    // against-club coaches export their own swimmers, not the host club's.
+    // Fall back to selectedMeet.clubId if none supplied.
+    const exportingClubId = requestClubId || selectedMeet.clubId;
+
     // Fetch swimmers and their event selections for this meet
-    const swimmers = await swimmerService.getSwimmers(selectedMeet.clubId);
+    const swimmers = await swimmerService.getSwimmers(exportingClubId);
     const swimmersWithEvents: SwimmerWithEvents[] = [];
 
     const swimmerMeetEventsForMeet = await swimmerMeetEventService.getSwimmerMeetEvents(null, selectedMeet.id);
@@ -59,11 +66,11 @@ export async function POST(request: NextRequest) {
     // Fetch relay teams for this meet
     let relayTeams: RelayTeam[] = [];
     try {
-      relayTeams = await relayTeamService.getRelayTeams(selectedMeet.id);
+      relayTeams = await relayTeamService.getRelayTeams(selectedMeet.id, exportingClubId);
     } catch (error) {
       console.error('Error fetching relay teams:', error);
     }
-    const content = await generateMeetManagerFile(selectedMeet, swimmersWithEvents, relayTeams);
+    const content = await generateMeetManagerFile(selectedMeet, swimmersWithEvents, relayTeams, exportingClubId);
     const fileName = selectedMeet 
       ? `${selectedMeet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${selectedMeet.date.replace(/-/g, '')}.sd3`
       : `swim-meet-entries-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.sd3`;

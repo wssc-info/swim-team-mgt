@@ -16,29 +16,32 @@ import {Z0Record} from './sdif/records/Z0Record';
 import {SwimmerMeetEventService} from "@/lib/services/swimmer-meet-event-service";
 import {D3Record} from "@/lib/sdif/records/D3Record";
 
-export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: SwimmerWithEvents[] = [], relayTeams: RelayTeam[] = []): Promise<string> {
+export async function generateMeetManagerFile(selectedMeet?: Meet, swimmers: SwimmerWithEvents[] = [], relayTeams: RelayTeam[] = [], exportingClubId?: string): Promise<string> {
   // Get target meet
   const targetMeet = selectedMeet;
   if (!targetMeet) {
     throw new Error('No meet selected for export');
   }
-  
+
+  // The club generating this export: explicit override, or the meet's home club.
+  const clubId = exportingClubId || targetMeet.clubId;
+
   // Fetch all events from database
   const allEvents = await SwimEventModel.findAll({
     order: [['course', 'ASC'], ['stroke', 'ASC'], ['distance', 'ASC']]
   });
-  
+
   let content = '';
   const meetDate = targetMeet.date.replace(/-/g, '');
-  
+
   // Generate SDIF records using utility classes
-  content += A0Record.generate();
+  content += A0Record.generate("Meet Entries");
   content += B1Record.generate(targetMeet);
-  content += await C1Record.generate(targetMeet);
-  
-  // Get club abbreviation for use in other records
+  content += await C1Record.generate(targetMeet, clubId);
+
+  // Get club abbreviation for use in relay records
   let clubAbbrev = 'TEAM';
-  const club = await SwimClubModel.findByPk(targetMeet.clubId);
+  const club = await SwimClubModel.findByPk(clubId);
   if (club) {
     clubAbbrev = club.abbreviation;
   }

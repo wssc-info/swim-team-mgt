@@ -111,10 +111,10 @@ export async function activateMeet(id: string, clubId?: string): Promise<void> {
 }
 
 // Export API
-export async function exportMeetData(meetId?: string): Promise<{ content: string; fileName: string }> {
+export async function exportMeetData(meetId?: string, clubId?: string): Promise<{ content: string; fileName: string }> {
   const response = await authenticatedFetch('/api/export', {
     method: 'POST',
-    body: JSON.stringify({ meetId }),
+    body: JSON.stringify({ meetId, clubId }),
   });
   if (!response.ok) {
     throw new Error('Failed to export meet data');
@@ -173,8 +173,11 @@ export async function fetchAssociatedSwimmers(userId: string): Promise<Swimmer[]
 }
 
 // Relay Teams API
-export async function fetchRelayTeams(meetId?: string): Promise<RelayTeam[]> {
-  const url = meetId ? `/api/relays?meetId=${meetId}` : '/api/relays';
+export async function fetchRelayTeams(meetId?: string, clubId?: string): Promise<RelayTeam[]> {
+  const params = new URLSearchParams();
+  if (meetId) params.set('meetId', meetId);
+  if (clubId) params.set('clubId', clubId);
+  const url = `/api/relays${params.size ? `?${params}` : ''}`;
   const response = await authenticatedFetch(url);
   if (!response.ok) {
     throw new Error('Failed to fetch relay teams');

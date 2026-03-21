@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {fetchMeets, fetchSwimmers, fetchSwimmerMeetEvents, fetchRelayTeams, fetchAllEvents} from '@/lib/api';
+import {fetchMeets, fetchSwimmers, fetchSwimmerMeetEvents, fetchRelayTeams, fetchAllEvents, fetchClub} from '@/lib/api';
 import { exportMeetData } from '@/lib/api';
 import {useAuth} from '@/lib/auth-context';
+import {getClubId} from '@/lib/utils';
 import MeetSelector from '@/components/export/MeetSelector';
 import ExportPreview from '@/components/export/ExportPreview';
 import ExportContent from '@/components/export/ExportContent';
@@ -29,35 +30,24 @@ export default function ExportPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [meetData, swimmerData] = await Promise.all([
-          fetchMeets(),
-          fetchSwimmers(user?.clubId)
+        let clubId: string | null = null;
+        try { clubId = getClubId(user); } catch { /* no club selected */ }
+
+        const [meetData, swimmerData, clubData] = await Promise.all([
+          fetchMeets(false, clubId ?? undefined),
+          fetchSwimmers(clubId ?? undefined),
+          clubId ? fetchClub(clubId) : Promise.resolve(null),
         ]);
 
         setMeets(meetData);
         setSwimmers(swimmerData);
 
-        // Auto-select active meet if available
-        // Active meet is now determined by the club's activeMeetId
-        if (user?.clubId) {
-          try {
-            const clubResponse = await fetch(`/api/admin/clubs/${user.clubId}`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-            if (clubResponse.ok) {
-              const clubData = await clubResponse.json();
-              if (clubData.activeMeetId) {
-                const activeMeet = meetData.find(m => m.id === clubData.activeMeetId);
-                if (activeMeet) {
-                  setSelectedMeet(activeMeet);
-                  await loadPreviewData(activeMeet, swimmerData);
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching club active meet:', error);
+        // Auto-select active meet from club
+        if (clubData?.activeMeetId) {
+          const activeMeet = meetData.find(m => m.id === clubData.activeMeetId);
+          if (activeMeet) {
+            setSelectedMeet(activeMeet);
+            await loadPreviewData(activeMeet, swimmerData, clubId ?? undefined);
           }
         }
       } catch (error) {
@@ -72,9 +62,9 @@ export default function ExportPage() {
     }
   }, [user]);
 
-  const loadPreviewData = async (meet: Meet, swimmerData: Swimmer[]) => {
+  const loadPreviewData = async (meet: Meet, swimmerData: Swimmer[], clubId?: string) => {
     try {
-      const relayData = await fetchRelayTeams(meet.id);
+      const relayData = await fetchRelayTeams(meet.id, clubId);
       // Create preview data from swimmers and their meet event selections
       const meetIndividualEntries: any[] = [];
       const meetRelayEntries: any[] = [];
@@ -134,7 +124,9 @@ export default function ExportPage() {
 
   const handleMeetSelect = async (meet: Meet) => {
     setSelectedMeet(meet);
-    await loadPreviewData(meet, swimmers);
+    let clubId: string | undefined;
+    try { clubId = getClubId(user) ?? undefined; } catch { /* ignore */ }
+    await loadPreviewData(meet, swimmers, clubId);
   };
 
   const handleExport = async () => {
@@ -142,7 +134,9 @@ export default function ExportPage() {
 
     setExporting(true);
     try {
-      const result = await exportMeetData(selectedMeet.id);
+      let clubId: string | undefined;
+      try { clubId = getClubId(user) ?? undefined; } catch { /* ignore */ }
+      const result = await exportMeetData(selectedMeet.id, clubId);
       setExportData(result);
     } catch (error) {
       console.error('Error generating export:', error);

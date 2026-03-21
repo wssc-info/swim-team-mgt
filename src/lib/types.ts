@@ -31,6 +31,7 @@ export interface RelayTeam {
   swimmers: string[]; // Swimmer IDs in order
   ageGroup: string;
   gender: 'M' | 'F' | 'Mixed';
+  seedTime?: string;
 }
 
 export interface MeetEvent {
