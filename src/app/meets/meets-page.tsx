@@ -7,7 +7,7 @@ import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {SwimClub, SwimEvent} from "@/lib/types";
 import {Meet} from "@/lib/types";
 import {useAuth} from '@/lib/auth-context';
-import {SwimClubModel} from "@/lib/models";
+import {getClubId} from '@/lib/utils';
 import {DataTable} from "@/components/datatable/dataTable";
 import {createMeetsColumns} from "@/app/meets/meets-columns";
 
@@ -21,26 +21,25 @@ export default function MeetsPage() {
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
 
   useEffect(() => {
-    const loadMeets = async () => {
+    const loadData = async () => {
       try {
-        const meetData = await fetchMeets();
-        return setMeets(meetData);
-
+        const clubId = getClubId(user);
+        const [meetData, eventsData, clubData] = await Promise.all([
+          fetchMeets(false, clubId),
+          fetchAllEvents(),
+          fetchClub(clubId),
+        ]);
+        setMeets(meetData);
+        setAllEvents(eventsData);
+        setClub(clubData);
       } catch (error) {
         console.error('Error loading meets:', error);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    if (user?.clubId) {
-      fetchClub(user.clubId).then(cl=> setClub(cl)).then(() => {
-        fetchAllEvents().then(allEvents => setAllEvents(allEvents)).then(() => {
-          loadMeets().then(() => setLoading(false));
-        });
-      })
-    } else {
-      setLoading(false);
-    }
 
+    if (user) loadData();
   }, [user]);
 
   const handleAddMeet = () => {
@@ -74,7 +73,7 @@ export default function MeetsPage() {
     if (confirm('Are you sure you want to delete this meet?')) {
       try {
         await deleteMeetApi(id);
-        const updatedMeets = await fetchMeets();
+        const updatedMeets = await fetchMeets(false, getClubId(user));
         setMeets(updatedMeets);
       } catch (error) {
         console.error('Error deleting meet:', error);
@@ -84,7 +83,7 @@ export default function MeetsPage() {
 
   const handleSetActive = async (id: string) => {
     try {
-      await activateMeet(id, user?.clubId);
+      await activateMeet(id, getClubId(user));
       setClub(prevState => ({...prevState, activeMeetId: id} as SwimClub));
     } catch (error) {
       console.error('Error setting active meet:', error);
@@ -95,7 +94,7 @@ export default function MeetsPage() {
     setShowForm(false);
     setEditingMeet(null);
     try {
-      const updatedMeets = await fetchMeets();
+      const updatedMeets = await fetchMeets(false, getClubId(user));
       setMeets(updatedMeets);
     } catch (error) {
       console.error('Error loading meets:', error);
@@ -120,15 +119,16 @@ export default function MeetsPage() {
     </div>;
   }
 
-  if (!user?.clubId) {
+  if (!club) {
     return (
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Manage Meets</h1>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Association</h2>
+          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Selected</h2>
           <p className="text-yellow-700">
-            You need to be associated with a club to manage meets. Please contact an administrator 
-            to assign you to a club.
+            {user?.role === 'admin'
+              ? 'Please select a club from the navigation bar to manage meets.'
+              : 'You need to be associated with a club to manage meets. Please contact an administrator to assign you to a club.'}
           </p>
         </div>
       </div>

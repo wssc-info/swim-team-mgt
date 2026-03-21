@@ -22,11 +22,9 @@ export const getColumns = (editFunction: (swimmer:Swimmer) => void,
                            clubs: SwimClub[] = [],
                            isAdmin: boolean = false): ColumnDef<Swimmer>[] => {
   const clubColumn: ColumnDef<Swimmer> = {
-    accessorKey: "clubId",
-    filterFn: (row, _columnId, filterValue) => {
-      if (filterValue === 'none') return !row.original.clubId;
-      return row.original.clubId === filterValue;
-    },
+    id: "clubId",
+    accessorFn: (row) => row.clubId ?? 'none',
+    filterFn: 'equals',
     header: ({ column }) => (
       <div>
         Club

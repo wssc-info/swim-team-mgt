@@ -64,7 +64,7 @@ export default function SwimmersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingSwimmer, setEditingSwimmer] = useState<Swimmer | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadResults, setUploadResults] = useState<{ success: number, successTimeRecords: number, info: string[], errors: string[] } | null>(null);
+  const [uploadResults, setUploadResults] = useState<{ success: number, activated?: number, successTimeRecords: number, info: string[], errors: string[] } | null>(null);
   const [importProgress, setImportProgress] = useState<{ currentRow: number, totalRows: number, currentAction: string, errors: string[] } | null>(null);
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const [clubs, setClubs] = useState<SwimClub[]>([]);
@@ -171,6 +171,8 @@ export default function SwimmersPage() {
       return;
     }
 
+    const markActive = confirm('Mark uploaded swimmers as active?\n\nNew swimmers will be created as active. Existing swimmers will be reactivated.');
+
     setUploading(true);
     setUploadResults(null);
 
@@ -192,7 +194,8 @@ export default function SwimmersPage() {
         return;
       }
 
-      const results = {success: 0, errors: [] as string[]};
+      const results = { success: 0, activated: 0, errors: [] as string[] };
+      const toActivateIds: string[] = [];
 
       for (let i = 1; i < lines.length; i++) {
         const values = parseCSVLine(lines[i]);
@@ -230,8 +233,13 @@ export default function SwimmersPage() {
             new Date(s.dateOfBirth).getTime() === dateOfBirth.getTime()
           );
 
-            if (existingSwimmer) {
-            results.errors.push(`Row ${i}: Swimmer "${row.firstname} ${row.lastname}" with this birth date already exists`);
+          if (existingSwimmer) {
+            if (markActive && !existingSwimmer.active) {
+              toActivateIds.push(existingSwimmer.id);
+              results.activated++;
+            } else {
+              results.errors.push(`Row ${i}: Swimmer "${row.firstname} ${row.lastname}" already exists`);
+            }
             continue;
           }
 
@@ -244,15 +252,12 @@ export default function SwimmersPage() {
             lastName: row.lastname,
             dateOfBirth: dateOfBirth.toISOString().split('T')[0],
             gender: normalizedGender,
+            active: markActive,
             ...(row.externalid && { externalId: row.externalid })
           };
-          console.log('saving swimmer', swimmerData);
 
-          const response = await fetch('/api/swimmers', {
+          const response = await authenticatedFetch('/api/swimmers', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
             body: JSON.stringify(swimmerData),
           });
 
@@ -267,7 +272,16 @@ export default function SwimmersPage() {
         }
       }
 
-      setUploadResults({successTimeRecords: 0, info: [], ...results});
+      // Batch-activate existing swimmers in one request
+      if (toActivateIds.length > 0) {
+        await fetch('/api/swimmers/active', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ swimmerIds: toActivateIds, activeFlag: true }),
+        });
+      }
+
+      setUploadResults({ successTimeRecords: 0, info: [], ...results });
       // Reload swimmers to show newly imported ones
       const updatedSwimmers = await fetchSwimmers(undefined, true);
       setSwimmers(updatedSwimmers);
@@ -446,7 +460,10 @@ export default function SwimmersPage() {
         <div className="mb-6 bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-3">Import Results</h3>
           <div className="space-y-2">
-            <p className="text-green-600">Successfully created: {uploadResults.success} swimmers and {uploadResults.successTimeRecords} time records</p>
+            <p className="text-green-600">Successfully created: {uploadResults.success} swimmers</p>
+            {(uploadResults.activated ?? 0) > 0 && (
+              <p className="text-blue-600">Reactivated: {uploadResults.activated} existing swimmers</p>
+            )}
             {uploadResults.info.length > 0 && (
               <div>
                 <p className="text-green-600 font-medium">Info ({uploadResults.info.length}):</p>

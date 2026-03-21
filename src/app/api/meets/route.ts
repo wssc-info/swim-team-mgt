@@ -8,8 +8,11 @@ const meetService = MeetService.getInstance();
 export async function GET(request: NextRequest) {
   try {
     const user: UserModel | null = await AuthService.getInstance().getUser(request);
-    const activeOnly = 'true' === request.nextUrl.searchParams.get('active')
-    const meets = await meetService.getMeets(activeOnly, user?.clubId);
+    const activeOnly = 'true' === request.nextUrl.searchParams.get('active');
+    // Admins pass their selected clubId as a query param; other users use their own clubId
+    const paramClubId = request.nextUrl.searchParams.get('clubId');
+    const clubId = (user?.role === 'admin' && paramClubId) ? paramClubId : user?.clubId;
+    const meets = await meetService.getMeets(activeOnly, clubId);
     return NextResponse.json(meets);
   } catch (error) {
     console.error('Error fetching meets:', error);

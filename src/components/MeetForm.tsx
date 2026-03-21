@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createMeet, updateMeetApi, fetchAllEvents, fetchClubs } from '@/lib/api';
 import {SwimEvent, SwimClub, Meet, MeetEvent} from "@/lib/types";
 import { useAuth } from '@/lib/auth-context';
+import { getClubId } from '@/lib/utils';
 import { DataTable } from "@/components/datatable/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -47,12 +48,13 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
         setAllEvents(events);
         setAllClubs(clubs);
         
-        // If user is not admin, set their club as default
-        if (user && user.role !== 'admin' && user.clubId) {
-          setFormData(prev => ({
-            ...prev,
-            clubId: user.clubId!
-          }));
+        // For new meets, pre-fill the club from the user's selected/assigned club
+        if (user && !meet) {
+          try {
+            setFormData(prev => ({ ...prev, clubId: getClubId(user) }));
+          } catch {
+            // No club selected yet — admin will pick manually
+          }
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -210,8 +212,6 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       )
     }));
   };
-
-  console.log('Form Data:', formData);
 
   const getFilteredEvents = (): SwimEvent[] => {
     return allEvents.filter(event => {

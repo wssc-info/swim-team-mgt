@@ -5,6 +5,7 @@ import {fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi, fetchAllEvents} fr
 import TimeRecordForm from '@/components/TimeRecordForm';
 import {Swimmer, TimeRecord, SwimEvent} from '@/lib/types';
 import {useAuth} from '@/lib/auth-context';
+import {getClubId} from '@/lib/utils';
 import {DataTable} from "@/components/datatable/dataTable";
 import {getColumns} from "@/app/times/columns";
 
@@ -30,24 +31,18 @@ export default function TimesPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        const clubId = getClubId(user);
         const [swimmerData, recordData, eventsData] = await Promise.all([
-          fetchSwimmers(user?.clubId),
+          fetchSwimmers(clubId),
           fetchTimeRecords(),
           fetchAllEvents()
         ]);
 
-        // Filter swimmers to only show those for the user's club
-        const filteredSwimmers = user?.clubId
-          ? swimmerData.filter(swimmer => swimmer.clubId === user.clubId)
-          : swimmerData;
+        setSwimmers(swimmerData);
 
-        setSwimmers(filteredSwimmers);
-
-        // Filter time records to only show those for swimmers in the user's club
-        const swimmerIds = filteredSwimmers.map(swimmer => swimmer.id);
-        const filteredRecords = recordData.filter(record => swimmerIds.includes(record.swimmerId));
-
-        setTimeRecords(filteredRecords);
+        // Filter time records to only those belonging to this club's swimmers
+        const swimmerIds = new Set(swimmerData.map(s => s.id));
+        setTimeRecords(recordData.filter(r => swimmerIds.has(r.swimmerId)));
         setAllEvents(eventsData);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -286,6 +281,25 @@ export default function TimesPage() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center py-8">
           <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  let clubId: string | null = null;
+  try { clubId = getClubId(user); } catch { /* no club selected */ }
+
+  if (!clubId) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Time Records</h1>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Selected</h2>
+          <p className="text-yellow-700">
+            {user?.role === 'admin'
+              ? 'Please select a club from the navigation bar to view time records.'
+              : 'You need to be associated with a club to view time records. Please contact an administrator.'}
+          </p>
         </div>
       </div>
     );

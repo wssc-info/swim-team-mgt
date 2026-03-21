@@ -60,8 +60,10 @@ export async function deleteSwimmerApi(id: string): Promise<void> {
 }
 
 // Meets API
-export async function fetchMeets(active: boolean = false): Promise<Meet[]> {
-  const response = await authenticatedFetch(`/api/meets?active=${active}`);
+export async function fetchMeets(active: boolean = false, clubId?: string): Promise<Meet[]> {
+  const params = new URLSearchParams({ active: String(active) });
+  if (clubId) params.set('clubId', clubId);
+  const response = await authenticatedFetch(`/api/meets?${params}`);
   if (!response.ok) {
     throw new Error('Failed to fetch meets');
   }

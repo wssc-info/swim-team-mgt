@@ -1,7 +1,7 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents } from '@/lib/api';
+import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub } from '@/lib/api';
 import {Meet, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -11,6 +11,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {getAllEvents} from "@/lib/events";
+import {getClubId} from "@/lib/utils";
 
 export function EventsPage() {
   const { user } = useAuth();
@@ -24,11 +25,11 @@ export function EventsPage() {
     // Fetch swimmers based on user role
     let swimmerData: Swimmer[];
     if (user?.role === 'family' && user?.id) {
-      // For family users, only fetch their associated swimmers
       swimmerData = await fetchAssociatedSwimmers(user.id);
     } else {
-      // For coaches, fetch all swimmers
-      swimmerData = await fetchSwimmers();
+      let clubId: string | null = null;
+      try { clubId = getClubId(user); } catch { /* ignore */ }
+      swimmerData = await fetchSwimmers(clubId ?? undefined);
     }
 
     const allEventsForMeet = await fetchSwimmerMeetEvents(activeMeet.id);
@@ -50,32 +51,25 @@ export function EventsPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [meetData, eventsData] = await Promise.all([
-          fetchMeets(),
-          fetchAllEvents()
+        let clubId: string | null = null;
+        try { clubId = getClubId(user); } catch { /* no club selected */ }
+
+        if (!clubId) {
+          setLoading(false);
+          return;
+        }
+
+        const [meetData, eventsData, clubData] = await Promise.all([
+          fetchMeets(false, clubId),
+          fetchAllEvents(),
+          fetchClub(clubId),
         ]);
 
         setAllEvents(eventsData);
 
-        // Get active meet from user's club
-        let activeMeetFromClub = null;
-        if (user?.clubId) {
-          try {
-            const clubResponse = await fetch(`/api/admin/clubs/${user.clubId}`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-            if (clubResponse.ok) {
-              const clubData = await clubResponse.json();
-              if (clubData.activeMeetId) {
-                activeMeetFromClub = meetData.find(m => m.id === clubData.activeMeetId) || null;
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching club active meet:', error);
-          }
-        }
+        const activeMeetFromClub = clubData?.activeMeetId
+          ? meetData.find(m => m.id === clubData.activeMeetId) ?? null
+          : null;
 
         setActiveMeet(activeMeetFromClub);
 
@@ -122,15 +116,19 @@ export function EventsPage() {
     );
   }
 
-  if (!user?.clubId) {
+  let clubId: string | null = null;
+  try { clubId = getClubId(user); } catch { /* no club selected */ }
+
+  if (!clubId) {
     return (
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Event Registration</h1>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Association</h2>
+          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Selected</h2>
           <p className="text-yellow-700">
-            You need to be associated with a club to register for events. Please contact an administrator 
-            to assign you to a club.
+            {user?.role === 'admin'
+              ? 'Please select a club from the navigation bar to manage event registrations.'
+              : 'You need to be associated with a club to register for events. Please contact an administrator to assign you to a club.'}
           </p>
         </div>
       </div>

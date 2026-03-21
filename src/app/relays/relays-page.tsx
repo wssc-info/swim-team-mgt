@@ -32,10 +32,9 @@ export default function RelaysPage() {
     const loadData = async () => {
       try {
         const clubId = getClubId(user);
-        console.log(clubId);
         const [swimmerData, meetData, eventsData, userClub] = await Promise.all([
           fetchSwimmers(clubId),
-          fetchMeets(),
+          fetchMeets(false, clubId),
           fetchAllEvents(),
           fetchClub(clubId)
         ]);
