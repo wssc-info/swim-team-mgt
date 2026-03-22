@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 import {useAuth} from '@/lib/auth-context';
 import {
   DropdownMenu,
@@ -10,16 +11,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Image from "next/image";
-import React, {ChangeEvent, useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {fetchClubs} from "@/lib/api";
 import {SwimClub} from "@/lib/types";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 export default function Navigation() {
   const {user, logout} = useAuth();
+  const router = useRouter();
   const [clubs, setClubs] = useState<SwimClub[]>()
-
   const [activeClub, setActiveClub] = useState<string>()
+  const [meetSetupOpen, setMeetSetupOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+
+  const navigate = (path: string, close: () => void) => {
+    close();
+    router.push(path);
+  };
 
   useEffect(()=>{
     if(user?.role === 'admin'){
@@ -73,57 +81,42 @@ export default function Navigation() {
           )}
           {(user.role === 'coach' || user.role === 'admin') && (
             <>
-              <DropdownMenu>
+              <DropdownMenu open={meetSetupOpen} onOpenChange={setMeetSetupOpen}>
                 <DropdownMenuTrigger className={'hover:underline hover:cursor-pointer'}>Meet Setup</DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <Link href="/meets" className="hover:underline flex-1">
-                      Meets
-                    </Link>
+                  <DropdownMenuItem onClick={() => navigate('/meets', () => setMeetSetupOpen(false))}>
+                    Meets
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link href="/relays" className="hover:underline flex-1">
-                      Relay Setup
-                    </Link>
+                  <DropdownMenuItem onClick={() => navigate('/relays', () => setMeetSetupOpen(false))}>
+                    Relay Setup
                   </DropdownMenuItem>
                   <DropdownMenuSeparator/>
-                  <DropdownMenuItem>
-                    <Link href="/export" className="hover:underline flex-1">
-                      Export
-                    </Link>
+                  <DropdownMenuItem onClick={() => navigate('/export', () => setMeetSetupOpen(false))}>
+                    Export
                   </DropdownMenuItem>
                   <DropdownMenuSeparator/>
-                  <DropdownMenuItem>
-                    <Link href="/times" className="hover:underline flex-1">
-                      Results/Times
-                    </Link>
+                  <DropdownMenuItem onClick={() => navigate('/times', () => setMeetSetupOpen(false))}>
+                    Results/Times
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger className={'hover:underline cursor-pointer'}>Admin
-                  Functions</DropdownMenuTrigger>
+              <DropdownMenu open={adminOpen} onOpenChange={setAdminOpen}>
+                <DropdownMenuTrigger className={'hover:underline cursor-pointer'}>Admin Functions</DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <Link href="/admin/users" className="hover:underline flex-1">
-                      Admin Users
-                    </Link></DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link href="/admin/swimmers" className="hover:underline flex-1">
-                      Swimmers
-                    </Link></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/admin/users', () => setAdminOpen(false))}>
+                    Admin Users
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/admin/swimmers', () => setAdminOpen(false))}>
+                    Swimmers
+                  </DropdownMenuItem>
                   {user.role === 'admin' && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Link href="/admin/clubs" className="hover:underline flex-1">
-                          Clubs
-                        </Link>
+                      <DropdownMenuItem onClick={() => navigate('/admin/clubs', () => setAdminOpen(false))}>
+                        Clubs
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Link href="/admin/events" className="hover:underline flex-1">
-                          Events
-                        </Link>
+                      <DropdownMenuItem onClick={() => navigate('/admin/events', () => setAdminOpen(false))}>
+                        Events
                       </DropdownMenuItem>
                     </>
                   )}
