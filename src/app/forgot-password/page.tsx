@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-type Step = 'request' | 'reset' | 'done';
+type Step = 'request' | 'sent' | 'reset' | 'done';
 
 export default function ForgotPasswordPage() {
   const searchParams = useSearchParams();
@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
         const data = await res.json();
         throw new Error(data.error || 'Request failed');
       }
-      setStep('reset');
+      setStep('sent');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed');
     } finally {
@@ -104,22 +104,25 @@ export default function ForgotPasswordPage() {
           </form>
         )}
 
+        {step === 'sent' && (
+          <div className="space-y-4 text-center">
+            <div className="text-blue-600 text-5xl mb-2">✉</div>
+            <p className="text-gray-700 font-medium">Check your email</p>
+            <p className="text-sm text-gray-600">
+              If an account exists for <strong>{email}</strong>, a password reset link has been sent.
+              Click the link in the email to set a new password.
+            </p>
+            <p className="text-center text-sm">
+              <Link href="/login" className="text-blue-600 hover:underline">Back to login</Link>
+            </p>
+          </div>
+        )}
+
         {step === 'reset' && (
           <form onSubmit={handleReset} className="space-y-4">
             <p className="text-sm text-gray-600">
-              Enter the reset token from your email and choose a new password.
+              Choose a new password for your account.
             </p>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reset Token *</label>
-              <input
-                type="text"
-                value={token}
-                onChange={e => setToken(e.target.value)}
-                required
-                placeholder="Paste token from email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">New Password *</label>
               <input

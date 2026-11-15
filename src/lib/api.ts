@@ -255,6 +255,19 @@ export async function fetchAllEvents(): Promise<SwimEvent[]> {
   return response.json();
 }
 
+export async function createSwimEvent(event: Partial<SwimEvent>): Promise<SwimEvent> {
+  const response = await authenticatedFetch('/api/admin/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(event),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create event');
+  }
+  return response.json();
+}
+
 export async function seedEventsApi(): Promise<void> {
   const response = await authenticatedFetch('/api/admin/events/seed', {
     method: 'POST',
