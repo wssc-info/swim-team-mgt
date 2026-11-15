@@ -1,28 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Plus, Building2 } from 'lucide-react';
-
-interface SwimClub {
-  id: string;
-  name: string;
-  abbreviation: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useState, useEffect, useMemo } from 'react';
+import { fetchClubs, fetchLeagues, createClub, updateClubApi, deleteClubApi } from '@/lib/api';
+import type { SwimClub, League } from '@/lib/types';
+import { Building2, Pencil, Trash2, Plus } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 interface ClubFormData {
   name: string;
@@ -34,73 +16,97 @@ interface ClubFormData {
   phone: string;
   email: string;
   website: string;
+  leagueId: string;
 }
 
-export default function ClubsPage() {
+const emptyForm: ClubFormData = {
+  name: '', abbreviation: '', address: '', city: '', state: '',
+  zipCode: '', phone: '', email: '', website: '', leagueId: '',
+};
+
+export default function AdminClubsPage() {
+  const { user } = useAuth();
+  const isLeagueAdmin = user?.role === 'leagueAdmin';
+  const myLeagueId = user?.leagueId;
+
   const [clubs, setClubs] = useState<SwimClub[]>([]);
+  const [leagues, setLeagues] = useState<League[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingClub, setEditingClub] = useState<SwimClub | null>(null);
-  const [formData, setFormData] = useState<ClubFormData>({
-    name: '',
-    abbreviation: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    phone: '',
-    email: '',
-    website: ''
-  });
+  const [editing, setEditing] = useState<SwimClub | null>(null);
+  const [formData, setFormData] = useState<ClubFormData>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchClubs();
-  }, []);
+  const [search, setSearch] = useState('');
+  const [leagueFilter, setLeagueFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [sortCol, setSortCol] = useState<'name' | 'abbreviation' | 'city' | 'league'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  const fetchClubs = async () => {
+  const load = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/admin/clubs');
-      if (response.ok) {
-        const data = await response.json();
-        setClubs(data);
-      }
-    } catch (error) {
-      console.error('Error fetching clubs:', error);
+      const [cs, ls] = await Promise.all([fetchClubs(), fetchLeagues()]);
+      setClubs(isLeagueAdmin && myLeagueId ? cs.filter(c => c.leagueId === myLeagueId) : cs);
+      setLeagues(ls);
+    } catch {
+      setError('Failed to load clubs');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const url = editingClub ? `/api/admin/clubs/${editingClub.id}` : '/api/admin/clubs';
-      const method = editingClub ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-      if (response.ok) {
-        await fetchClubs();
-        resetForm();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to save club');
-      }
-    } catch (error) {
-      console.error('Error saving club:', error);
-      alert('Failed to save club');
-    }
+  const leagueMap = useMemo(
+    () => Object.fromEntries(leagues.map(l => [l.id, l])),
+    [leagues]
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return clubs
+      .filter(c => {
+        if (q && !c.name.toLowerCase().includes(q) && !c.abbreviation.toLowerCase().includes(q) && !c.city.toLowerCase().includes(q)) return false;
+        if (leagueFilter === '__none' && c.leagueId) return false;
+        if (leagueFilter && leagueFilter !== '__none' && c.leagueId !== leagueFilter) return false;
+        if (statusFilter === 'active' && !c.isActive) return false;
+        if (statusFilter === 'inactive' && c.isActive) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        let cmp = 0;
+        if (sortCol === 'name') cmp = a.name.localeCompare(b.name);
+        else if (sortCol === 'abbreviation') cmp = a.abbreviation.localeCompare(b.abbreviation);
+        else if (sortCol === 'city') cmp = a.city.localeCompare(b.city);
+        else if (sortCol === 'league') {
+          const la = leagueMap[a.leagueId ?? '']?.name ?? '';
+          const lb = leagueMap[b.leagueId ?? '']?.name ?? '';
+          cmp = la.localeCompare(lb);
+        }
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+  }, [clubs, search, leagueFilter, statusFilter, sortCol, sortDir, leagueMap]);
+
+  const toggleSort = (col: typeof sortCol) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
   };
 
-  const handleEdit = (club: SwimClub) => {
-    setEditingClub(club);
+  const SortIcon = ({ col }: { col: typeof sortCol }) =>
+    sortCol === col
+      ? <span className="ml-1 text-blue-500">{sortDir === 'asc' ? '↑' : '↓'}</span>
+      : <span className="ml-1 text-gray-300">↕</span>;
+
+  const openCreate = () => {
+    setEditing(null);
+    setFormData({ ...emptyForm, leagueId: isLeagueAdmin && myLeagueId ? myLeagueId : '' });
+    setShowForm(true);
+  };
+
+  const openEdit = (club: SwimClub) => {
+    setEditing(club);
     setFormData({
       name: club.name,
       abbreviation: club.abbreviation,
@@ -108,259 +114,268 @@ export default function ClubsPage() {
       city: club.city,
       state: club.state,
       zipCode: club.zipCode,
-      phone: club.phone || '',
-      email: club.email || '',
-      website: club.website || ''
+      phone: club.phone ?? '',
+      email: club.email ?? '',
+      website: club.website ?? '',
+      leagueId: club.leagueId ?? '',
     });
     setShowForm(true);
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const payload = {
+        name: formData.name,
+        abbreviation: formData.abbreviation,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        phone: formData.phone || undefined,
+        email: formData.email || undefined,
+        website: formData.website || undefined,
+        leagueId: formData.leagueId || undefined,
+        isActive: true,
+      };
+      if (editing) {
+        await updateClubApi(editing.id, payload);
+      } else {
+        await createClub(payload);
+      }
+      setShowForm(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleActive = async (club: SwimClub) => {
+    try {
+      await updateClubApi(club.id, { isActive: !club.isActive });
+      await load();
+    } catch {
+      setError('Failed to update club status');
+    }
+  };
+
   const handleDelete = async (club: SwimClub) => {
-    if (!confirm(`Are you sure you want to delete ${club.name}?`)) {
-      return;
-    }
-
+    if (!confirm(`Delete "${club.name}"? This cannot be undone.`)) return;
     try {
-      const response = await fetch(`/api/admin/clubs/${club.id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        await fetchClubs();
-      } else {
-        alert('Failed to delete club');
-      }
-    } catch (error) {
-      console.error('Error deleting club:', error);
-      alert('Failed to delete club');
+      await deleteClubApi(club.id);
+      await load();
+    } catch {
+      setError('Failed to delete club');
     }
   };
 
-  const toggleActive = async (club: SwimClub) => {
-    try {
-      const response = await fetch(`/api/admin/clubs/${club.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive: !club.isActive }),
-      });
-
-      if (response.ok) {
-        await fetchClubs();
-      } else {
-        alert('Failed to update club status');
-      }
-    } catch (error) {
-      console.error('Error updating club status:', error);
-      alert('Failed to update club status');
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      abbreviation: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      phone: '',
-      email: '',
-      website: ''
-    });
-    setEditingClub(null);
-    setShowForm(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading clubs...</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading clubs...</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center space-x-3">
-          <Building2 className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold">Swim Club Administration</h1>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <Building2 className="h-7 w-7 text-blue-600" />
+          <h1 className="text-2xl font-bold">Swim Clubs</h1>
         </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Add Club</span>
-        </Button>
+        <button onClick={openCreate}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium">
+          <Plus className="h-4 w-4" /> Add Club
+        </button>
       </div>
 
+      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm">{error}</div>}
+
       {showForm && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>{editingClub ? 'Edit Club' : 'Add New Club'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Club Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="abbreviation">Abbreviation *</Label>
-                  <Input
-                    id="abbreviation"
-                    value={formData.abbreviation}
-                    onChange={(e) => setFormData({ ...formData, abbreviation: e.target.value.toUpperCase() })}
-                    maxLength={10}
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="address">Address *</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="state">State *</Label>
-                  <Input
-                    id="state"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    maxLength={2}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="zipCode">Zip Code *</Label>
-                  <Input
-                    id="zipCode"
-                    value={formData.zipCode}
-                    onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  />
-                </div>
+        <div className="mb-6 border rounded-lg p-4 bg-gray-50">
+          <h2 className="text-lg font-semibold mb-4">{editing ? 'Edit Club' : 'Add New Club'}</h2>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Club Name *</label>
+                <input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
               </div>
-              <div className="flex space-x-2">
-                <Button type="submit">
-                  {editingClub ? 'Update Club' : 'Add Club'}
-                </Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancel
-                </Button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Abbreviation *</label>
+                <input value={formData.abbreviation}
+                  onChange={e => setFormData(p => ({ ...p, abbreviation: e.target.value.toUpperCase() }))}
+                  required maxLength={10}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
               </div>
-            </form>
-          </CardContent>
-        </Card>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                <input value={formData.address} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
+                  required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                <input value={formData.city} onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
+                  required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                <input value={formData.state} onChange={e => setFormData(p => ({ ...p, state: e.target.value.toUpperCase() }))}
+                  required maxLength={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Zip Code *</label>
+                <input value={formData.zipCode} onChange={e => setFormData(p => ({ ...p, zipCode: e.target.value }))}
+                  required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input value={formData.phone} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" value={formData.email} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                <input value={formData.website} onChange={e => setFormData(p => ({ ...p, website: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              {!isLeagueAdmin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">League</label>
+                  <select value={formData.leagueId} onChange={e => setFormData(p => ({ ...p, leagueId: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">No league</option>
+                    {leagues.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button type="submit" disabled={saving}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
+                {saving ? 'Saving...' : editing ? 'Update Club' : 'Add Club'}
+              </button>
+              <button type="button" onClick={() => setShowForm(false)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-300">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
-      <div className="grid gap-6">
-        {clubs.map((club) => (
-          <Card key={club.id}>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-xl font-semibold">{club.name}</h3>
-                    <Badge variant={club.isActive ? "default" : "secondary"}>
-                      {club.abbreviation}
-                    </Badge>
-                    <Badge variant={club.isActive ? "default" : "outline"}>
-                      {club.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </div>
-                  <div className="text-gray-600 space-y-1">
-                    <p>{club.address}</p>
-                    <p>{club.city}, {club.state} {club.zipCode}</p>
-                    {club.phone && <p>Phone: {club.phone}</p>}
-                    {club.email && <p>Email: {club.email}</p>}
-                    {club.website && <p>Website: {club.website}</p>}
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleActive(club)}
-                  >
-                    {club.isActive ? 'Deactivate' : 'Activate'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(club)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(club)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        
-        {clubs.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No clubs found</h3>
-              <p className="text-gray-600 mb-4">Get started by adding your first swim club.</p>
-              <Button onClick={() => setShowForm(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Club
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="mb-4 flex flex-wrap gap-3 items-center">
+        <input
+          type="search"
+          placeholder="Search name, abbr, city…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none w-56"
+        />
+        {!isLeagueAdmin && (
+          <select
+            value={leagueFilter}
+            onChange={e => setLeagueFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="">All Leagues</option>
+            {leagues.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+            <option value="__none">No League</option>
+          </select>
         )}
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <span className="text-sm text-gray-500">{filtered.length} of {clubs.length}</span>
+      </div>
+
+      <div className="border rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs text-gray-600 uppercase tracking-wide">
+            <tr>
+              <th className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                Name <SortIcon col="name" />
+              </th>
+              <th className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => toggleSort('abbreviation')}>
+                Abbr <SortIcon col="abbreviation" />
+              </th>
+              <th className="px-4 py-3 text-left cursor-pointer select-none hidden lg:table-cell" onClick={() => toggleSort('league')}>
+                League <SortIcon col="league" />
+              </th>
+              <th className="px-4 py-3 text-left cursor-pointer select-none hidden md:table-cell" onClick={() => toggleSort('city')}>
+                City <SortIcon col="city" />
+              </th>
+              <th className="px-4 py-3 text-left hidden xl:table-cell">Contact</th>
+              <th className="px-4 py-3 text-center">Status</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-10 text-gray-400">
+                  {clubs.length === 0 ? 'No clubs yet. Add one above.' : 'No results for that filter.'}
+                </td>
+              </tr>
+            ) : filtered.map(club => (
+              <tr key={club.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium">{club.name}</td>
+                <td className="px-4 py-3">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
+                    {club.abbreviation}
+                  </span>
+                </td>
+                <td className="px-4 py-3 hidden lg:table-cell text-gray-600">
+                  {club.leagueId && leagueMap[club.leagueId]
+                    ? <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded">{leagueMap[club.leagueId].abbreviation}</span>
+                    : <span className="text-gray-300">—</span>
+                  }
+                </td>
+                <td className="px-4 py-3 hidden md:table-cell text-gray-600">
+                  {club.city}, {club.state}
+                </td>
+                <td className="px-4 py-3 hidden xl:table-cell text-gray-500 text-xs space-y-0.5">
+                  {club.phone && <div>{club.phone}</div>}
+                  {club.email && <div>{club.email}</div>}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <button
+                    onClick={() => handleToggleActive(club)}
+                    className={`text-xs px-2 py-0.5 rounded border ${
+                      club.isActive
+                        ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    {club.isActive ? 'Active' : 'Inactive'}
+                  </button>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <button onClick={() => openEdit(club)}
+                      className="p-1.5 border border-gray-200 rounded hover:bg-gray-50">
+                      <Pencil className="h-3.5 w-3.5 text-gray-500" />
+                    </button>
+                    <button onClick={() => handleDelete(club)}
+                      className="p-1.5 border border-gray-200 rounded hover:bg-red-50">
+                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

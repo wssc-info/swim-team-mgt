@@ -22,11 +22,11 @@ export async function POST(request: NextRequest) {
     await initializeDatabase();
     
     const clubData = await request.json();
-    const { name, abbreviation, address, city, state, zipCode, phone, email, website } = clubData;
-    
+    const { name, abbreviation, address, city, state, zipCode, phone, email, website, leagueId } = clubData;
+
     if (!name || !abbreviation || !address || !city || !state || !zipCode) {
-      return NextResponse.json({ 
-        error: 'Name, abbreviation, address, city, state, and zip code are required' 
+      return NextResponse.json({
+        error: 'Name, abbreviation, address, city, state, and zip code are required'
       }, { status: 400 });
     }
 
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       phone,
       email,
       website,
+      leagueId: leagueId || null,
       isActive: true
     });
 

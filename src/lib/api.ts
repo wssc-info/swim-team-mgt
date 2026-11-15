@@ -1,5 +1,5 @@
 // Helper function to make authenticated API calls
-import {SwimEvent, SwimClub, Swimmer, Meet, TimeRecord, RelayTeam, SwimmerMeetEvent} from "@/lib/types";
+import {SwimEvent, SwimClub, Swimmer, Meet, TimeRecord, RelayTeam, SwimmerMeetEvent, League, MeetTemplate, User} from "@/lib/types";
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('auth_token');
@@ -279,4 +279,122 @@ export async function fetchClub(clubId: string): Promise<SwimClub> {
     throw new Error('Failed to fetch clubs');
   }
   return response.json();
+}
+
+export async function createClub(club: Partial<SwimClub>): Promise<SwimClub> {
+  const response = await authenticatedFetch('/api/admin/clubs', {
+    method: 'POST',
+    body: JSON.stringify(club),
+  });
+  if (!response.ok) throw new Error('Failed to create club');
+  return response.json();
+}
+
+export async function updateClubApi(id: string, updates: Partial<SwimClub>): Promise<void> {
+  const response = await authenticatedFetch(`/api/admin/clubs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+  if (!response.ok) throw new Error('Failed to update club');
+}
+
+export async function deleteClubApi(id: string): Promise<void> {
+  const response = await authenticatedFetch(`/api/admin/clubs/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Failed to delete club');
+}
+
+// Leagues API
+export async function fetchLeagues(): Promise<League[]> {
+  const response = await authenticatedFetch('/api/admin/leagues');
+  if (!response.ok) throw new Error('Failed to fetch leagues');
+  return response.json();
+}
+
+export async function createLeague(data: Partial<League>): Promise<League> {
+  const response = await authenticatedFetch('/api/admin/leagues', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to create league');
+  return response.json();
+}
+
+export async function updateLeagueApi(id: string, updates: Partial<League>): Promise<void> {
+  const response = await authenticatedFetch(`/api/admin/leagues/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+  if (!response.ok) throw new Error('Failed to update league');
+}
+
+export async function deleteLeagueApi(id: string): Promise<void> {
+  const response = await authenticatedFetch(`/api/admin/leagues/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Failed to delete league');
+}
+
+// Meet Templates API
+export async function fetchMeetTemplates(): Promise<MeetTemplate[]> {
+  const response = await authenticatedFetch('/api/admin/meet-templates');
+  if (!response.ok) throw new Error('Failed to fetch meet templates');
+  const data = await response.json();
+  return data.map((t: any) => ({
+    ...t,
+    meetEvents: typeof t.meetEvents === 'string' ? JSON.parse(t.meetEvents) : t.meetEvents,
+    availableEvents: typeof t.availableEvents === 'string' ? JSON.parse(t.availableEvents) : t.availableEvents,
+  }));
+}
+
+export async function createMeetTemplate(data: Partial<MeetTemplate>): Promise<MeetTemplate> {
+  const response = await authenticatedFetch('/api/admin/meet-templates', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to create meet template');
+  return response.json();
+}
+
+export async function updateMeetTemplateApi(id: string, updates: Partial<MeetTemplate>): Promise<void> {
+  const response = await authenticatedFetch(`/api/admin/meet-templates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+  if (!response.ok) throw new Error('Failed to update meet template');
+}
+
+export async function deleteMeetTemplateApi(id: string): Promise<void> {
+  const response = await authenticatedFetch(`/api/admin/meet-templates/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Failed to delete meet template');
+}
+
+// Users API
+export async function fetchUsers(clubId?: string): Promise<User[]> {
+  const url = clubId ? `/api/admin/users?clubId=${clubId}` : '/api/admin/users';
+  const response = await authenticatedFetch(url);
+  if (!response.ok) throw new Error('Failed to fetch users');
+  return response.json();
+}
+
+export async function createUserProfile(data: Partial<User>): Promise<User> {
+  const response = await authenticatedFetch('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to create user');
+  }
+  return response.json();
+}
+
+export async function deleteUserProfileApi(id: string): Promise<void> {
+  const response = await authenticatedFetch(`/api/admin/users/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Failed to delete user');
 }

@@ -331,24 +331,26 @@ interface UserAttributes {
   id: string;
   email: string;
   password: string;
-  role: 'coach' | 'family' | 'admin';
+  role: 'coach' | 'family' | 'admin' | 'leagueAdmin';
   firstName: string;
   lastName: string;
   clubId?: string;
+  leagueId?: string;
   phoneNumber?: string;
 }
 
 type UserCreationAttributes = Optional<UserAttributes, 'id'>
 
-export class UserModel extends Model<UserAttributes, UserCreationAttributes> 
+export class UserModel extends Model<UserAttributes, UserCreationAttributes>
   implements UserAttributes {
   declare id: string;
   declare email: string;
   declare password: string;
-  declare role: 'coach' | 'family' | 'admin';
+  declare role: 'coach' | 'family' | 'admin' | 'leagueAdmin';
   declare firstName: string;
   declare lastName: string;
   declare clubId?: string;
+  declare leagueId?: string;
   declare phoneNumber?: string;
 
   declare readonly createdAt: Date;
@@ -372,7 +374,7 @@ UserModel.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM('coach', 'family', 'admin'),
+      type: DataTypes.ENUM('coach', 'family', 'admin', 'leagueAdmin'),
       allowNull: false,
     },
     firstName: {
@@ -390,6 +392,10 @@ UserModel.init(
         model: 'swim_clubs',
         key: 'id'
       }
+    },
+    leagueId: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     phoneNumber: {
       type: DataTypes.STRING,
@@ -497,6 +503,60 @@ FamilySwimmerAssociationModel.init(
   }
 );
 
+// League Model
+interface LeagueAttributes {
+  id: string;
+  name: string;
+  abbreviation: string;
+  description?: string;
+  isActive: boolean;
+}
+
+type LeagueCreationAttributes = Optional<LeagueAttributes, 'id'>
+
+export class LeagueModel extends Model<LeagueAttributes, LeagueCreationAttributes>
+  implements LeagueAttributes {
+  declare id: string;
+  declare name: string;
+  declare abbreviation: string;
+  declare description?: string;
+  declare isActive: boolean;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+LeagueModel.init(
+  {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    abbreviation: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'League',
+    tableName: 'leagues',
+  }
+);
+
 // SwimClub Model
 interface SwimClubAttributes {
   id: string;
@@ -511,11 +571,12 @@ interface SwimClubAttributes {
   website?: string;
   isActive: boolean;
   activeMeetId?: string | null;
+  leagueId?: string | null;
 }
 
 type SwimClubCreationAttributes = Optional<SwimClubAttributes, 'id'>
 
-export class SwimClubModel extends Model<SwimClubAttributes, SwimClubCreationAttributes> 
+export class SwimClubModel extends Model<SwimClubAttributes, SwimClubCreationAttributes>
   implements SwimClubAttributes {
   declare id: string;
   declare name: string;
@@ -529,6 +590,7 @@ export class SwimClubModel extends Model<SwimClubAttributes, SwimClubCreationAtt
   declare website?: string;
   declare isActive: boolean;
   declare activeMeetId?: string | null;
+  declare leagueId?: string | null;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -591,6 +653,10 @@ SwimClubModel.init(
       },
       onDelete: 'SET NULL',
       onUpdate: 'CASCADE'
+    },
+    leagueId: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {
@@ -671,6 +737,91 @@ SwimEventModel.init(
     sequelize,
     modelName: 'SwimEvent',
     tableName: 'swim_events',
+  }
+);
+
+// MeetTemplate Model
+interface MeetTemplateAttributes {
+  id: string;
+  name: string;
+  description?: string;
+  scope: 'league' | 'club';
+  leagueId?: string;
+  clubId?: string;
+  course: 'SCY' | 'SCM' | 'LCM';
+  meetEvents: string; // JSON
+  availableEvents: string; // JSON
+}
+
+type MeetTemplateCreationAttributes = Optional<MeetTemplateAttributes, 'id'>
+
+export class MeetTemplateModel extends Model<MeetTemplateAttributes, MeetTemplateCreationAttributes>
+  implements MeetTemplateAttributes {
+  declare id: string;
+  declare name: string;
+  declare description?: string;
+  declare scope: 'league' | 'club';
+  declare leagueId?: string;
+  declare clubId?: string;
+  declare course: 'SCY' | 'SCM' | 'LCM';
+  declare meetEvents: string;
+  declare availableEvents: string;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+MeetTemplateModel.init(
+  {
+    id: { type: DataTypes.STRING, primaryKey: true },
+    name: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.STRING, allowNull: true },
+    scope: { type: DataTypes.ENUM('league', 'club'), allowNull: false, defaultValue: 'club' },
+    leagueId: { type: DataTypes.STRING, allowNull: true },
+    clubId: { type: DataTypes.STRING, allowNull: true },
+    course: { type: DataTypes.ENUM('SCY', 'SCM', 'LCM'), allowNull: false, defaultValue: 'SCY' },
+    meetEvents: { type: DataTypes.TEXT, allowNull: false, defaultValue: '[]' },
+    availableEvents: { type: DataTypes.TEXT, allowNull: false, defaultValue: '[]' },
+  },
+  {
+    sequelize,
+    modelName: 'MeetTemplate',
+    tableName: 'meet_templates',
+  }
+);
+
+// PasswordResetToken Model
+interface PasswordResetTokenAttributes {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: Date;
+}
+
+type PasswordResetTokenCreationAttributes = Optional<PasswordResetTokenAttributes, 'id'>
+
+export class PasswordResetTokenModel extends Model<PasswordResetTokenAttributes, PasswordResetTokenCreationAttributes>
+  implements PasswordResetTokenAttributes {
+  declare id: string;
+  declare userId: string;
+  declare token: string;
+  declare expiresAt: Date;
+
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+
+PasswordResetTokenModel.init(
+  {
+    id: { type: DataTypes.STRING, primaryKey: true },
+    userId: { type: DataTypes.STRING, allowNull: false },
+    token: { type: DataTypes.STRING, allowNull: false, unique: true },
+    expiresAt: { type: DataTypes.DATE, allowNull: false },
+  },
+  {
+    sequelize,
+    modelName: 'PasswordResetToken',
+    tableName: 'password_reset_tokens',
   }
 );
 

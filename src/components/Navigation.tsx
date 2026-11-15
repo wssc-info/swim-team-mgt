@@ -79,7 +79,7 @@ export default function Navigation() {
               </Select>
             </>
           )}
-          {(user.role === 'coach' || user.role === 'admin') && (
+          {(user.role === 'coach' || user.role === 'admin' || user.role === 'leagueAdmin') && (
             <>
               <DropdownMenu open={meetSetupOpen} onOpenChange={setMeetSetupOpen}>
                 <DropdownMenuTrigger className={'hover:underline hover:cursor-pointer'}>Meet Setup</DropdownMenuTrigger>
@@ -109,11 +109,17 @@ export default function Navigation() {
                   <DropdownMenuItem onClick={() => navigate('/admin/swimmers', () => setAdminOpen(false))}>
                     Swimmers
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/admin/meet-templates', () => setAdminOpen(false))}>
+                    Meet Templates
+                  </DropdownMenuItem>
                   {user.role === 'admin' && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate('/admin/clubs', () => setAdminOpen(false))}>
                         Clubs
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/leagues', () => setAdminOpen(false))}>
+                        Leagues
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/admin/events', () => setAdminOpen(false))}>
                         Events
@@ -133,9 +139,9 @@ export default function Navigation() {
             </Link>
           )}
           <div className="flex items-center space-x-2">
-            <span className="text-sm">
+            <Link href="/profile" className="text-sm hover:underline">
               {user.firstName} {user.lastName} ({user.role})
-            </span>
+            </Link>
             <button
               onClick={logout}
               className="bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded text-sm"

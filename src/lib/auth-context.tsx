@@ -5,10 +5,12 @@ import React, {createContext, useContext, useState, useEffect, useCallback} from
 interface User {
   id: string;
   email: string;
-  role: 'coach' | 'family' | 'admin';
+  role: 'coach' | 'family' | 'admin' | 'leagueAdmin';
   firstName: string;
   lastName: string;
   clubId?: string;
+  leagueId?: string;
+  phoneNumber?: string;
 }
 
 interface AuthContextType {
@@ -17,6 +19,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  updateProfile: (data: { firstName: string; lastName: string; phoneNumber?: string; clubId?: string }) => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             firstName: decoded.firstName || '',
             lastName: decoded.lastName || '',
             clubId: decoded.clubId,
+            leagueId: decoded.leagueId,
+            phoneNumber: decoded.phoneNumber,
           });
           setToken(tokenToVerify);
         } else {
@@ -122,6 +128,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: { firstName: string; lastName: string; phoneNumber?: string; clubId?: string }) => {
+    const currentToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : token;
+    const response = await fetch('/api/profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(currentToken && { Authorization: `Bearer ${currentToken}` }),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to update profile');
+    }
+    setUser(prev => prev ? { ...prev, ...data } : null);
+  };
+
+  const changePassword = async (oldPassword: string, newPassword: string) => {
+    const currentToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : token;
+    const response = await fetch('/api/profile/password', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(currentToken && { Authorization: `Bearer ${currentToken}` }),
+      },
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to change password');
+    }
+  };
+
   return (
     <>
       {loading ? (
@@ -129,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           <div className="text-lg">Loading...</div>
         </div>
       ) : (
-          <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+          <AuthContext.Provider value={{ user, token, login, logout, loading, updateProfile, changePassword }}>
             {children}
           </AuthContext.Provider>
       )}

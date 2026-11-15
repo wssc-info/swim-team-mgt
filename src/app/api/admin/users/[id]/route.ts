@@ -12,15 +12,12 @@ export async function PUT(
     
     const updates = await request.json();
     let { clubId } = updates;
+    const { leagueId } = updates;
     const { firstName, lastName, email, password, role, phoneNumber } = updates;
 
-    // Normalize clubId - convert empty string to null for admin users
-    if (!clubId || clubId.trim() === '') {
-      if (role === 'admin') {
-        clubId = null; // Admin users can have null clubId
-      } else {
-        return NextResponse.json({error: 'Club is required for non-admin users'}, {status: 400});
-      }
+    // Normalize clubId
+    if (!clubId || (typeof clubId === 'string' && clubId.trim() === '')) {
+      clubId = null;
     }
 
     // Club validation - ensure club exists if provided
@@ -38,6 +35,7 @@ export async function PUT(
       email,
       role,
       clubId,
+      leagueId: leagueId || null,
       phoneNumber: phoneNumber || null,
     };
 

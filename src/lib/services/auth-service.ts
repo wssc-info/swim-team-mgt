@@ -38,7 +38,7 @@ export class AuthService {
       if (!isValidPassword) return null;
 
       const token = jwt.sign(
-        {userId: user.id, email: user.email, role: user.role},
+        {userId: user.id, email: user.email, role: user.role, clubId: user.clubId, leagueId: user.leagueId},
         JWT_SECRET,
         {expiresIn: '24h'}
       );

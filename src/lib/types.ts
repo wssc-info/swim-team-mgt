@@ -69,10 +69,11 @@ export interface User {
   id: string;
   email: string;
   password: string;
-  role: 'coach' | 'family' | 'admin';
+  role: 'coach' | 'family' | 'admin' | 'leagueAdmin';
   firstName: string;
   lastName: string;
   clubId?: string;
+  leagueId?: string;
   phoneNumber?: string;
   createdAt: string;
 }
@@ -108,8 +109,29 @@ export interface SwimClub {
   website?: string;
   isActive: boolean;
   activeMeetId?: string;
+  leagueId?: string;
 }
 
+export interface League {
+  id: string;
+  name: string;
+  abbreviation: string;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface MeetTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  scope: 'league' | 'club';
+  leagueId?: string;
+  clubId?: string;
+  course: 'SCY' | 'SCM' | 'LCM';
+  meetEvents: MeetEvent[];
+  availableEvents: string[];
+  createdAt: string;
+}
 
 export interface MeetManagerEntry {
   swimmer: Swimmer;

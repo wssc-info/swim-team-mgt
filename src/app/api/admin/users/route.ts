@@ -102,11 +102,19 @@ export async function POST(request: NextRequest) {
     }
     const userData = await request.json();
 
-    const {email, password, firstName, lastName} = userData;
+    const {email, firstName, lastName} = userData;
     let {role, clubId} = userData;
+    const {leagueId, phoneNumber} = userData;
+    let password = userData.password;
 
-    if (!email || !password || !firstName || !lastName) {
-      return NextResponse.json({error: 'Email, password, first name, and last name are required'}, {status: 400});
+    if (!email || !firstName || !lastName) {
+      return NextResponse.json({error: 'Email, first name, and last name are required'}, {status: 400});
+    }
+
+    // Auto-generate password if not provided
+    if (!password) {
+      const { v4: uuidv4 } = await import('uuid');
+      password = uuidv4().replace(/-/g, '').slice(0, 16) + 'Aa1!';
     }
 
     // Role validation and default assignment
@@ -114,12 +122,12 @@ export async function POST(request: NextRequest) {
       role = 'family'; // Default role
     }
 
-    // Only admins can set admin or coach roles
-    if (currentUser?.role !== 'admin' && (role === 'admin' || role === 'coach')) {
+    // Only admins can set admin, coach, or leagueAdmin roles
+    if (currentUser?.role !== 'admin' && ['admin', 'coach', 'leagueAdmin'].includes(role)) {
       role = 'family'; // Force to family role if not admin
     }
 
-    if (!['admin', 'coach', 'family'].includes(role)) {
+    if (!['admin', 'coach', 'family', 'leagueAdmin'].includes(role)) {
       return NextResponse.json({error: 'Invalid role'}, {status: 400});
     }
 
@@ -148,8 +156,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Normalize phone number to E.164 if provided
+    let normalizedPhone = phoneNumber;
+    if (phoneNumber) {
+      const digits = phoneNumber.replace(/\D/g, '');
+      if (digits.length === 10) normalizedPhone = `+1${digits}`;
+      else if (digits.length === 11 && digits.startsWith('1')) normalizedPhone = `+${digits}`;
+      else normalizedPhone = phoneNumber;
+    }
+
     const authService = AuthService.getInstance();
-    const user = await authService.register({...userData, clubId});
+    const user = await authService.register({...userData, password, clubId, leagueId: leagueId || undefined, phoneNumber: normalizedPhone});
 
     return NextResponse.json(user);
   } catch (error) {

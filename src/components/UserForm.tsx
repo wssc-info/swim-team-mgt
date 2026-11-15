@@ -10,6 +10,12 @@ interface SwimClub {
   abbreviation: string;
 }
 
+interface League {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
 interface UserFormProps {
   user?: User | null;
   onClose: () => void;
@@ -23,13 +29,15 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
     lastName: '',
     email: '',
     password: '',
-    role: 'family' as 'admin' | 'coach' | 'family',
+    role: 'family' as 'admin' | 'coach' | 'family' | 'leagueAdmin',
     clubId: '',
     phoneNumber: '',
+    leagueId: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [clubs, setClubs] = useState<SwimClub[]>([]);
+  const [leagues, setLeagues] = useState<League[]>([]);
   const [loadingClubs, setLoadingClubs] = useState(true);
 
   useEffect(() => {
@@ -42,23 +50,25 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        password: '', // Don't populate password for editing
+        password: '',
         role: user.role,
         clubId: user.clubId || '',
         phoneNumber: user.phoneNumber || '',
+        leagueId: user.leagueId || '',
       });
     }
   }, [user]);
 
   const loadClubs = async () => {
     try {
-      const response = await fetch('/api/admin/clubs');
-      if (response.ok) {
-        const clubsData = await response.json();
-        setClubs(clubsData);
-      }
+      const [clubsResp, leaguesResp] = await Promise.all([
+        fetch('/api/admin/clubs'),
+        fetch('/api/admin/leagues'),
+      ]);
+      if (clubsResp.ok) setClubs(await clubsResp.json());
+      if (leaguesResp.ok) setLeagues(await leaguesResp.json());
     } catch (error) {
-      console.error('Error loading clubs:', error);
+      console.error('Error loading clubs/leagues:', error);
     } finally {
       setLoadingClubs(false);
     }
@@ -73,9 +83,11 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
       const url = user ? `/api/admin/users/${user.id}` : '/api/admin/users';
       const method = user ? 'PUT' : 'POST';
       
-      const body = user 
-        ? { ...formData, password: formData.password || undefined } // Only include password if provided
-        : formData;
+      const body = {
+        ...formData,
+        password: formData.password || undefined,
+        leagueId: formData.leagueId || undefined,
+      };
 
       const response = await authenticatedFetch(url, {
         method,
@@ -187,7 +199,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password {user ? '(leave blank to keep current)' : '*'}
+            Password {user ? '(leave blank to keep current)' : '(leave blank to auto-generate)'}
           </label>
           <input
             type="password"
@@ -195,7 +207,6 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
             name="password"
             value={formData.password}
             onChange={handleChange}
-            required={!user}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -215,6 +226,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
           >
             <option value="family">Family</option>
             {currentUserRole === 'admin' && <option value="coach">Coach</option>}
+            {currentUserRole === 'admin' && <option value="leagueAdmin">League Admin</option>}
             {currentUserRole === 'admin' && <option value="admin">Admin</option>}
           </select>
           {currentUserRole !== 'admin' && (
@@ -265,6 +277,26 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
             </p>
           )}
         </div>
+
+        {currentUserRole === 'admin' && formData.role === 'leagueAdmin' && (
+          <div>
+            <label htmlFor="leagueId" className="block text-sm font-medium text-gray-700 mb-1">
+              League
+            </label>
+            <select
+              id="leagueId"
+              name="leagueId"
+              value={formData.leagueId}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">No League</option>
+              {leagues.map(l => (
+                <option key={l.id} value={l.id}>{l.name} ({l.abbreviation})</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="flex space-x-3 pt-4">
           <button
