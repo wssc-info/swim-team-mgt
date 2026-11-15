@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -34,6 +35,9 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="text-center mb-6">
+        <div className="flex justify-center mb-4">
+          <Image src="/stm-logo.png" alt="Swim Team Management" width={180} height={60} priority />
+        </div>
         <h2 className="text-2xl font-bold text-gray-900">Sign In</h2>
         <p className="text-gray-600 mt-2">Welcome back to the swim team management system</p>
       </div>
