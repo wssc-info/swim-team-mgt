@@ -3,7 +3,6 @@ import {AuthService} from '@/lib/services/auth-service';
 import {UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase} from '@/lib/models';
 import {sendWelcomeEmail} from '@/lib/email';
 import DbConnection from "@/lib/db-connection";
-import jwt from 'jsonwebtoken';
 
 export async function GET(request: NextRequest) {
   try {
@@ -89,18 +88,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the current user from the token
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    let currentUser = null;
+    await initializeDatabase();
 
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
-        currentUser = await UserModel.findByPk(decoded.userId);
-      } catch (error) {
-        // Token invalid, continue without current user
-      }
-    }
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const decoded = AuthService.getInstance().verifyToken(token);
+    if (!decoded) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const currentUser = await UserModel.findByPk(decoded.userId);
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const userData = await request.json();
 
     const {email, firstName, lastName} = userData;
@@ -123,36 +120,39 @@ export async function POST(request: NextRequest) {
       role = 'family'; // Default role
     }
 
-    // Only admins can set admin, coach, or leagueAdmin roles
-    if (currentUser?.role !== 'admin' && ['admin', 'coach', 'leagueAdmin'].includes(role)) {
-      role = 'family'; // Force to family role if not admin
+    const isPrivileged = ['admin', 'leagueAdmin'].includes(currentUser.role);
+
+    // Only admins/leagueAdmins can set elevated roles
+    if (!isPrivileged && ['admin', 'coach', 'leagueAdmin'].includes(role)) {
+      role = 'family';
     }
 
     if (!['admin', 'coach', 'family', 'leagueAdmin'].includes(role)) {
       return NextResponse.json({error: 'Invalid role'}, {status: 400});
     }
 
-    // Normalize clubId - convert empty string to null for admin users
+    // admin and leagueAdmin roles don't require a club
+    const roleRequiresClub = !['admin', 'leagueAdmin'].includes(role);
+
     if (!clubId || clubId.trim() === '') {
-      if (role === 'admin') {
-        clubId = null; // Admin users can have null clubId
-      } else if (currentUser?.clubId) {
-        // Non-admin users default to their club if no club specified
-        clubId = currentUser.clubId;
-      } else {
-        return NextResponse.json({error: 'Club is required for non-admin users'}, {status: 400});
+      clubId = null;
+      if (roleRequiresClub) {
+        if (currentUser.clubId) {
+          clubId = currentUser.clubId;
+        } else {
+          return NextResponse.json({error: 'Club is required for this role'}, {status: 400});
+        }
       }
     }
 
-    // Club validation - non-admins can only assign users to their own club
+    // Club validation
     if (clubId) {
       const club = await SwimClubModel.findByPk(clubId);
       if (!club) {
         return NextResponse.json({error: 'Invalid club selected'}, {status: 400});
       }
-
-      // If current user is not admin, they can only assign to their own club
-      if (currentUser?.role !== 'admin' && clubId !== currentUser?.clubId) {
+      // leagueAdmins and admins can assign any club; coaches/coaches are restricted to their own
+      if (!isPrivileged && clubId !== currentUser.clubId) {
         return NextResponse.json({error: 'You can only assign users to your own club'}, {status: 403});
       }
     }
