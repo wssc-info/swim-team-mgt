@@ -39,7 +39,8 @@ export function Combobox({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const filtered = inputText
+  const isFiltering = inputText !== '' && inputText !== selectedLabel;
+  const filtered = isFiltering
     ? allOptions.filter(o => o.label.toLowerCase().includes(inputText.toLowerCase()))
     : allOptions;
 
@@ -72,6 +73,12 @@ export function Combobox({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
+  const handleClear = () => {
+    onChange('');
+    setInputText('');
+    setOpen(false);
+  };
+
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <input
@@ -85,8 +92,18 @@ export function Combobox({
         }}
         onFocus={() => setOpen(true)}
         onBlur={handleBlur}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+        className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
       />
+      {value && !disabled && (
+        <button
+          type="button"
+          onMouseDown={e => { e.preventDefault(); handleClear(); }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          aria-label="Clear"
+        >
+          ✕
+        </button>
+      )}
       {open && !disabled && filtered.length > 0 && (
         <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto text-sm">
           {filtered.map(opt => (
