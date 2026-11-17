@@ -30,7 +30,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
     email: '',
     password: '',
     role: 'family' as 'admin' | 'coach' | 'family' | 'leagueAdmin',
-    clubId: '',
+    clubId: !user && currentUserClubId ? currentUserClubId : '',
     phoneNumber: '',
     leagueId: '',
   });
