@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { getClubId } from '@/lib/utils';
 import { DataTable } from "@/components/datatable/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import { Combobox } from '@/components/ui/combobox';
 
 interface MeetFormProps {
   meet?: Partial<Meet> | null;
@@ -449,28 +449,20 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Club (Meet For) *
             </label>
-            <select
-              id="clubId"
-              name="clubId"
-              value={formData.clubId}
-              onChange={handleInputChange}
-              disabled={user?.role !== 'admin'}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.clubId ? 'border-red-500' : 'border-gray-300'
-              } ${user?.role !== 'admin' ? 'bg-gray-100' : ''}`}
-            >
-              <option value="">Select a club</option>
-              {allClubs
+            <Combobox
+              options={allClubs
                 .filter(club => user?.role === 'admin' || club.id === user?.clubId)
-                .map((club) => (
-                <option key={club.id} value={club.id}>
-                  {club.name} ({club.abbreviation})
-                </option>
-              ))}
-            </select>
+                .map(club => ({ value: club.id, label: `${club.name} (${club.abbreviation})` }))}
+              value={formData.clubId}
+              onChange={val => setFormData(prev => ({ ...prev, clubId: val }))}
+              disabled={user?.role !== 'admin'}
+              placeholder="Select a club"
+              emptyLabel=""
+              className={errors.clubId ? 'ring-1 ring-red-500 rounded-md' : ''}
+            />
             {errors.clubId && (
               <p className="text-red-500 text-sm mt-1">{errors.clubId}</p>
             )}
@@ -482,25 +474,18 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
           </div>
 
           <div>
-            <label htmlFor="againstClubId" className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Against Club (Optional)
             </label>
-            <select
-              id="againstClubId"
-              name="againstClubId"
-              value={formData.againstClubId}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">No opposing club</option>
-              {allClubs
+            <Combobox
+              options={allClubs
                 .filter(club => club.id !== formData.clubId)
-                .map((club) => (
-                <option key={club.id} value={club.id}>
-                  {club.name} ({club.abbreviation})
-                </option>
-              ))}
-            </select>
+                .map(club => ({ value: club.id, label: `${club.name} (${club.abbreviation})` }))}
+              value={formData.againstClubId}
+              onChange={val => setFormData(prev => ({ ...prev, againstClubId: val }))}
+              placeholder="No opposing club"
+              emptyLabel="No opposing club"
+            />
           </div>
         </div>
         <div>

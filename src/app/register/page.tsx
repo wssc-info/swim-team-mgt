@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { SwimClub } from '@/lib/types';
+import { Combobox } from '@/components/ui/combobox';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -37,6 +38,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!formData.clubId) {
+      setError('Please select a club');
+      setLoading(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -183,24 +190,19 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Club *
             </label>
-            <select
-              id="clubId"
-              name="clubId"
+            <Combobox
+              options={clubs.map(club => ({
+                value: club.id,
+                label: club.name + (club.abbreviation ? ` (${club.abbreviation})` : ''),
+              }))}
               value={formData.clubId}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select a club</option>
-              {clubs.map(club => (
-                <option key={club.id} value={club.id}>
-                  {club.name}{club.abbreviation ? ` (${club.abbreviation})` : ''}
-                </option>
-              ))}
-            </select>
+              onChange={val => setFormData(prev => ({ ...prev, clubId: val }))}
+              placeholder="Select a club"
+              emptyLabel=""
+            />
           </div>
 
           <div>

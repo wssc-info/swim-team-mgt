@@ -8,6 +8,7 @@ import {generateSwimmerExternalId, calculateAgeGroup} from "@/lib/utils";
 import {SquarePenIcon} from "lucide-react";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {Checkbox} from "@/components/ui/checkbox";
+import { Combobox } from '@/components/ui/combobox';
 
 interface SwimClub {
   id: string;
@@ -303,39 +304,24 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
             />
           </div>
           <div className="flex-1">
-            <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Club
             </label>
             {loadingClubs ? (
-              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
                 Loading clubs...
               </div>
             ) : (
-              <select
-                id="clubId"
-                name="clubId"
+              <Combobox
+                options={(currentUser?.role === 'admin'
+                  ? clubs
+                  : clubs.filter(club => club.id === currentUser?.clubId)
+                ).map(club => ({ value: club.id, label: `${club.name} (${club.abbreviation})` }))}
                 value={formData.clubId}
-                onChange={handleInputChange}
+                onChange={val => setFormData(prev => ({ ...prev, clubId: val }))}
                 disabled={currentUser?.role !== 'admin'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">No Club</option>
-                {currentUser?.role === 'admin' ? (
-                  clubs.map((club) => (
-                    <option key={club.id} value={club.id}>
-                      {club.name} ({club.abbreviation})
-                    </option>
-                  ))
-                ) : (
-                  clubs
-                    .filter(club => club.id === currentUser?.clubId)
-                    .map((club) => (
-                      <option key={club.id} value={club.id}>
-                        {club.name} ({club.abbreviation})
-                      </option>
-                    ))
-                )}
-              </select>
+                emptyLabel="No Club"
+              />
             )}
           </div>
         </div>
