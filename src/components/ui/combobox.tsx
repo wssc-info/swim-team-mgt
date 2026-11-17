@@ -31,6 +31,7 @@ export function Combobox({
 
   const [inputText, setInputText] = useState(selectedLabel);
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Keep input text in sync when value changes externally
@@ -90,7 +91,15 @@ export function Combobox({
           setInputText(e.target.value);
           setOpen(true);
         }}
-        onFocus={e => { setOpen(true); e.target.select(); }}
+        onFocus={e => {
+          if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            setDropUp(spaceBelow < 240);
+          }
+          setOpen(true);
+          e.target.select();
+        }}
         onBlur={handleBlur}
         className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
       />
@@ -105,7 +114,7 @@ export function Combobox({
         </button>
       )}
       {open && !disabled && filtered.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto text-sm">
+        <ul className={`absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto text-sm ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
           {filtered.map(opt => (
             <li
               key={opt.value}
@@ -118,7 +127,7 @@ export function Combobox({
         </ul>
       )}
       {open && !disabled && filtered.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg px-3 py-2 text-sm text-gray-500">
+        <div className={`absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg px-3 py-2 text-sm text-gray-500 ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
           No matches
         </div>
       )}
