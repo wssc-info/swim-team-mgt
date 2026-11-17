@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/lib/types';
 import {authenticatedFetch} from "@/lib/api";
+import { Combobox } from '@/components/ui/combobox';
 
 interface SwimClub {
   id: string;
@@ -237,41 +238,26 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
         </div>
 
         <div>
-          <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Club
           </label>
           {loadingClubs ? (
-            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
               Loading clubs...
             </div>
           ) : (
-            <select
-              id="clubId"
-              name="clubId"
+            <Combobox
+              options={(currentUserRole === 'admin'
+                ? clubs
+                : clubs.filter(c => c.id === currentUserClubId)
+              ).map(c => ({ value: c.id, label: `${c.name} (${c.abbreviation})` }))}
               value={formData.clubId}
-              onChange={handleChange}
-              disabled={currentUserRole !== 'admin'}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">No Club</option>
-              {currentUserRole === 'admin' ? (
-                clubs.map((club) => (
-                  <option key={club.id} value={club.id}>
-                    {club.name} ({club.abbreviation})
-                  </option>
-                ))
-              ) : (
-                clubs
-                  .filter(club => club.id === currentUserClubId)
-                  .map((club) => (
-                    <option key={club.id} value={club.id}>
-                      {club.name} ({club.abbreviation})
-                    </option>
-                  ))
-              )}
-            </select>
+              onChange={val => setFormData(prev => ({ ...prev, clubId: val }))}
+              disabled={currentUserRole !== 'admin' && currentUserRole !== 'leagueAdmin'}
+              emptyLabel="No Club"
+            />
           )}
-          {currentUserRole !== 'admin' && (
+          {currentUserRole !== 'admin' && currentUserRole !== 'leagueAdmin' && (
             <p className="text-xs text-gray-500 mt-1">
               Non-admin users can only assign users to their own club
             </p>
