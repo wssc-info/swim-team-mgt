@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [selectedFamilyUser, setSelectedFamilyUser] = useState<UserWithAssociations | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResults, setUploadResults] = useState<{ success: number, errors: string[] } | null>(null);
+  const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -84,6 +85,20 @@ export default function AdminPage() {
     setShowUserForm(false);
     setEditingUser(null);
     loadData();
+  };
+
+  const handleSendPasswordReset = async (userId: string) => {
+    try {
+      const response = await authenticatedFetch(`/api/admin/users/${userId}/reset-password`, { method: 'POST' });
+      if (response.ok) {
+        setResetMessage({ type: 'success', text: 'Password reset link sent.' });
+      } else {
+        setResetMessage({ type: 'error', text: 'Failed to send reset link.' });
+      }
+    } catch {
+      setResetMessage({ type: 'error', text: 'Failed to send reset link.' });
+    }
+    setTimeout(() => setResetMessage(null), 4000);
   };
 
   const handleAssociationFormClose = () => {
@@ -287,6 +302,13 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Reset password feedback */}
+        {resetMessage && (
+          <div className={`mb-4 p-3 rounded text-sm ${resetMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
+            {resetMessage.text}
+          </div>
+        )}
+
         {/* Upload Results */}
         {uploadResults && (
           <div className="mb-6 bg-white rounded-lg shadow p-4">
@@ -334,6 +356,7 @@ export default function AdminPage() {
               onEditUser: handleEditUser,
               onManageAssociations: handleManageAssociations,
               onDeleteUser: handleDeleteUser,
+              onSendPasswordReset: handleSendPasswordReset,
             })}
             data={users}
           />

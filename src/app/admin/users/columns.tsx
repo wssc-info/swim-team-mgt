@@ -22,6 +22,7 @@ interface UserColumnsProps {
   onEditUser: (user: UserWithAssociations) => void;
   onManageAssociations: (user: UserWithAssociations) => void;
   onDeleteUser: (userId: string) => void;
+  onSendPasswordReset: (userId: string) => void;
 }
 
 export const createUserColumns = ({
@@ -29,6 +30,7 @@ export const createUserColumns = ({
   onEditUser,
   onManageAssociations,
   onDeleteUser,
+  onSendPasswordReset,
 }: UserColumnsProps): ColumnDef<UserWithAssociations>[] => [
   {
     accessorKey: "firstName",
@@ -146,6 +148,9 @@ export const createUserColumns = ({
                 Manage Swimmers
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem onClick={() => onSendPasswordReset(row.original.id)}>
+              Send Password Reset
+            </DropdownMenuItem>
             <DropdownMenuSeparator/>
             <DropdownMenuItem onClick={() => onDeleteUser(row.original.id)}>
               <div className={'text-red-500'}>Delete</div>
