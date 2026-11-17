@@ -38,19 +38,16 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   });
 }
 
-export async function sendWelcomeEmail(to: string, firstName: string, password: string, loginUrl: string) {
+export async function sendWelcomeEmail(to: string, firstName: string, setPasswordUrl: string) {
   await sendEmail({
     to,
     subject: 'Your swim team account has been created',
     html: `
       <p>Hi ${firstName},</p>
-      <p>Your swim team account has been created. Here are your login credentials:</p>
-      <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 12px 4px 0;font-weight:bold">Email</td><td>${to}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;font-weight:bold">Password</td><td>${password}</td></tr>
-      </table>
-      <p><a href="${loginUrl}" style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block">Sign In</a></p>
-      <p>Please change your password after your first login.</p>
+      <p>An account has been created for you on the swim team management system.</p>
+      <p>Click the button below to set your password and sign in. This link expires in 24 hours.</p>
+      <p><a href="${setPasswordUrl}" style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;display:inline-block">Set Your Password</a></p>
+      <p>Your login email is: <strong>${to}</strong></p>
     `,
   });
 }

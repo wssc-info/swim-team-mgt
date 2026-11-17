@@ -1,8 +1,10 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {AuthService} from '@/lib/services/auth-service';
-import {UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase} from '@/lib/models';
+import {UserModel, FamilySwimmerAssociationModel, SwimClubModel, PasswordResetTokenModel, initializeDatabase} from '@/lib/models';
 import {sendWelcomeEmail} from '@/lib/email';
 import DbConnection from "@/lib/db-connection";
+import {v4 as uuidv4} from 'uuid';
+import crypto from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
@@ -169,8 +171,12 @@ export async function POST(request: NextRequest) {
     const authService = AuthService.getInstance();
     const user = await authService.register({...userData, password, clubId, leagueId: leagueId || undefined, phoneNumber: normalizedPhone});
 
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await PasswordResetTokenModel.create({ id: uuidv4(), userId: user.id, token: resetToken, expiresAt });
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    await sendWelcomeEmail(email, firstName, password, `${appUrl}/login`);
+    await sendWelcomeEmail(email, firstName, `${appUrl}/forgot-password?token=${resetToken}`);
 
     return NextResponse.json(user);
   } catch (error) {
