@@ -266,21 +266,15 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
 
         {currentUserRole === 'admin' && formData.role === 'leagueAdmin' && (
           <div>
-            <label htmlFor="leagueId" className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               League
             </label>
-            <select
-              id="leagueId"
-              name="leagueId"
+            <Combobox
+              options={leagues.map(l => ({ value: l.id, label: `${l.name} (${l.abbreviation})` }))}
               value={formData.leagueId}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">No League</option>
-              {leagues.map(l => (
-                <option key={l.id} value={l.id}>{l.name} ({l.abbreviation})</option>
-              ))}
-            </select>
+              onChange={val => setFormData(prev => ({ ...prev, leagueId: val }))}
+              emptyLabel="No League"
+            />
           </div>
         )}
 
