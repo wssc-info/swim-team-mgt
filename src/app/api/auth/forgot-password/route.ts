@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserModel, PasswordResetTokenModel, initializeDatabase } from '@/lib/models';
+import { sendPasswordResetEmail } from '@/lib/email';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
@@ -12,7 +13,6 @@ export async function POST(request: NextRequest) {
     // Always return success to avoid email enumeration
     const user = await UserModel.findOne({ where: { email: email.toLowerCase() } });
     if (user) {
-      // Delete any existing token for this user
       await PasswordResetTokenModel.destroy({ where: { userId: user.id } });
 
       const token = crypto.randomBytes(32).toString('hex');
@@ -20,12 +20,10 @@ export async function POST(request: NextRequest) {
 
       await PasswordResetTokenModel.create({ id: uuidv4(), userId: user.id, token, expiresAt });
 
-      // Log the reset URL (email sending requires SMTP config)
-      const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/forgot-password?token=${token}`;
-      console.log(`Password reset link for ${email}: ${resetUrl}`);
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const resetUrl = `${appUrl}/forgot-password?token=${token}`;
 
-      // If SMTP is configured, send email here
-      // For now, we just log it
+      await sendPasswordResetEmail(email, resetUrl);
     }
 
     return NextResponse.json({ success: true, message: 'If an account exists, a reset link has been sent.' });

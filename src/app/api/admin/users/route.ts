@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {AuthService} from '@/lib/services/auth-service';
 import {UserModel, FamilySwimmerAssociationModel, SwimClubModel, initializeDatabase} from '@/lib/models';
+import {sendWelcomeEmail} from '@/lib/email';
 import DbConnection from "@/lib/db-connection";
 import jwt from 'jsonwebtoken';
 
@@ -167,6 +168,9 @@ export async function POST(request: NextRequest) {
 
     const authService = AuthService.getInstance();
     const user = await authService.register({...userData, password, clubId, leagueId: leagueId || undefined, phoneNumber: normalizedPhone});
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    await sendWelcomeEmail(email, firstName, password, `${appUrl}/login`);
 
     return NextResponse.json(user);
   } catch (error) {
