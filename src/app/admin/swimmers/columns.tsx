@@ -20,7 +20,8 @@ export const getColumns = (editFunction: (swimmer:Swimmer) => void,
                            deleteFunction: (id:string) => void,
                            swimmers: Swimmer[],
                            clubs: SwimClub[] = [],
-                           isAdmin: boolean = false): ColumnDef<Swimmer>[] => {
+                           isAdmin: boolean = false,
+                           viewSeedTimesFunction?: (swimmer: Swimmer) => void): ColumnDef<Swimmer>[] => {
   const clubColumn: ColumnDef<Swimmer> = {
     id: "clubId",
     accessorFn: (row) => row.clubId ?? 'none',
@@ -136,11 +137,14 @@ export const getColumns = (editFunction: (swimmer:Swimmer) => void,
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => editFunction(row.original)}
-              >
+              <DropdownMenuItem onClick={() => editFunction(row.original)}>
                 Edit
               </DropdownMenuItem>
+              {viewSeedTimesFunction && (
+                <DropdownMenuItem onClick={() => viewSeedTimesFunction(row.original)}>
+                  View Seed Times
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator/>
               <DropdownMenuItem onClick={() => deleteFunction(row.original.id)}>
                 <div className={'text-red-500'}>Delete</div>

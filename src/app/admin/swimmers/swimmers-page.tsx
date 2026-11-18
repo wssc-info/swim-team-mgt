@@ -68,6 +68,9 @@ export default function SwimmersPage() {
   const [importProgress, setImportProgress] = useState<{ currentRow: number, totalRows: number, currentAction: string, errors: string[] } | null>(null);
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const [clubs, setClubs] = useState<SwimClub[]>([]);
+  const [seedTimesSwimmer, setSeedTimesSwimmer] = useState<Swimmer | null>(null);
+  const [seedTimes, setSeedTimes] = useState<Record<string, string> | null>(null);
+  const [loadingSeedTimes, setLoadingSeedTimes] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -109,6 +112,20 @@ export default function SwimmersPage() {
       } catch (error) {
         console.error('Error deleting swimmer:', error);
       }
+    }
+  };
+
+  const handleViewSeedTimes = async (swimmer: Swimmer) => {
+    setSeedTimesSwimmer(swimmer);
+    setSeedTimes(null);
+    setLoadingSeedTimes(true);
+    try {
+      const res = await fetch(`/api/swimmers/${swimmer.id}/best-times`);
+      if (res.ok) setSeedTimes(await res.json());
+    } catch (e) {
+      console.error('Error loading seed times:', e);
+    } finally {
+      setLoadingSeedTimes(false);
     }
   };
 
@@ -506,8 +523,69 @@ export default function SwimmersPage() {
         </div>
       )}
 
+      {/* Seed Times Modal */}
+      {seedTimesSwimmer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b">
+              <div>
+                <h2 className="text-xl font-bold">Seed Times — {seedTimesSwimmer.firstName} {seedTimesSwimmer.lastName}</h2>
+                <p className="text-sm text-gray-500 mt-0.5">Age Group: {seedTimesSwimmer.ageGroup} · {seedTimesSwimmer.gender === 'M' ? 'Male' : 'Female'}</p>
+              </div>
+              <button onClick={() => setSeedTimesSwimmer(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-6">
+              {loadingSeedTimes ? (
+                <p className="text-gray-500 text-center py-8">Loading...</p>
+              ) : !seedTimes || Object.keys(seedTimes).length === 0 ? (
+                <p className="text-gray-500 text-center py-8 italic">No seed times on record for this swimmer.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b text-gray-500 font-medium">
+                      <th className="pb-2 pr-4">Event</th>
+                      <th className="pb-2 pr-4">Course</th>
+                      <th className="pb-2 pr-4">Distance</th>
+                      <th className="pb-2 pr-4">Stroke</th>
+                      <th className="pb-2 text-right">Personal Best</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(seedTimes)
+                      .map(([eventId, time]) => {
+                        const event = allEvents.find((e: any) => e.id === eventId);
+                        return { eventId, time, event };
+                      })
+                      .sort((a, b) => {
+                        if (!a.event || !b.event) return 0;
+                        const courseOrder = ['SCY', 'SCM', 'LCM'];
+                        const cA = courseOrder.indexOf(a.event.course);
+                        const cB = courseOrder.indexOf(b.event.course);
+                        if (cA !== cB) return cA - cB;
+                        return (a.event.distance ?? 0) - (b.event.distance ?? 0);
+                      })
+                      .map(({ eventId, time, event }) => (
+                        <tr key={eventId} className="border-b last:border-0">
+                          <td className="py-2 pr-4 font-medium">{event?.name ?? eventId}</td>
+                          <td className="py-2 pr-4 text-gray-600">{event?.course ?? '—'}</td>
+                          <td className="py-2 pr-4 text-gray-600">{event ? `${event.distance}m` : '—'}</td>
+                          <td className="py-2 pr-4 text-gray-600 capitalize">{event?.stroke ?? '—'}</td>
+                          <td className="py-2 text-right font-mono font-semibold">{time}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="p-4 border-t text-right">
+              <button onClick={() => setSeedTimesSwimmer(null)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <DataTable
-        columns={getColumns(handleEditSwimmer, handleDeleteSwimmer, swimmers, clubs, user?.role === 'admin')}
+        columns={getColumns(handleEditSwimmer, handleDeleteSwimmer, swimmers, clubs, user?.role === 'admin', handleViewSeedTimes)}
         data={swimmers}
         aboveTable={createFilters}
         pageSizeOptions={[10, 20, 50, 100, 200, 400, 9999]}
