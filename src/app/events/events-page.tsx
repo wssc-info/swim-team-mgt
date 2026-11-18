@@ -1,7 +1,7 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub } from '@/lib/api';
+import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub, updateSwimmerMeetEvents } from '@/lib/api';
 import {Meet, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -21,6 +21,15 @@ export function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
   const [activeTab, setActiveTab] = useState<'bySwimmer' | 'byEvent'>('bySwimmer');
+  const [addingToEventKey, setAddingToEventKey] = useState<string | null>(null);
+  const [savingEventAction, setSavingEventAction] = useState(false);
+
+  useEffect(() => {
+    if (!addingToEventKey) return;
+    const handler = () => setAddingToEventKey(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [addingToEventKey]);
 
   const loadSwimmerData = useCallback(async (activeMeet: Meet) => {
     // Fetch swimmers based on user role
@@ -165,6 +174,36 @@ export function EventsPage() {
       </div>
     );
   }
+
+  const handleAddSwimmerToEvent = async (swimmer: SwimmerWithEvents, eventId: string) => {
+    setSavingEventAction(true);
+    try {
+      const current = (swimmer.selectedEvents ?? []).map(se => ({ eventId: se.eventId, seedTime: se.seedTime }));
+      if (current.some(e => e.eventId === eventId)) return;
+      await updateSwimmerMeetEvents(swimmer.id, activeMeet!.id, [...current, { eventId }]);
+      await loadSwimmerData(activeMeet!);
+      setAddingToEventKey(null);
+    } catch (e) {
+      console.error('Error adding swimmer to event:', e);
+    } finally {
+      setSavingEventAction(false);
+    }
+  };
+
+  const handleRemoveSwimmerFromEvent = async (swimmer: SwimmerWithEvents, eventId: string) => {
+    setSavingEventAction(true);
+    try {
+      const updated = (swimmer.selectedEvents ?? [])
+        .filter(se => se.eventId !== eventId)
+        .map(se => ({ eventId: se.eventId, seedTime: se.seedTime }));
+      await updateSwimmerMeetEvents(swimmer.id, activeMeet!.id, updated);
+      await loadSwimmerData(activeMeet!);
+    } catch (e) {
+      console.error('Error removing swimmer from event:', e);
+    } finally {
+      setSavingEventAction(false);
+    }
+  };
 
   // Get available events from meetEvents, filtering by age group and gender
   const getAvailableEventsForSwimmer = (swimmerAgeGroup: string, swimmerGender: 'M' | 'F'): SwimEvent[] => {
@@ -403,14 +442,20 @@ export function EventsPage() {
                   .slice()
                   .sort((a, b) => a.eventNumber - b.eventNumber)
                   .map(meetEvent => {
+                    const eventKey = `${meetEvent.eventId}-${meetEvent.ageGroup}-${meetEvent.gender}`;
                     const event = allEvents.find(e => e.id === meetEvent.eventId);
                     const registered = swimmers.filter(swimmer =>
                       (meetEvent.gender === 'Mixed' || swimmer.gender === meetEvent.gender) &&
                       swimmer.ageGroup === meetEvent.ageGroup &&
                       swimmer.selectedEvents?.some(se => se.eventId === meetEvent.eventId)
-                    );
+                    ).sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`));
+                    const eligible = swimmers.filter(swimmer =>
+                      (meetEvent.gender === 'Mixed' || swimmer.gender === meetEvent.gender) &&
+                      swimmer.ageGroup === meetEvent.ageGroup &&
+                      !swimmer.selectedEvents?.some(se => se.eventId === meetEvent.eventId)
+                    ).sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`));
                     return (
-                      <tr key={`${meetEvent.eventId}-${meetEvent.ageGroup}-${meetEvent.gender}`} className="border-b last:border-0 align-top">
+                      <tr key={eventKey} className="border-b last:border-0 align-top">
                         <td className="py-3 pr-4 text-gray-500">{meetEvent.eventNumber}</td>
                         <td className="py-3 pr-4 font-medium">
                           {event?.name ?? meetEvent.eventId}
@@ -426,14 +471,53 @@ export function EventsPage() {
                             {registered.length}
                           </span>
                         </td>
-                        <td className="py-3 text-gray-700">
-                          {registered.length === 0
-                            ? <span className="text-gray-400 italic">No swimmers registered</span>
-                            : registered
-                                .sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))
-                                .map(s => `${s.lastName}, ${s.firstName}`)
-                                .join(' · ')
-                          }
+                        <td className="py-3">
+                          <div className="flex flex-wrap gap-1 items-center">
+                            {registered.map(s => (
+                              <span key={s.id} className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full">
+                                {s.lastName}, {s.firstName}
+                                <button
+                                  type="button"
+                                  disabled={savingEventAction}
+                                  onClick={() => handleRemoveSwimmerFromEvent(s, meetEvent.eventId)}
+                                  className="text-green-500 hover:text-red-500 disabled:opacity-40 leading-none"
+                                  aria-label="Remove"
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                            {eligible.length > 0 && (
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  disabled={savingEventAction}
+                                  onClick={e => { e.stopPropagation(); setAddingToEventKey(addingToEventKey === eventKey ? null : eventKey); }}
+                                  className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-700 text-xs px-2 py-0.5 rounded-full hover:bg-blue-100 disabled:opacity-40"
+                                >
+                                  + Add Swimmer
+                                </button>
+                                {addingToEventKey === eventKey && (
+                                  <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-md shadow-lg min-w-[180px] max-h-48 overflow-y-auto">
+                                    {eligible.map(s => (
+                                      <button
+                                        key={s.id}
+                                        type="button"
+                                        disabled={savingEventAction}
+                                        onClick={() => handleAddSwimmerToEvent(s, meetEvent.eventId)}
+                                        className="block w-full text-left px-3 py-2 text-sm hover:bg-blue-50 disabled:opacity-40"
+                                      >
+                                        {s.lastName}, {s.firstName}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {registered.length === 0 && eligible.length === 0 && (
+                              <span className="text-gray-400 italic text-xs">No eligible swimmers</span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
