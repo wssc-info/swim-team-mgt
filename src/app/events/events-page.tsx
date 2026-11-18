@@ -140,7 +140,7 @@ export function EventsPage() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Club Selected</h2>
           <p className="text-yellow-700">
-            {user?.role === 'admin'
+            {(user?.role === 'admin' || user?.role === 'leagueAdmin')
               ? 'Please select a club from the navigation bar to manage event registrations.'
               : 'You need to be associated with a club to register for events. Please contact an administrator to assign you to a club.'}
           </p>

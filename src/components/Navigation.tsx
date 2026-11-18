@@ -31,8 +31,19 @@ export default function Navigation() {
 
   useEffect(()=>{
     if(user?.role === 'admin' || user?.role === 'leagueAdmin'){
-      fetchClubs().then(setClubs);
-      setActiveClub(localStorage.getItem('adminClubId') || '');
+      fetchClubs().then(clubList => {
+        setClubs(clubList);
+        const stored = localStorage.getItem('adminClubId');
+        if (stored) {
+          setActiveClub(stored);
+        } else if (user.role === 'leagueAdmin' && clubList.length > 0) {
+          // Auto-select first club for leagueAdmin if none stored
+          localStorage.setItem('adminClubId', clubList[0].id);
+          setActiveClub(clubList[0].id);
+        } else {
+          setActiveClub('');
+        }
+      });
     }
   }, [user])
 
