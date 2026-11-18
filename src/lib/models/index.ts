@@ -858,7 +858,7 @@ export async function initializeDatabase() {
 
 export async function syncModels() {
   await initializeDatabase();
-  await sequelize.sync({ alter: true });
+  await dbConnection.syncModels();
 }
 
 export { sequelize, dbConnection };

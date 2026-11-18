@@ -69,6 +69,10 @@ class DatabaseConnection {
     }
   }
 
+  public async syncModels(): Promise<void> {
+    await this.sequelize.sync({ alter: true });
+  }
+
   public isConnected(): boolean {
     return this.isInitialized;
   }
