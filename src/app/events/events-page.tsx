@@ -20,6 +20,7 @@ export function EventsPage() {
   const [selectedSwimmer, setSelectedSwimmer] = useState<SwimmerWithEvents | null>(null);
   const [loading, setLoading] = useState(true);
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
+  const [activeTab, setActiveTab] = useState<'bySwimmer' | 'byEvent'>('bySwimmer');
 
   const loadSwimmerData = useCallback(async (activeMeet: Meet) => {
     // Fetch swimmers based on user role
@@ -349,23 +350,98 @@ export function EventsPage() {
         </div>
       )}
 
-      {/* Swimmers List */}
+      {/* Tabs */}
       <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold mb-2">
-            Swimmers ({swimmers.length} total)
-          </h2>
-          <p className="text-sm text-gray-600">
-            Select events for each swimmer below
-          </p>
+        <div className="border-b flex">
+          <button
+            onClick={() => setActiveTab('bySwimmer')}
+            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'bySwimmer'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            By Swimmer ({swimmers.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('byEvent')}
+            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'byEvent'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            By Event ({activeMeet.meetEvents.length})
+          </button>
         </div>
-        <div className="p-6">
-          <DataTable 
-            columns={swimmerColumns} 
-            data={swimmers.sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))}
-            aboveTable={createFilters}
-          />
-        </div>
+
+        {activeTab === 'bySwimmer' && (
+          <div className="p-6">
+            <DataTable
+              columns={swimmerColumns}
+              data={swimmers.sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))}
+              aboveTable={createFilters}
+            />
+          </div>
+        )}
+
+        {activeTab === 'byEvent' && (
+          <div className="p-6">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b text-gray-500 font-medium">
+                  <th className="pb-3 pr-4 w-12">#</th>
+                  <th className="pb-3 pr-4">Event</th>
+                  <th className="pb-3 pr-4">Age Group</th>
+                  <th className="pb-3 pr-4">Gender</th>
+                  <th className="pb-3 pr-4 w-16 text-center">Count</th>
+                  <th className="pb-3">Registered Swimmers</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeMeet.meetEvents
+                  .slice()
+                  .sort((a, b) => a.eventNumber - b.eventNumber)
+                  .map(meetEvent => {
+                    const event = allEvents.find(e => e.id === meetEvent.eventId);
+                    const registered = swimmers.filter(swimmer =>
+                      (meetEvent.gender === 'Mixed' || swimmer.gender === meetEvent.gender) &&
+                      swimmer.ageGroup === meetEvent.ageGroup &&
+                      swimmer.selectedEvents?.some(se => se.eventId === meetEvent.eventId)
+                    );
+                    return (
+                      <tr key={`${meetEvent.eventId}-${meetEvent.ageGroup}-${meetEvent.gender}`} className="border-b last:border-0 align-top">
+                        <td className="py-3 pr-4 text-gray-500">{meetEvent.eventNumber}</td>
+                        <td className="py-3 pr-4 font-medium">
+                          {event?.name ?? meetEvent.eventId}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{meetEvent.ageGroup}</span>
+                        </td>
+                        <td className="py-3 pr-4 text-gray-700">
+                          {meetEvent.gender === 'M' ? 'Male' : meetEvent.gender === 'F' ? 'Female' : 'Mixed'}
+                        </td>
+                        <td className="py-3 pr-4 text-center">
+                          <span className={`inline-block min-w-[1.5rem] text-center px-1.5 py-0.5 rounded text-xs font-semibold ${registered.length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+                            {registered.length}
+                          </span>
+                        </td>
+                        <td className="py-3 text-gray-700">
+                          {registered.length === 0
+                            ? <span className="text-gray-400 italic">No swimmers registered</span>
+                            : registered
+                                .sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`))
+                                .map(s => `${s.lastName}, ${s.firstName}`)
+                                .join(' · ')
+                          }
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
