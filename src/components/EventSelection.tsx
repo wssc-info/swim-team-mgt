@@ -57,10 +57,11 @@ interface EventSelectionProps {
   meet: Meet;
   availableEvents: SwimEvent[];
   allEvents?: SwimEvent[];
+  maxEventsPerSwimmer?: number;
   onClose: () => void;
 }
 
-export default function EventSelection({ swimmer, meet, availableEvents, allEvents, onClose }: EventSelectionProps) {
+export default function EventSelection({ swimmer, meet, availableEvents, allEvents, maxEventsPerSwimmer, onClose }: EventSelectionProps) {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [seedTimes, setSeedTimes] = useState<Record<string, string>>({});
   const [activeMeetId, setActiveMeetId] = useState<string | null>(null);
@@ -225,7 +226,14 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
             Event Selection - {swimmer.firstName} {swimmer.lastName}
           </h2>
           <p className="text-sm text-gray-600">
-            Age Group: {swimmer.ageGroup} • {selectedEvents.length} events selected
+            Age Group: {swimmer.ageGroup} •{' '}
+            {maxEventsPerSwimmer && maxEventsPerSwimmer > 0
+              ? <span className={selectedEvents.length >= maxEventsPerSwimmer ? 'text-orange-600 font-medium' : ''}>
+                  {selectedEvents.length} of {maxEventsPerSwimmer} events selected
+                  {selectedEvents.length >= maxEventsPerSwimmer && ' (limit reached)'}
+                </span>
+              : `${selectedEvents.length} events selected`
+            }
           </p>
         </div>
         <button
@@ -319,7 +327,7 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
                       checked={isSelected}
                       onChange={() => handleEventToggle(event.id)}
                       className="mt-1 rounded"
-                      disabled={loading}
+                      disabled={loading || (!isSelected && !!maxEventsPerSwimmer && maxEventsPerSwimmer > 0 && selectedEvents.length >= maxEventsPerSwimmer)}
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">

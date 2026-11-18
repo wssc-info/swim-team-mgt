@@ -51,6 +51,7 @@ export interface Meet {
   meetEvents: MeetEvent[]; // Event numbers and age group assignments
   clubId: string; // The club this meet is for (required)
   againstClubId?: string; // The club this meet is against (optional)
+  familySignupOpen?: boolean; // Whether families can self-select events
   createdAt: string;
 }
 
@@ -110,6 +111,7 @@ export interface SwimClub {
   isActive: boolean;
   activeMeetId?: string;
   leagueId?: string;
+  maxEventsPerSwimmer?: number; // 0 = family read-only, N = family can self-select up to N
 }
 
 export interface League {

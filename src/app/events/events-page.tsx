@@ -2,7 +2,7 @@
 
 import {useState, useEffect, useCallback} from 'react';
 import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub, updateSwimmerMeetEvents } from '@/lib/api';
-import {Meet, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
+import {Meet, SwimClub, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
@@ -17,6 +17,7 @@ export function EventsPage() {
   const { user } = useAuth();
   const [swimmers, setSwimmers] = useState<SwimmerWithEvents[]>([]);
   const [activeMeet, setActiveMeet] = useState<Meet | null>(null);
+  const [club, setClub] = useState<SwimClub | null>(null);
   const [selectedSwimmer, setSelectedSwimmer] = useState<SwimmerWithEvents | null>(null);
   const [loading, setLoading] = useState(true);
   const [allEvents, setAllEvents] = useState<SwimEvent[]>([]);
@@ -76,6 +77,7 @@ export function EventsPage() {
         ]);
 
         setAllEvents(eventsData);
+        setClub(clubData);
 
         const activeMeetFromClub = clubData?.activeMeetId
           ? meetData.find(m => m.id === clubData.activeMeetId) ?? null
@@ -205,6 +207,12 @@ export function EventsPage() {
     }
   };
 
+  const isFamily = user?.role === 'family';
+  const maxEventsPerSwimmer = club?.maxEventsPerSwimmer ?? 0;
+  const signupOpen = activeMeet?.familySignupOpen ?? false;
+  const canFamilySelfSelect = isFamily && maxEventsPerSwimmer > 0 && signupOpen;
+  const familyReadOnly = isFamily && !canFamilySelfSelect;
+
   // Get available events from meetEvents, filtering by age group and gender
   const getAvailableEventsForSwimmer = (swimmerAgeGroup: string, swimmerGender: 'M' | 'F'): SwimEvent[] => {
     return activeMeet.meetEvents
@@ -287,10 +295,10 @@ export function EventsPage() {
         );
       },
     },
-    {
+    ...(familyReadOnly ? [] : [{
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: SwimmerWithEvents } }) => (
         <button
           onClick={() => handleSwimmerSelect(row.original)}
           className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
@@ -298,7 +306,7 @@ export function EventsPage() {
           Select Events
         </button>
       ),
-    },
+    }]),
   ];
 
   // Create filters for the data table
@@ -361,9 +369,9 @@ export function EventsPage() {
   return (
     <div className="max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Event Registration</h1>
-      
+
       {/* Active Meet Info */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-4">
         <h2 className="text-xl font-semibold text-green-800 mb-2">
           {activeMeet.name}
         </h2>
@@ -375,6 +383,29 @@ export function EventsPage() {
         </p>
       </div>
 
+      {/* Family signup status banners */}
+      {isFamily && maxEventsPerSwimmer === 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800 text-sm">
+            <strong>Events are assigned by your coach.</strong> Contact your coach if you have questions about event assignments.
+          </p>
+        </div>
+      )}
+      {isFamily && maxEventsPerSwimmer > 0 && !signupOpen && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <p className="text-yellow-800 text-sm">
+            <strong>Event registration is currently closed.</strong> Your coach will open registration when it is available.
+          </p>
+        </div>
+      )}
+      {isFamily && canFamilySelfSelect && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <p className="text-green-800 text-sm">
+            <strong>Event registration is open.</strong> You can select up to {maxEventsPerSwimmer} event{maxEventsPerSwimmer !== 1 ? 's' : ''} per swimmer.
+          </p>
+        </div>
+      )}
+
       {/* Event Selection Modal */}
       {selectedSwimmer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -384,6 +415,7 @@ export function EventsPage() {
               meet={activeMeet}
               availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup, selectedSwimmer.gender)}
               allEvents={allEvents}
+              maxEventsPerSwimmer={canFamilySelfSelect ? maxEventsPerSwimmer : undefined}
               onClose={handleEventSelectionClose}
             />
           </div>
@@ -403,16 +435,18 @@ export function EventsPage() {
           >
             By Swimmer ({swimmers.length})
           </button>
-          <button
-            onClick={() => setActiveTab('byEvent')}
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'byEvent'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            By Event ({activeMeet.meetEvents.length})
-          </button>
+          {!isFamily && (
+            <button
+              onClick={() => setActiveTab('byEvent')}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'byEvent'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              By Event ({activeMeet.meetEvents.length})
+            </button>
+          )}
         </div>
 
         {activeTab === 'bySwimmer' && (

@@ -17,11 +17,12 @@ interface ClubFormData {
   email: string;
   website: string;
   leagueId: string;
+  maxEventsPerSwimmer: number;
 }
 
 const emptyForm: ClubFormData = {
   name: '', abbreviation: '', address: '', city: '', state: '',
-  zipCode: '', phone: '', email: '', website: '', leagueId: '',
+  zipCode: '', phone: '', email: '', website: '', leagueId: '', maxEventsPerSwimmer: 0,
 };
 
 export default function AdminClubsPage() {
@@ -118,6 +119,7 @@ export default function AdminClubsPage() {
       email: club.email ?? '',
       website: club.website ?? '',
       leagueId: club.leagueId ?? '',
+      maxEventsPerSwimmer: club.maxEventsPerSwimmer ?? 0,
     });
     setShowForm(true);
   };
@@ -139,6 +141,7 @@ export default function AdminClubsPage() {
         website: formData.website || undefined,
         leagueId: formData.leagueId || undefined,
         isActive: true,
+        maxEventsPerSwimmer: formData.maxEventsPerSwimmer,
       };
       if (editing) {
         await updateClubApi(editing.id, payload);
@@ -253,6 +256,19 @@ export default function AdminClubsPage() {
                   </select>
                 </div>
               )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Events per Swimmer (Family)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={formData.maxEventsPerSwimmer}
+                  onChange={e => setFormData(p => ({ ...p, maxEventsPerSwimmer: parseInt(e.target.value) || 0 }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  0 = families view only (events assigned by coach). N = families can self-select up to N events when signup is open.
+                </p>
+              </div>
             </div>
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={saving}
@@ -347,6 +363,7 @@ export default function AdminClubsPage() {
                 <td className="px-4 py-3 hidden xl:table-cell text-gray-500 text-xs space-y-0.5">
                   {club.phone && <div>{club.phone}</div>}
                   {club.email && <div>{club.email}</div>}
+                  <div className="text-gray-400">Max events: {club.maxEventsPerSwimmer ?? 0}</div>
                 </td>
                 <td className="px-4 py-3 text-center">
                   <button

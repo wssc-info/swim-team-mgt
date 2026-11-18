@@ -105,11 +105,12 @@ interface MeetAttributes {
   meetEvents: string; // JSON string of MeetEvent[]
   clubId: string;
   againstClubId?: string;
+  familySignupOpen?: boolean;
 }
 
 type MeetCreationAttributes = Optional<MeetAttributes, 'id'>
 
-export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes> 
+export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes>
   implements MeetAttributes {
   declare id: string;
   declare name: string;
@@ -120,6 +121,7 @@ export class MeetModel extends Model<MeetAttributes, MeetCreationAttributes>
   declare meetEvents: string;
   declare clubId: string;
   declare againstClubId?: string;
+  declare familySignupOpen?: boolean;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -173,6 +175,11 @@ MeetModel.init(
         model: 'swim_clubs',
         key: 'id'
       }
+    },
+    familySignupOpen: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   },
   {
@@ -572,6 +579,7 @@ interface SwimClubAttributes {
   isActive: boolean;
   activeMeetId?: string | null;
   leagueId?: string | null;
+  maxEventsPerSwimmer?: number;
 }
 
 type SwimClubCreationAttributes = Optional<SwimClubAttributes, 'id'>
@@ -591,6 +599,7 @@ export class SwimClubModel extends Model<SwimClubAttributes, SwimClubCreationAtt
   declare isActive: boolean;
   declare activeMeetId?: string | null;
   declare leagueId?: string | null;
+  declare maxEventsPerSwimmer?: number;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -657,6 +666,11 @@ SwimClubModel.init(
     leagueId: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    maxEventsPerSwimmer: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
   },
   {

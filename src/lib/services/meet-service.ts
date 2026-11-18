@@ -39,6 +39,7 @@ export class MeetService {
         meetEvents: JSON.parse(meet.meetEvents || '[]'),
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
+        familySignupOpen: meet.familySignupOpen ?? false,
         createdAt: (meet.createdAt || new Date()).toISOString(),
       };
   }
@@ -64,6 +65,7 @@ export class MeetService {
         meetEvents: JSON.parse(meet.meetEvents || '[]'),
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
+        familySignupOpen: meet.familySignupOpen ?? false,
         createdAt: (meet.createdAt || new Date()).toISOString(),
       }));
     } catch (error) {
@@ -98,6 +100,7 @@ export class MeetService {
         meetEvents: JSON.parse(meet.meetEvents || '[]'),
         clubId: meet.clubId,
         againstClubId: meet.againstClubId,
+        familySignupOpen: meet.familySignupOpen ?? false,
         createdAt: meet.createdAt.toISOString(),
       };
     } catch (error) {

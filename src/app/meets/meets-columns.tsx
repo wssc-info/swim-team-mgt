@@ -21,11 +21,14 @@ export const createMeetsColumns =
       {
         accessorKey: "name",
         header: "Name",
-        cell: ({row}) => (<div>
+        cell: ({row}) => (<div className="flex items-center gap-2 flex-wrap">
           {row.original.name}
-            { row.original.id === activeMeet?.id &&
-              <Badge variant={"outline"} className='bg-green-50 ml-4'>Active</Badge>
-            }
+          { row.original.id === activeMeet?.id &&
+            <Badge variant={"outline"} className='bg-green-50'>Active</Badge>
+          }
+          { row.original.familySignupOpen &&
+            <Badge variant={"outline"} className='bg-blue-50 text-blue-700 border-blue-200'>Signup Open</Badge>
+          }
         </div>),
       },
       {
@@ -93,6 +96,10 @@ export const createMeetsColumns =
                 onClick={() => actionFunction("edit", row.original)}
               >
                 Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator/>
+              <DropdownMenuItem onClick={() => actionFunction("toggleFamilySignup", row.original)}>
+                <div>{row.original.familySignupOpen ? 'Close Family Signup' : 'Open Family Signup'}</div>
               </DropdownMenuItem>
               <DropdownMenuSeparator/>
               <DropdownMenuItem onClick={() => actionFunction("clone", row.original)}>

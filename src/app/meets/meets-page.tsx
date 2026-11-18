@@ -66,6 +66,8 @@ export default function MeetsPage() {
       handleCloneMeet(meet);
     } else if ("activate" === action && meet?.id && club?.id) {
       handleSetActive(meet?.id);
+    } else if ("toggleFamilySignup" === action && meet?.id) {
+      handleToggleFamilySignup(meet);
     }
   }
 
@@ -87,6 +89,20 @@ export default function MeetsPage() {
       setClub(prevState => ({...prevState, activeMeetId: id} as SwimClub));
     } catch (error) {
       console.error('Error setting active meet:', error);
+    }
+  };
+
+  const handleToggleFamilySignup = async (meet: Meet) => {
+    try {
+      await fetch(`/api/meets/${meet.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ familySignupOpen: !meet.familySignupOpen }),
+      });
+      const updatedMeets = await fetchMeets(false, getClubId(user));
+      setMeets(updatedMeets);
+    } catch (error) {
+      console.error('Error toggling family signup:', error);
     }
   };
 
@@ -191,12 +207,20 @@ export default function MeetsPage() {
                   </details>
                 </div>
               </div>
-              <div className="flex space-x-2 ml-4">
+              <div className="flex space-x-2 ml-4 flex-wrap gap-2">
                 <button
                   onClick={() => handleEditMeet(activeMeet)}
                   className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                 >
                   Edit
+                </button>
+                <button
+                  onClick={() => handleToggleFamilySignup(activeMeet)}
+                  className={`px-3 py-1 rounded text-sm border ${activeMeet.familySignupOpen
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}`}
+                >
+                  {activeMeet.familySignupOpen ? 'Close Family Signup' : 'Open Family Signup'}
                 </button>
               </div>
             </div>
