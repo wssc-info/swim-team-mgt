@@ -16,9 +16,15 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
     const clubId = searchParams.get('clubId');
     const showInactive = searchParams.get('showInactive') === 'true';
-    
+
+    // Family users always see only their associated swimmers, regardless of params
+    if (user.role === 'family') {
+      const swimmers = await swimmerService.getAssociatedSwimmers(user.id);
+      return NextResponse.json(swimmers);
+    }
+
     if (userId) {
-      // Fetch swimmers associated with the specific user (family)
+      // Fetch swimmers associated with the specific user (admin/coach looking up a family)
       const swimmers = await swimmerService.getAssociatedSwimmers(userId);
       return NextResponse.json(swimmers);
     } else if (clubId) {
