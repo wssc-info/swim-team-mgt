@@ -235,6 +235,7 @@ export default function TimesPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      try { formData.append('clubId', getClubId(user)); } catch { /* no club selected */ }
 
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/times/import', {

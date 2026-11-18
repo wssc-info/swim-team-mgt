@@ -3,7 +3,7 @@ import RelaysPage from './relays-page';
 
 export default function Page() {
   return (
-    <ProtectedRoute allowedRoles={['coach','admin']}>
+    <ProtectedRoute allowedRoles={['coach', 'admin', 'leagueAdmin']}>
       <RelaysPage />
     </ProtectedRoute>
   );

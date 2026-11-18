@@ -19,7 +19,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Must be logged in' }, { status: 401 });
     }
 
-    if (user.role !== 'admin' && user.role !== 'coach') {
+    if (user.role !== 'admin' && user.role !== 'coach' && user.role !== 'leagueAdmin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -89,7 +89,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Must be logged in' }, { status: 401 });
     }
 
-    if (user.role !== 'admin' && user.role !== 'coach') {
+    if (user.role !== 'admin' && user.role !== 'coach' && user.role !== 'leagueAdmin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

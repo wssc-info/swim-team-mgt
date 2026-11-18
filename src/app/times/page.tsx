@@ -5,7 +5,7 @@ import TimesPage from "@/app/times/times-page";
 
 export default function Page() {
     return (
-        <ProtectedRoute allowedRoles={['coach', 'admin']}>
+        <ProtectedRoute allowedRoles={['coach', 'admin', 'leagueAdmin']}>
             <TimesPage/>
         </ProtectedRoute>
     );

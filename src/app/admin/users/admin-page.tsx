@@ -5,6 +5,7 @@ import UserForm from '@/components/UserForm';
 import FamilyAssociationForm from '@/components/FamilyAssociationForm';
 import {User, Swimmer} from '@/lib/types';
 import {authenticatedFetch, fetchSwimmers} from '@/lib/api';
+import {getClubId} from '@/lib/utils';
 import {useAuth} from '@/lib/auth-context';
 import { DataTable } from '@/components/datatable/dataTable';
 import { createUserColumns } from '@/app/admin/users/columns';
@@ -27,15 +28,18 @@ export default function AdminPage() {
   const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentUser) loadData();
+  }, [currentUser]);
 
   const loadData = async () => {
     setLoading(true);
+    let clubId: string | undefined;
+    try { clubId = getClubId(currentUser); } catch { /* no club */ }
     try {
+      const usersUrl = clubId ? `/api/admin/users?clubId=${clubId}` : '/api/admin/users';
       const [usersResponse, swimmersData] = await Promise.all([
-        authenticatedFetch('/api/admin/users'),
-        fetchSwimmers()
+        authenticatedFetch(usersUrl),
+        fetchSwimmers(clubId)
       ]);
 
       if (usersResponse.ok) {

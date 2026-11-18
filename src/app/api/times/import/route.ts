@@ -148,7 +148,9 @@ export async function POST(request: NextRequest) {
     const parseResult = parseSdifContent(sdifContent);
 
     // Load existing swimmers for this club into a lightweight working list
-    const swimmerWhere = user.clubId ? { clubId: user.clubId } : {};
+    const formClubId = formData.get('clubId') as string | null;
+    const effectiveClubId = user.clubId || formClubId || null;
+    const swimmerWhere = effectiveClubId ? { clubId: effectiveClubId } : {};
     const swimmerModels = await SwimmerModel.findAll({ where: swimmerWhere });
     const knownSwimmers: WorkingSwimmer[] = swimmerModels.map(s => ({
       id: s.id,

@@ -43,7 +43,7 @@ export function getClubId(user: Partial<User> | null): string{
   if(user?.clubId) {
     return user.clubId;
   }
-  if(user?.role === "admin"){
+  if(user?.role === "admin" || user?.role === "leagueAdmin"){
     const clubId = localStorage.getItem('adminClubId');
     if (clubId) {
       return clubId;

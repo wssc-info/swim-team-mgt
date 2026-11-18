@@ -6,7 +6,7 @@ import { Op } from 'sequelize';
 export async function POST(request: NextRequest) {
   try {
     const user = await AuthService.getInstance().getUser(request);
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'leagueAdmin')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

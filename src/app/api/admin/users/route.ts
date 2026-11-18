@@ -34,15 +34,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query conditions based on current user's role and club
-    const whereConditions: any = (currentUser.clubId ? {
-      clubId: currentUser.clubId
-    } : {});
-    console.log(whereConditions)
-
-    // If current user is not admin and has a club, filter by club
-    if (currentUser?.role !== 'admin' && currentUser?.clubId) {
-      whereConditions.clubId = currentUser.clubId;
-    }
+    const paramClubId = request.nextUrl.searchParams.get('clubId');
+    const isPrivileged = currentUser.role === 'admin' || currentUser.role === 'leagueAdmin';
+    const effectiveClubId = currentUser.clubId || (isPrivileged ? paramClubId : null);
+    const whereConditions: any = effectiveClubId ? { clubId: effectiveClubId } : {};
 
     // Get users with their associations
     const users = await UserModel.findAll({

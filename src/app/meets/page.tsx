@@ -5,7 +5,7 @@ import MeetsPage from "@/app/meets/meets-page";
 
 export default function Page() {
     return (
-        <ProtectedRoute allowedRoles={['coach', 'admin']}>
+        <ProtectedRoute allowedRoles={['coach', 'admin', 'leagueAdmin']}>
             <MeetsPage/>
         </ProtectedRoute>
     );

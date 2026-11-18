@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     } else if (clubId) {
       // Fetch swimmers for a specific club
       // Only admins can query any club, others can only query their own club
-      if (user.role !== 'admin' && clubId !== user.clubId) {
+      if (user.role !== 'admin' && user.role !== 'leagueAdmin' && clubId !== user.clubId) {
         return NextResponse.json({ error: 'You can only access swimmers from your own club' }, { status: 403 });
       }
       const swimmers = await swimmerService.getSwimmers(clubId, showInactive? undefined : true);

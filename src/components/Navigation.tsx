@@ -30,7 +30,7 @@ export default function Navigation() {
   };
 
   useEffect(()=>{
-    if(user?.role === 'admin'){
+    if(user?.role === 'admin' || user?.role === 'leagueAdmin'){
       fetchClubs().then(setClubs);
       setActiveClub(localStorage.getItem('adminClubId') || '');
     }
@@ -61,7 +61,7 @@ export default function Navigation() {
                  />
         </Link>
         <div className="flex items-center space-x-4">
-          {(user.role === 'admin' && !!clubs) && (
+          {((user.role === 'admin' || user.role === 'leagueAdmin') && !!clubs) && (
             <>
               <Select value={activeClub || "---"}
                       onValueChange={adminClubChange}>
@@ -69,12 +69,10 @@ export default function Navigation() {
                   <SelectValue className="text-white" placeholder="Club to Use..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="---">No Club</SelectItem>
-                  {
-                    clubs.map((club) => {
-                      return <SelectItem value={club.id} key={club.id}>{club.name}</SelectItem>
-                    })
-                  }
+                  {user.role === 'admin' && <SelectItem value="---">No Club</SelectItem>}
+                  {clubs.map((club) => (
+                    <SelectItem value={club.id} key={club.id}>{club.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </>

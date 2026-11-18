@@ -5,7 +5,7 @@ import {EventsPage} from "@/app/events/events-page";
 
 export default function Page() {
   return (
-      <ProtectedRoute allowedRoles={['coach', 'family', 'admin']}>
+      <ProtectedRoute allowedRoles={['coach', 'family', 'admin', 'leagueAdmin']}>
         <EventsPage/>
       </ProtectedRoute>
   );

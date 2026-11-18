@@ -5,7 +5,7 @@ import SwimmersPage from "@/app/admin/swimmers/swimmers-page";
 
 export default function Page() {
     return (
-        <ProtectedRoute allowedRoles={['coach', 'admin']}>
+        <ProtectedRoute allowedRoles={['coach', 'admin', 'leagueAdmin']}>
             <SwimmersPage/>
         </ProtectedRoute>
     );
