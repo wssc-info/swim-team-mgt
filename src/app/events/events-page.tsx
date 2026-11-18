@@ -1,8 +1,8 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub, updateSwimmerMeetEvents } from '@/lib/api';
-import {Meet, SwimClub, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
+import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub, updateSwimmerMeetEvents, fetchRelayTeams } from '@/lib/api';
+import {Meet, RelayTeam, SwimClub, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
@@ -24,6 +24,8 @@ export function EventsPage() {
   const [activeTab, setActiveTab] = useState<'bySwimmer' | 'byEvent'>('bySwimmer');
   const [addingToEventKey, setAddingToEventKey] = useState<string | null>(null);
   const [savingEventAction, setSavingEventAction] = useState(false);
+  const [showEventDetails, setShowEventDetails] = useState(false);
+  const [relayTeams, setRelayTeams] = useState<RelayTeam[]>([]);
 
   useEffect(() => {
     if (!addingToEventKey) return;
@@ -43,19 +45,19 @@ export function EventsPage() {
       swimmerData = await fetchSwimmers(clubId ?? undefined);
     }
 
-    const allEventsForMeet = await fetchSwimmerMeetEvents(activeMeet.id);
-    console.log("All events for meet:", allEventsForMeet);
-    const swimmersWithEvents = await Promise.all(
-      swimmerData.map(async (swimmer) => {
-        try {
-          const selectedEvents = allEventsForMeet.filter(event=> event.swimmerId === swimmer.id);
-          return { ...swimmer, selectedEvents };
-        } catch (error) {
-          console.error(`Error loading events for swimmer ${swimmer.id}:`, error);
-          return { ...swimmer, selectedEvents: [] };
-        }
-      })
-    );
+    let clubId: string | null = null;
+    try { clubId = getClubId(user); } catch { /* ignore */ }
+
+    const [allEventsForMeet, relayTeamsData] = await Promise.all([
+      fetchSwimmerMeetEvents(activeMeet.id),
+      fetchRelayTeams(activeMeet.id, clubId ?? undefined),
+    ]);
+    setRelayTeams(relayTeamsData);
+
+    const swimmersWithEvents = swimmerData.map((swimmer) => {
+      const selectedEvents = allEventsForMeet.filter(event => event.swimmerId === swimmer.id);
+      return { ...swimmer, selectedEvents };
+    });
     setSwimmers(swimmersWithEvents);
   }, [user?.id, user?.role]);
 
@@ -216,12 +218,12 @@ export function EventsPage() {
   // Get available events from meetEvents, filtering by age group and gender
   const getAvailableEventsForSwimmer = (swimmerAgeGroup: string, swimmerGender: 'M' | 'F'): SwimEvent[] => {
     return activeMeet.meetEvents
-      .filter(meetEvent => 
-        meetEvent.ageGroup === swimmerAgeGroup && 
+      .filter(meetEvent =>
+        meetEvent.ageGroup === swimmerAgeGroup &&
         (meetEvent.gender === swimmerGender || meetEvent.gender === 'Mixed')
       )
       .map(meetEvent => allEvents.find(e => e.id === meetEvent.eventId))
-      .filter(Boolean) as SwimEvent[];
+      .filter((e): e is SwimEvent => !!e && !e.isRelay);
   };
 
   // Get all unique events from meetEvents for general display
@@ -277,11 +279,40 @@ export function EventsPage() {
     {
       id: "eventsSelected",
       header: "Events Selected",
-      cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.selectedEvents?.length || 0}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const swimmer = row.original;
+        const selected = swimmer.selectedEvents || [];
+        const swimmerRelays = relayTeams.filter(rt => rt.swimmers.includes(swimmer.id));
+        const total = selected.length + swimmerRelays.length;
+        if (!showEventDetails) {
+          return <span className="text-sm">{total}</span>;
+        }
+        if (total === 0) {
+          return <span className="text-sm text-gray-400">None</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {selected.map(se => {
+              const meetEvent = activeMeet?.meetEvents.find(me => me.eventId === se.eventId);
+              const event = allEvents.find(e => e.id === se.eventId);
+              return (
+                <span key={se.eventId} className="inline-flex items-center bg-blue-50 border border-blue-200 text-blue-800 text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
+                  {meetEvent ? `#${meetEvent.eventNumber} ` : ''}{event?.name ?? se.eventId}
+                </span>
+              );
+            })}
+            {swimmerRelays.map(rt => {
+              const meetEvent = activeMeet?.meetEvents.find(me => me.eventId === rt.eventId);
+              const event = allEvents.find(e => e.id === rt.eventId);
+              return (
+                <span key={rt.id} className="inline-flex items-center bg-purple-50 border border-purple-200 text-purple-800 text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
+                  {meetEvent ? `#${meetEvent.eventNumber} ` : ''}{event?.name ?? rt.eventId} (R)
+                </span>
+              );
+            })}
+          </div>
+        );
+      },
     },
     {
       id: "eventsAvailable",
@@ -362,6 +393,17 @@ export function EventsPage() {
             <SelectItem value="ALL">All Genders</SelectItem>
           </SelectContent>
         </Select>
+        <button
+          type="button"
+          onClick={() => setShowEventDetails(v => !v)}
+          className={`ml-4 px-3 py-1.5 rounded text-sm border transition-colors ${
+            showEventDetails
+              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          {showEventDetails ? 'Hide Events' : 'Show Events'}
+        </button>
       </>
     );
   };
@@ -477,21 +519,30 @@ export function EventsPage() {
                   .map(meetEvent => {
                     const eventKey = `${meetEvent.eventId}-${meetEvent.ageGroup}-${meetEvent.gender}`;
                     const event = allEvents.find(e => e.id === meetEvent.eventId);
-                    const registered = swimmers.filter(swimmer =>
+                    const isRelayEvent = event?.isRelay ?? false;
+                    // For relay events, show teams from relayTeams; for individual events, show from selectedEvents
+                    const eventRelayTeams = isRelayEvent
+                      ? relayTeams.filter(rt => rt.eventId === meetEvent.eventId && rt.ageGroup === meetEvent.ageGroup)
+                      : [];
+                    const registered = isRelayEvent ? [] : swimmers.filter(swimmer =>
                       (meetEvent.gender === 'Mixed' || swimmer.gender === meetEvent.gender) &&
                       swimmer.ageGroup === meetEvent.ageGroup &&
                       swimmer.selectedEvents?.some(se => se.eventId === meetEvent.eventId)
                     ).sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`));
-                    const eligible = swimmers.filter(swimmer =>
+                    const eligible = isRelayEvent ? [] : swimmers.filter(swimmer =>
                       (meetEvent.gender === 'Mixed' || swimmer.gender === meetEvent.gender) &&
                       swimmer.ageGroup === meetEvent.ageGroup &&
                       !swimmer.selectedEvents?.some(se => se.eventId === meetEvent.eventId)
                     ).sort((a, b) => `${a.lastName}, ${a.firstName}`.localeCompare(`${b.lastName}, ${b.firstName}`));
+                    const displayCount = isRelayEvent ? eventRelayTeams.length : registered.length;
                     return (
                       <tr key={eventKey} className="border-b last:border-0 align-top">
                         <td className="py-3 pr-4 text-gray-500">{meetEvent.eventNumber}</td>
                         <td className="py-3 pr-4 font-medium">
-                          {event?.name ?? meetEvent.eventId}
+                          <div className="flex items-center gap-1.5">
+                            {event?.name ?? meetEvent.eventId}
+                            {isRelayEvent && <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Relay</span>}
+                          </div>
                         </td>
                         <td className="py-3 pr-4">
                           <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{meetEvent.ageGroup}</span>
@@ -500,59 +551,80 @@ export function EventsPage() {
                           {meetEvent.gender === 'M' ? 'Male' : meetEvent.gender === 'F' ? 'Female' : 'Mixed'}
                         </td>
                         <td className="py-3 pr-4 text-center">
-                          <span className={`inline-block min-w-[1.5rem] text-center px-1.5 py-0.5 rounded text-xs font-semibold ${registered.length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
-                            {registered.length}
+                          <span className={`inline-block min-w-[1.5rem] text-center px-1.5 py-0.5 rounded text-xs font-semibold ${displayCount > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+                            {displayCount}
                           </span>
                         </td>
                         <td className="py-3">
-                          <div className="flex flex-wrap gap-1 items-center">
-                            {registered.map(s => (
-                              <span key={s.id} className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full">
-                                {s.lastName}, {s.firstName}
-                                {!isFamily && (
+                          {isRelayEvent ? (
+                            <div className="flex flex-col gap-2">
+                              {eventRelayTeams.length === 0 ? (
+                                <span className="text-gray-400 italic text-xs">No relay teams assigned</span>
+                              ) : (
+                                eventRelayTeams.map(rt => {
+                                  const teamSwimmerNames = rt.swimmers
+                                    .map(id => swimmers.find(s => s.id === id))
+                                    .filter(Boolean)
+                                    .map(s => `${s!.lastName}, ${s!.firstName}`);
+                                  return (
+                                    <div key={rt.id} className="text-xs">
+                                      <span className="font-medium text-purple-800">{rt.name}:</span>{' '}
+                                      <span className="text-gray-700">{teamSwimmerNames.join(' · ') || 'No swimmers assigned'}</span>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-1 items-center">
+                              {registered.map(s => (
+                                <span key={s.id} className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full">
+                                  {s.lastName}, {s.firstName}
+                                  {!isFamily && (
+                                    <button
+                                      type="button"
+                                      disabled={savingEventAction}
+                                      onClick={() => handleRemoveSwimmerFromEvent(s, meetEvent.eventId)}
+                                      className="text-green-500 hover:text-red-500 disabled:opacity-40 leading-none"
+                                      aria-label="Remove"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </span>
+                              ))}
+                              {!isFamily && eligible.length > 0 && (
+                                <div className="relative">
                                   <button
                                     type="button"
                                     disabled={savingEventAction}
-                                    onClick={() => handleRemoveSwimmerFromEvent(s, meetEvent.eventId)}
-                                    className="text-green-500 hover:text-red-500 disabled:opacity-40 leading-none"
-                                    aria-label="Remove"
+                                    onClick={e => { e.stopPropagation(); setAddingToEventKey(addingToEventKey === eventKey ? null : eventKey); }}
+                                    className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-700 text-xs px-2 py-0.5 rounded-full hover:bg-blue-100 disabled:opacity-40"
                                   >
-                                    ✕
+                                    + Add Swimmer
                                   </button>
-                                )}
-                              </span>
-                            ))}
-                            {!isFamily && eligible.length > 0 && (
-                              <div className="relative">
-                                <button
-                                  type="button"
-                                  disabled={savingEventAction}
-                                  onClick={e => { e.stopPropagation(); setAddingToEventKey(addingToEventKey === eventKey ? null : eventKey); }}
-                                  className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-700 text-xs px-2 py-0.5 rounded-full hover:bg-blue-100 disabled:opacity-40"
-                                >
-                                  + Add Swimmer
-                                </button>
-                                {addingToEventKey === eventKey && (
-                                  <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-md shadow-lg min-w-[180px] max-h-48 overflow-y-auto">
-                                    {eligible.map(s => (
-                                      <button
-                                        key={s.id}
-                                        type="button"
-                                        disabled={savingEventAction}
-                                        onClick={() => handleAddSwimmerToEvent(s, meetEvent.eventId)}
-                                        className="block w-full text-left px-3 py-2 text-sm hover:bg-blue-50 disabled:opacity-40"
-                                      >
-                                        {s.lastName}, {s.firstName}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            {registered.length === 0 && eligible.length === 0 && (
-                              <span className="text-gray-400 italic text-xs">No eligible swimmers</span>
-                            )}
-                          </div>
+                                  {addingToEventKey === eventKey && (
+                                    <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-md shadow-lg min-w-[180px] max-h-48 overflow-y-auto">
+                                      {eligible.map(s => (
+                                        <button
+                                          key={s.id}
+                                          type="button"
+                                          disabled={savingEventAction}
+                                          onClick={() => handleAddSwimmerToEvent(s, meetEvent.eventId)}
+                                          className="block w-full text-left px-3 py-2 text-sm hover:bg-blue-50 disabled:opacity-40"
+                                        >
+                                          {s.lastName}, {s.firstName}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {registered.length === 0 && eligible.length === 0 && (
+                                <span className="text-gray-400 italic text-xs">No eligible swimmers</span>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
