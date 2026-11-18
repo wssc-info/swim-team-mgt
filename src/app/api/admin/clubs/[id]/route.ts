@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SwimClubModel, initializeDatabase } from '@/lib/models';
+import { AuthService } from '@/lib/services/auth-service';
 
 export async function GET(
   request: NextRequest,
@@ -28,10 +29,30 @@ export async function PUT(
 ) {
   try {
     await initializeDatabase();
-    
+
+    const user = await AuthService.getInstance().getUser(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    // Coaches can only update their own club; admins and leagueAdmins can update any
+    if (user.role === 'coach' && user.clubId !== id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (user.role === 'family') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const updates = await request.json();
-    
+
+    // Coaches cannot change structural fields
+    if (user.role === 'coach') {
+      const allowed = ['name', 'phone', 'email', 'website', 'address', 'city', 'state', 'zipCode', 'maxEventsPerSwimmer'];
+      Object.keys(updates).forEach(k => { if (!allowed.includes(k)) delete updates[k]; });
+    }
+
     const club = await SwimClubModel.findByPk(id);
     if (!club) {
       return NextResponse.json({ error: 'Swim club not found' }, { status: 404 });
@@ -43,7 +64,7 @@ export async function PUT(
     }
 
     await club.update(updates);
-    
+
     return NextResponse.json(club);
   } catch (error: any) {
     console.error('Error updating swim club:', error);

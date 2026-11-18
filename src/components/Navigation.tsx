@@ -133,6 +133,11 @@ export default function Navigation() {
           <Link href="/events" className="hover:underline cursor-pointer">
             Events
           </Link>
+          {(user.role === 'coach' || user.role === 'admin' || user.role === 'leagueAdmin') && (
+            <Link href="/settings" className="hover:underline cursor-pointer">
+              Team Settings
+            </Link>
+          )}
           {(user.role === 'family') && (
             <Link href="/my-swimmers" className="hover:underline cursor-pointer">
               Swimmer Times
