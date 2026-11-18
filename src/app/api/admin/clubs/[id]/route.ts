@@ -4,7 +4,10 @@ import { AuthService } from '@/lib/services/auth-service';
 
 function canAccessClub(userRole: string, userLeagueId: string | undefined, clubLeagueId: string | null | undefined): boolean {
   if (userRole === 'admin') return true;
-  if (userRole === 'leagueAdmin') return !!userLeagueId && clubLeagueId === userLeagueId;
+  if (userRole === 'leagueAdmin') {
+    if (!userLeagueId) return true; // no league restriction on this admin
+    return clubLeagueId === userLeagueId;
+  }
   return false;
 }
 
