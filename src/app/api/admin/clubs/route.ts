@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SwimClubModel, initializeDatabase } from '@/lib/models';
+import { AuthService } from '@/lib/services/auth-service';
 import { v4 as uuidv4 } from 'uuid';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await initializeDatabase();
-    
-    const clubs = await SwimClubModel.findAll({
-      order: [['name', 'ASC']]
-    });
-    
+
+    const user = await AuthService.getInstance().getUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin' && user.role !== 'leagueAdmin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const where: Record<string, any> = {};
+    if (user.role === 'leagueAdmin' && user.leagueId) {
+      where.leagueId = user.leagueId;
+    }
+
+    const clubs = await SwimClubModel.findAll({ where, order: [['name', 'ASC']] });
     return NextResponse.json(clubs);
   } catch (error) {
     console.error('Error fetching swim clubs:', error);
@@ -20,15 +29,24 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await initializeDatabase();
-    
+
+    const user = await AuthService.getInstance().getUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin' && user.role !== 'leagueAdmin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const clubData = await request.json();
-    const { name, abbreviation, address, city, state, zipCode, phone, email, website, leagueId } = clubData;
+    const { name, abbreviation, address, city, state, zipCode, phone, email, website, maxEventsPerSwimmer } = clubData;
 
     if (!name || !abbreviation || !address || !city || !state || !zipCode) {
       return NextResponse.json({
         error: 'Name, abbreviation, address, city, state, and zip code are required'
       }, { status: 400 });
     }
+
+    // League admins can only create clubs in their own league
+    const leagueId = user.role === 'leagueAdmin' ? user.leagueId : (clubData.leagueId || null);
 
     const club = await SwimClubModel.create({
       id: uuidv4(),
@@ -42,19 +60,16 @@ export async function POST(request: NextRequest) {
       email,
       website,
       leagueId: leagueId || null,
-      isActive: true
+      isActive: true,
+      maxEventsPerSwimmer: maxEventsPerSwimmer ?? 0,
     });
 
     return NextResponse.json(club, { status: 201 });
   } catch (error: any) {
     console.error('Error creating swim club:', error);
-    
     if (error.name === 'SequelizeUniqueConstraintError') {
-      return NextResponse.json({ 
-        error: 'A club with this abbreviation already exists' 
-      }, { status: 409 });
+      return NextResponse.json({ error: 'A club with this abbreviation already exists' }, { status: 409 });
     }
-    
     return NextResponse.json({ error: 'Failed to create swim club' }, { status: 500 });
   }
 }

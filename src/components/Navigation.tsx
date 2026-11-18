@@ -112,12 +112,16 @@ export default function Navigation() {
                   <DropdownMenuItem onClick={() => navigate('/admin/meet-templates', () => setAdminOpen(false))}>
                     Meet Templates
                   </DropdownMenuItem>
-                  {user.role === 'admin' && (
+                  {(user.role === 'admin' || user.role === 'leagueAdmin') && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate('/admin/clubs', () => setAdminOpen(false))}>
                         Clubs
                       </DropdownMenuItem>
+                    </>
+                  )}
+                  {user.role === 'admin' && (
+                    <>
                       <DropdownMenuItem onClick={() => navigate('/admin/leagues', () => setAdminOpen(false))}>
                         Leagues
                       </DropdownMenuItem>

@@ -5,7 +5,7 @@ import ClubsPage from "@/app/admin/clubs/admin-clubs-page";
 
 export default function Page() {
   return (
-    <ProtectedRoute allowedRoles={['admin']}>
+    <ProtectedRoute allowedRoles={['admin', 'leagueAdmin']}>
       <ClubsPage/>
     </ProtectedRoute>
   );
