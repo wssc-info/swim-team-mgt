@@ -22,14 +22,45 @@ interface SwimmerMeetEvent {
   createdAt: string;
 }
 
+// Multiply these factors by the source time to get the target course time
+const COURSE_FACTORS: Record<string, Record<string, number>> = {
+  SCM: { SCY: 0.900, LCM: 1.030 },
+  LCM: { SCY: 0.874, SCM: 0.971 },
+  SCY: { SCM: 1.111, LCM: 1.145 },
+};
+
+function parseTimeToSeconds(time: string): number {
+  const parts = time.split(':');
+  if (parts.length !== 2) return NaN;
+  const mins = parseInt(parts[0], 10);
+  const secs = parseFloat(parts[1]);
+  return mins * 60 + secs;
+}
+
+function formatSeconds(total: number): string {
+  const mins = Math.floor(total / 60);
+  const secs = total - mins * 60;
+  return `${mins}:${secs.toFixed(2).padStart(5, '0')}`;
+}
+
+function convertCourseTime(time: string, fromCourse: string, toCourse: string): string | null {
+  if (fromCourse === toCourse) return time;
+  const factor = COURSE_FACTORS[fromCourse]?.[toCourse];
+  if (!factor) return null;
+  const secs = parseTimeToSeconds(time);
+  if (isNaN(secs)) return null;
+  return formatSeconds(secs * factor);
+}
+
 interface EventSelectionProps {
   swimmer: SwimmerWithEvents;
   meet: Meet;
   availableEvents: SwimEvent[];
+  allEvents?: SwimEvent[];
   onClose: () => void;
 }
 
-export default function EventSelection({ swimmer, meet, availableEvents, onClose }: EventSelectionProps) {
+export default function EventSelection({ swimmer, meet, availableEvents, allEvents, onClose }: EventSelectionProps) {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [seedTimes, setSeedTimes] = useState<Record<string, string>>({});
   const [activeMeetId, setActiveMeetId] = useState<string | null>(null);
@@ -40,6 +71,7 @@ export default function EventSelection({ swimmer, meet, availableEvents, onClose
   });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [convertedEventIds, setConvertedEventIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadSwimmerData = async () => {
@@ -64,8 +96,32 @@ export default function EventSelection({ swimmer, meet, availableEvents, onClose
 
         if (response.ok) {
           const bestTimes = await response.json();
-          // Merge best times with existing seed times, preferring existing seed times
-          setSeedTimes({ ...bestTimes, ...seedTimesMap });
+          const merged: Record<string, string> = { ...bestTimes, ...seedTimesMap };
+
+          // For each available event that has no direct time, look for a cross-course equivalent
+          const converted = new Set<string>();
+          if (allEvents) {
+            for (const availEvent of availableEvents) {
+              if (merged[availEvent.id]) continue;
+              for (const [eventId, time] of Object.entries(merged)) {
+                const src = allEvents.find(e => e.id === eventId);
+                if (!src) continue;
+                if (src.distance !== availEvent.distance) continue;
+                if (src.stroke !== availEvent.stroke) continue;
+                if (src.isRelay !== availEvent.isRelay) continue;
+                if (src.course === availEvent.course) continue;
+                const convertedTime = convertCourseTime(time, src.course, availEvent.course);
+                if (convertedTime) {
+                  merged[availEvent.id] = convertedTime;
+                  converted.add(availEvent.id);
+                }
+                break;
+              }
+            }
+          }
+
+          setSeedTimes(merged);
+          setConvertedEventIds(converted);
         } else {
           console.error('Failed to fetch best times');
           setSeedTimes(seedTimesMap);
@@ -277,13 +333,18 @@ export default function EventSelection({ swimmer, meet, availableEvents, onClose
                           </p>
                         </div>
                         {!event.isRelay && (
-                          <div className="ml-4">
+                          <div className="ml-4 text-right">
                             <label className="block text-xs text-gray-600 mb-1">
                               Seed Time
+                              {convertedEventIds.has(event.id) && (
+                                <span className="ml-1 text-orange-500 font-medium" title={`Converted from ${(() => { const src = allEvents?.find(e => Object.keys(seedTimes ?? {}).includes(e.id) && e.distance === event.distance && e.stroke === event.stroke && e.course !== event.course); return src?.course ?? ''; })()}`}>
+                                  (conv.)
+                                </span>
+                              )}
                             </label>
                             <input
                               type="text"
-                              value={seedTime || 'NTY'}
+                              value={seedTime || 'NT'}
                               onChange={(e) => setSeedTimes(prev => ({
                                 ...prev,
                                 [event.id]: e.target.value

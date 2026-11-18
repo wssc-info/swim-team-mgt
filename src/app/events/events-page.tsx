@@ -383,6 +383,7 @@ export function EventsPage() {
               swimmer={selectedSwimmer}
               meet={activeMeet}
               availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup, selectedSwimmer.gender)}
+              allEvents={allEvents}
               onClose={handleEventSelectionClose}
             />
           </div>
