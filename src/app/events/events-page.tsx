@@ -435,18 +435,16 @@ export function EventsPage() {
           >
             By Swimmer ({swimmers.length})
           </button>
-          {!isFamily && (
-            <button
-              onClick={() => setActiveTab('byEvent')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'byEvent'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              By Event ({activeMeet.meetEvents.length})
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab('byEvent')}
+            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'byEvent'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            By Event ({activeMeet.meetEvents.length})
+          </button>
         </div>
 
         {activeTab === 'bySwimmer' && (
@@ -511,18 +509,20 @@ export function EventsPage() {
                             {registered.map(s => (
                               <span key={s.id} className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full">
                                 {s.lastName}, {s.firstName}
-                                <button
-                                  type="button"
-                                  disabled={savingEventAction}
-                                  onClick={() => handleRemoveSwimmerFromEvent(s, meetEvent.eventId)}
-                                  className="text-green-500 hover:text-red-500 disabled:opacity-40 leading-none"
-                                  aria-label="Remove"
-                                >
-                                  ✕
-                                </button>
+                                {!isFamily && (
+                                  <button
+                                    type="button"
+                                    disabled={savingEventAction}
+                                    onClick={() => handleRemoveSwimmerFromEvent(s, meetEvent.eventId)}
+                                    className="text-green-500 hover:text-red-500 disabled:opacity-40 leading-none"
+                                    aria-label="Remove"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
                               </span>
                             ))}
-                            {eligible.length > 0 && (
+                            {!isFamily && eligible.length > 0 && (
                               <div className="relative">
                                 <button
                                   type="button"
