@@ -63,8 +63,8 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
   const loadClubs = async () => {
     try {
       const [clubsResp, leaguesResp] = await Promise.all([
-        fetch('/api/admin/clubs'),
-        fetch('/api/admin/leagues'),
+        authenticatedFetch('/api/admin/clubs'),
+        authenticatedFetch('/api/admin/leagues'),
       ]);
       if (clubsResp.ok) setClubs(await clubsResp.json());
       if (leaguesResp.ok) setLeagues(await leaguesResp.json());
@@ -247,7 +247,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
             </div>
           ) : (
             <Combobox
-              options={(currentUserRole === 'admin'
+              options={(currentUserRole === 'admin' || currentUserRole === 'leagueAdmin'
                 ? clubs
                 : clubs.filter(c => c.id === currentUserClubId)
               ).map(c => ({ value: c.id, label: `${c.name} (${c.abbreviation})` }))}
