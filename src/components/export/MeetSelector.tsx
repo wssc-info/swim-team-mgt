@@ -40,7 +40,7 @@ export default function MeetSelector({ meets, selectedMeet, onMeetSelect, loadin
   useEffect(() => {
     if (!user?.clubId) return;
     fetch(`/api/admin/clubs/${user.clubId}`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => setActiveMeetId(data?.activeMeetId ?? null))

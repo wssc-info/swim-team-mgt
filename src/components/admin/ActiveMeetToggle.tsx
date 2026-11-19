@@ -21,7 +21,7 @@ export default function ActiveMeetToggle({ meetId, meetName, onToggle }: ActiveM
         try {
           const clubResponse = await fetch(`/api/admin/clubs/${user.clubId}`, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
             }
           });
           if (clubResponse.ok) {
@@ -50,7 +50,7 @@ export default function ActiveMeetToggle({ meetId, meetName, onToggle }: ActiveM
       const response = await fetch(`/api/meets/${meetId}/active`, {
         method,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json',
         },
         ...(requestBody && { body: JSON.stringify(requestBody) }),

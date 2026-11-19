@@ -118,6 +118,7 @@ export default function Navigation() {
                   <DropdownMenuItem onClick={() => navigate('/admin/swimmers', () => setAdminOpen(false))}>
                     Swimmers
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/admin/meet-templates', () => setAdminOpen(false))}>
                     Meet Templates
                   </DropdownMenuItem>
@@ -134,6 +135,7 @@ export default function Navigation() {
                       <DropdownMenuItem onClick={() => navigate('/admin/leagues', () => setAdminOpen(false))}>
                         Leagues
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate('/admin/events', () => setAdminOpen(false))}>
                         Events
                       </DropdownMenuItem>

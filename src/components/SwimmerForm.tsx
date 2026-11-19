@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {createSwimmer, updateSwimmerApi} from '@/lib/api';
+import {authenticatedFetch, createSwimmer, updateSwimmerApi} from '@/lib/api';
 import {Swimmer} from '@/lib/types';
 import {useAuth} from '@/lib/auth-context';
 import {generateSwimmerExternalId, calculateAgeGroup} from "@/lib/utils";
@@ -65,7 +65,7 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
 
   const loadClubs = async () => {
     try {
-      const response = await fetch('/api/admin/clubs');
+      const response = await authenticatedFetch('/api/admin/clubs');
       if (response.ok) {
         const clubsData = await response.json();
         setClubs(clubsData);
@@ -313,13 +313,13 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
               </div>
             ) : (
               <Combobox
-                options={(currentUser?.role === 'admin'
+                options={(currentUser?.role === 'admin' || currentUser?.role === 'leagueAdmin'
                   ? clubs
                   : clubs.filter(club => club.id === currentUser?.clubId)
                 ).map(club => ({ value: club.id, label: `${club.name} (${club.abbreviation})` }))}
                 value={formData.clubId}
                 onChange={val => setFormData(prev => ({ ...prev, clubId: val }))}
-                disabled={currentUser?.role !== 'admin'}
+                disabled={currentUser?.role !== 'admin' && currentUser?.role !== 'leagueAdmin'}
                 emptyLabel="No Club"
               />
             )}
