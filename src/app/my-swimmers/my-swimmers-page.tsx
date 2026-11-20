@@ -241,19 +241,21 @@ export default function MySwimmersPage() {
           const filteredRecords = getFilteredTimeRecords(swimmer.timeRecords);
           const personalBestCount = swimmer.timeRecords.filter(r => r.isPersonalBest).length;
 
+          const isPending = swimmer.associationStatus === 'pending';
+
           return (
             <div key={swimmer.id} className="bg-white rounded-lg shadow">
               {/* Swimmer Header */}
               <div
-                className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => toggleSwimmerExpansion(swimmer.id)}
+                className={`p-6 transition-colors ${isPending ? 'cursor-default' : 'cursor-pointer hover:bg-gray-50'}`}
+                onClick={() => !isPending && toggleSwimmerExpansion(swimmer.id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div>
                       <h2 className="text-xl font-semibold flex items-center gap-2">
                         {swimmer.firstName} {swimmer.lastName}
-                        {swimmer.associationStatus === 'pending' && (
+                        {isPending && (
                           <span className="text-xs font-normal bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full">
                             Pending Approval
                           </span>
@@ -266,6 +268,9 @@ export default function MySwimmersPage() {
                       </div>
                     </div>
                   </div>
+                  {isPending ? (
+                    <p className="text-sm text-yellow-700 italic">Times and events available after coach approves</p>
+                  ) : (
                   <div className="flex items-center space-x-4">
                     <div className="text-right text-sm">
                       <div className="font-medium">
@@ -279,11 +284,12 @@ export default function MySwimmersPage() {
                       {isExpanded ? '▼' : '▶'}
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
 
               {/* Time Records Table */}
-              {isExpanded && (
+              {!isPending && isExpanded && (
                 <div className="border-t">
                   {filteredRecords.length === 0 ? (
                     <div className="p-6 text-center text-gray-500">

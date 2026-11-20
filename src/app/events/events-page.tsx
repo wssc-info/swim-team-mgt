@@ -38,7 +38,8 @@ export function EventsPage() {
     // Fetch swimmers based on user role
     let swimmerData: Swimmer[];
     if (user?.role === 'family' && user?.id) {
-      swimmerData = await fetchAssociatedSwimmers(user.id);
+      const all = await fetchAssociatedSwimmers(user.id);
+      swimmerData = all.filter((s: any) => s.associationStatus !== 'pending');
     } else {
       let clubId: string | null = null;
       try { clubId = getClubId(user); } catch { /* ignore */ }
