@@ -333,12 +333,12 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
 
               return (
                 <div key={event.id} className="p-4 hover:bg-gray-50">
-                  <div className="flex items-start space-x-3">
+                  <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleEventToggle(event.id)}
-                      className="mt-1 rounded"
+                      className="rounded"
                       disabled={loading || (!isSelected && !!maxEventsPerSwimmer && maxEventsPerSwimmer > 0 && selectedEvents.length >= maxEventsPerSwimmer)}
                     />
                     <div className="flex-1">
