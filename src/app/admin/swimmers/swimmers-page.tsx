@@ -178,6 +178,7 @@ export default function SwimmersPage() {
         setLoading(false);
       } catch (error) {
         console.error('Error deleting swimmer:', error);
+        alert(error instanceof Error ? error.message : 'Failed to delete swimmer');
       }
     }
   };

@@ -55,7 +55,8 @@ export async function deleteSwimmerApi(id: string): Promise<void> {
     method: 'DELETE',
   });
   if (!response.ok) {
-    throw new Error('Failed to delete swimmer');
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || 'Failed to delete swimmer');
   }
 }
 
