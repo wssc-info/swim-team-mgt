@@ -40,9 +40,48 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
   const [clubs, setClubs] = useState<SwimClub[]>([]);
   const [loadingClubs, setLoadingClubs] = useState(true);
 
+  type Association = {
+    id: string;
+    status: 'pending' | 'approved' | 'denied';
+    createdAt: string;
+    familyUser: { id: string; firstName: string; lastName: string; email: string } | null;
+  };
+  const [associations, setAssociations] = useState<Association[]>([]);
+  const [loadingAssociations, setLoadingAssociations] = useState(false);
+
   useEffect(() => {
     loadClubs();
   }, []);
+
+  useEffect(() => {
+    if (swimmer?.id) loadAssociations(swimmer.id);
+  }, [swimmer?.id]);
+
+  const loadAssociations = async (swimmerId: string) => {
+    setLoadingAssociations(true);
+    try {
+      const res = await authenticatedFetch(`/api/admin/associations?swimmerId=${swimmerId}&status=all`);
+      if (res.ok) setAssociations(await res.json());
+    } catch (e) {
+      console.error('Error loading associations:', e);
+    } finally {
+      setLoadingAssociations(false);
+    }
+  };
+
+  const handleAssociationAction = async (assocId: string, action: 'approve' | 'deny' | 'remove') => {
+    if (action === 'remove') {
+      if (!confirm('Remove this family association?')) return;
+      await authenticatedFetch(`/api/admin/associations/${assocId}`, { method: 'DELETE' });
+    } else {
+      await authenticatedFetch(`/api/admin/associations/${assocId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+    }
+    if (swimmer?.id) loadAssociations(swimmer.id);
+  };
 
   useEffect(() => {
     if (swimmer) {
@@ -327,6 +366,48 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
           </div>
         </div>
       </form>
+
+      {swimmer && (
+        <div className="mt-6 border-t pt-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Associated Families</h4>
+          {loadingAssociations ? (
+            <p className="text-sm text-gray-400">Loading...</p>
+          ) : associations.length === 0 ? (
+            <p className="text-sm text-gray-400 italic">No family associations</p>
+          ) : (
+            <div className="space-y-2">
+              {associations.map(assoc => (
+                <div key={assoc.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2 text-sm">
+                  <div>
+                    <span className="font-medium">
+                      {assoc.familyUser ? `${assoc.familyUser.firstName} ${assoc.familyUser.lastName}` : '—'}
+                    </span>
+                    {assoc.familyUser?.email && (
+                      <span className="ml-2 text-gray-500 text-xs">{assoc.familyUser.email}</span>
+                    )}
+                    <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                      assoc.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      assoc.status === 'denied'   ? 'bg-red-100 text-red-600' :
+                                                    'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {assoc.status}
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {assoc.status === 'pending' && (
+                      <>
+                        <Button size="sm" className="h-6 text-xs bg-green-600 hover:bg-green-700" onClick={() => handleAssociationAction(assoc.id, 'approve')}>Approve</Button>
+                        <Button size="sm" variant="destructive" className="h-6 text-xs" onClick={() => handleAssociationAction(assoc.id, 'deny')}>Deny</Button>
+                      </>
+                    )}
+                    <Button size="sm" variant="ghost" className="h-6 text-xs text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleAssociationAction(assoc.id, 'remove')}>Remove</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }

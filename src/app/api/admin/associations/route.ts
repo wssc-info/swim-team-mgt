@@ -17,12 +17,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const statusFilter = request.nextUrl.searchParams.get('status') || 'pending';
+    const statusParam = request.nextUrl.searchParams.get('status') || 'pending';
+    const swimmerIdParam = request.nextUrl.searchParams.get('swimmerId');
 
-    // Get all pending associations; then filter by coach's club
-    const associations = await FamilySwimmerAssociationModel.findAll({
-      where: { status: statusFilter },
-    });
+    const whereClause: Record<string, unknown> = statusParam === 'all' ? {} : { status: statusParam };
+    if (swimmerIdParam) whereClause.swimmerId = swimmerIdParam;
+
+    const associations = await FamilySwimmerAssociationModel.findAll({ where: whereClause });
 
     const enriched = await Promise.all(
       associations.map(async (assoc) => {

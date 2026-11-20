@@ -47,3 +47,29 @@ export async function PUT(
     return NextResponse.json({ error: 'Failed to update association' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await initializeDatabase();
+
+    const user = await AuthService.getInstance().getUser(request);
+    if (!user || (user.role !== 'coach' && user.role !== 'admin' && user.role !== 'leagueAdmin')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const association = await FamilySwimmerAssociationModel.findByPk(id);
+    if (!association) {
+      return NextResponse.json({ error: 'Association not found' }, { status: 404 });
+    }
+
+    await association.destroy();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting association:', error);
+    return NextResponse.json({ error: 'Failed to delete association' }, { status: 500 });
+  }
+}
