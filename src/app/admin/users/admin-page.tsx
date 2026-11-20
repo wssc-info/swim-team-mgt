@@ -3,7 +3,6 @@
 import {useState, useEffect} from 'react';
 import UserForm from '@/components/UserForm';
 import FamilyAssociationForm from '@/components/FamilyAssociationForm';
-import Modal from '@/components/Modal';
 import {User, Swimmer} from '@/lib/types';
 import {authenticatedFetch, fetchSwimmers} from '@/lib/api';
 import {getClubId} from '@/lib/utils';
@@ -369,24 +368,20 @@ export default function AdminPage() {
 
         {/* User Form Modal */}
         {showUserForm && (
-          <Modal size="md">
-            <UserForm
-              user={editingUser}
-              onClose={handleUserFormClose}
-              currentUserRole={currentUser?.role}
-              currentUserClubId={currentUser?.clubId}
-            />
-          </Modal>
+          <UserForm
+            user={editingUser}
+            onClose={handleUserFormClose}
+            currentUserRole={currentUser?.role}
+            currentUserClubId={currentUser?.clubId}
+          />
         )}
 
         {/* Family Association Form Modal */}
         {showAssociationForm && selectedFamilyUser && (
-          <Modal size="md">
-            <FamilyAssociationForm
-              user={selectedFamilyUser}
-              onClose={handleAssociationFormClose}
-            />
-          </Modal>
+          <FamilyAssociationForm
+            user={selectedFamilyUser}
+            onClose={handleAssociationFormClose}
+          />
         )}
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {Meet, SwimEvent, SwimmerWithEvents} from '@/lib/types';
+import Modal from '@/components/Modal';
 import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets } from '@/lib/api';
 
 interface Swimmer {
@@ -218,33 +219,54 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
   const allFilteredSelected = filteredEvents.length > 0 && 
     filteredEvents.every(event => selectedEvents.includes(event.id));
 
-  return (
-    <>
-      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
-        <div>
-          <h2 className="text-xl font-bold">
-            Event Selection - {swimmer.firstName} {swimmer.lastName}
-          </h2>
-          <p className="text-sm text-gray-600">
-            Age Group: {swimmer.ageGroup} •{' '}
-            {maxEventsPerSwimmer && maxEventsPerSwimmer > 0
-              ? <span className={selectedEvents.length >= maxEventsPerSwimmer ? 'text-orange-600 font-medium' : ''}>
-                  {selectedEvents.length} of {maxEventsPerSwimmer} events selected
-                  {selectedEvents.length >= maxEventsPerSwimmer && ' (limit reached)'}
-                </span>
-              : `${selectedEvents.length} events selected`
-            }
-          </p>
-        </div>
+  const title = (
+    <div>
+      <div>Event Selection — {swimmer.firstName} {swimmer.lastName}</div>
+      <p className="text-sm font-normal text-gray-600 mt-0.5">
+        Age Group: {swimmer.ageGroup} •{' '}
+        {maxEventsPerSwimmer && maxEventsPerSwimmer > 0
+          ? <span className={selectedEvents.length >= maxEventsPerSwimmer ? 'text-orange-600 font-medium' : ''}>
+              {selectedEvents.length} of {maxEventsPerSwimmer} events selected
+              {selectedEvents.length >= maxEventsPerSwimmer && ' (limit reached)'}
+            </span>
+          : `${selectedEvents.length} events selected`
+        }
+      </p>
+    </div>
+  );
+
+  const footer = (
+    <div className="space-y-3">
+      <div className="flex space-x-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Event Selection'}
+        </button>
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
+          disabled={saving}
+          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
         >
-          ✕
+          Cancel
         </button>
       </div>
+      <div className="p-3 bg-blue-50 rounded-lg">
+        <p className="text-sm text-blue-700">
+          <strong>Tips:</strong> Select the events you want to swim in this meet.
+          Your best times from previous meets are automatically shown as seed times.
+          "NT" means No Time (no previous record for this event).
+          Relay events will be organized by your coach.
+        </p>
+      </div>
+    </div>
+  );
 
-      <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+  return (
+    <Modal title={title} onClose={onClose} footer={footer} size="4xl">
+      <div className="space-y-4">
       {/* Event Filters */}
       <div className="p-4 bg-gray-50 rounded-lg">
         <h4 className="text-sm font-medium text-gray-700 mb-2">Filter Events:</h4>
@@ -375,35 +397,6 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
       </div>
 
       </div>
-
-      <div className="shrink-0 px-6 py-4 border-t space-y-3">
-        {/* Action Buttons */}
-        <div className="flex space-x-3">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Event Selection'}
-          </button>
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </div>
-        {/* Help Text */}
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-700">
-            <strong>Tips:</strong> Select the events you want to swim in this meet.
-            Your best times from previous meets are automatically shown as seed times.
-            "NT" means No Time (no previous record for this event).
-            Relay events will be organized by your coach.
-          </p>
-        </div>
-      </div>
-    </>
+    </Modal>
   );
 }

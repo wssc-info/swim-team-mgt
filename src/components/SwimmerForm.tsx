@@ -2,6 +2,7 @@
 
 import {useEffect, useState} from 'react';
 import {authenticatedFetch, createSwimmer, updateSwimmerApi} from '@/lib/api';
+import Modal from '@/components/Modal';
 import {Swimmer} from '@/lib/types';
 import {useAuth} from '@/lib/auth-context';
 import {generateSwimmerExternalId, calculateAgeGroup} from "@/lib/utils";
@@ -150,22 +151,28 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
     }
   }
 
-  return (
-    <>
-      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
-        <h2 className="text-xl font-bold">
-          {swimmer ? 'Edit Swimmer' : 'Add New Swimmer'}
-        </h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          ✕
-        </button>
-      </div>
+  const footer = (
+    <div className="flex space-x-3">
+      <button
+        type="submit"
+        form="swimmer-form"
+        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {swimmer ? 'Update Swimmer' : 'Add Swimmer'}
+      </button>
+      <button
+        type="button"
+        onClick={onClose}
+        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+      >
+        Cancel
+      </button>
+    </div>
+  );
 
-      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+  return (
+    <Modal title={swimmer ? 'Edit Swimmer' : 'Add New Swimmer'} onClose={onClose} footer={footer}>
+      <form id="swimmer-form" onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
             First Name *
@@ -326,23 +333,7 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
             )}
           </div>
         </div>
-        </div>
-        <div className="shrink-0 px-6 py-4 border-t flex space-x-3">
-          <button
-            type="submit"
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {swimmer ? 'Update Swimmer' : 'Add Swimmer'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-          >
-            Cancel
-          </button>
-        </div>
       </form>
-    </>
+    </Modal>
   );
 }

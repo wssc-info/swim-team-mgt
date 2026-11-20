@@ -281,14 +281,31 @@ function MeetTemplatesContent() {
       )}
 
       {showForm && (
-        <Modal size="3xl">
-            <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
-              <h2 className="text-xl font-bold">{editing ? 'Edit Template' : 'New Meet Template'}</h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+        <Modal
+          title={editing ? 'Edit Template' : 'New Meet Template'}
+          onClose={() => setShowForm(false)}
+          footer={
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                form="template-form"
+                disabled={saving}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : editing ? 'Update Template' : 'Create Template'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
             </div>
-
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-5">
+          }
+          size="3xl"
+        >
+            <form id="template-form" onSubmit={handleSubmit} className="space-y-5">
               {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">{error}</div>}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -506,24 +523,6 @@ function MeetTemplatesContent() {
                     )}
                   </div>
                 </div>
-              </div>
-
-              </div>
-              <div className="shrink-0 px-6 py-4 border-t flex gap-3">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {saving ? 'Saving…' : editing ? 'Update Template' : 'Create Template'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
               </div>
             </form>
         </Modal>

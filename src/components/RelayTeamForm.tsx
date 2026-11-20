@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createRelayTeam, updateRelayTeamApi } from '@/lib/api';
+import Modal from '@/components/Modal';
 import {AGE_GROUPS} from "@/lib/constants";
 import {Swimmer, SwimEvent, RelayTeam} from "@/lib/types";
 import {useAuth} from "@/lib/auth-context";
@@ -152,22 +153,30 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
     }
   }, [formData.swimmers, selectedSwimmers]);
 
-  return (
-    <>
-      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
-        <h2 className="text-2xl font-bold">
-          {team ? 'Edit Relay Team' : 'Create Relay Team'}
-        </h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          ✕
-        </button>
-      </div>
+  const footer = (
+    <div className="flex justify-end space-x-3">
+      <button
+        type="button"
+        onClick={onClose}
+        className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form="relay-team-form"
+        disabled={saving || formData.swimmers.length === 0}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+      >
+        {saving ? 'Saving...' : team ? 'Update Team' : 'Create Team'}
+      </button>
+    </div>
+  );
 
-      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+  return (
+    <Modal title={team ? 'Edit Relay Team' : 'Create Relay Team'} onClose={onClose} footer={footer} size="4xl">
+      <form id="relay-team-form" onSubmit={handleSubmit}>
+        <div className="space-y-6">
         {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -369,25 +378,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
             )}
           </div>
         </div>
-
-        </div>
-        <div className="shrink-0 px-6 py-4 border-t flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving || formData.swimmers.length === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : team ? 'Update Team' : 'Create Team'}
-          </button>
         </div>
       </form>
-    </>
+    </Modal>
   );
 }

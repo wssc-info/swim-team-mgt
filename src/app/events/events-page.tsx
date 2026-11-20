@@ -4,7 +4,6 @@ import {useState, useEffect, useCallback} from 'react';
 import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub, updateSwimmerMeetEvents, fetchRelayTeams } from '@/lib/api';
 import {Meet, RelayTeam, SwimClub, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
-import Modal from '@/components/Modal';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
 import { DataTable } from "@/components/datatable/dataTable";
@@ -452,16 +451,14 @@ export function EventsPage() {
 
       {/* Event Selection Modal */}
       {selectedSwimmer && (
-        <Modal size="4xl">
-          <EventSelection
-            swimmer={selectedSwimmer}
-            meet={activeMeet}
-            availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup, selectedSwimmer.gender)}
-            allEvents={allEvents}
-            maxEventsPerSwimmer={canFamilySelfSelect ? maxEventsPerSwimmer : undefined}
-            onClose={handleEventSelectionClose}
-          />
-        </Modal>
+        <EventSelection
+          swimmer={selectedSwimmer}
+          meet={activeMeet}
+          availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup, selectedSwimmer.gender)}
+          allEvents={allEvents}
+          maxEventsPerSwimmer={canFamilySelfSelect ? maxEventsPerSwimmer : undefined}
+          onClose={handleEventSelectionClose}
+        />
       )}
 
       {/* Tabs */}

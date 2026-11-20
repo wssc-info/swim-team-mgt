@@ -2,6 +2,7 @@
 
 import {useState, useEffect, useCallback} from 'react';
 import {User, Swimmer} from '@/lib/types';
+import Modal from '@/components/Modal';
 import {fetchSwimmers} from "@/lib/api";
 import {Input} from "@/components/ui/input";
 
@@ -93,110 +94,92 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
     }
   };
 
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="text-lg">Loading associations...</div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
-        <h2 className="text-xl font-bold">
-          Manage Swimmers for {user.firstName} {user.lastName}
-        </h2>
+  const footer = (
+    <div className="space-y-3">
+      <div className="flex space-x-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Associations'}
+        </button>
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
+          disabled={saving}
+          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
         >
-          ✕
+          Cancel
         </button>
       </div>
-
-      <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
-      {error && (
-        <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-
-      <div>
-        <p className="text-sm text-gray-600">
-          Select which swimmers this family account can manage:
+      <div className="p-3 bg-blue-50 rounded-lg">
+        <p className="text-sm text-blue-700">
+          <strong>Note:</strong> Family accounts can only access event selection for their associated swimmers.
+          {associatedSwimmers.length > 0 && (
+            <span> Currently selected: {associatedSwimmers.length} swimmer(s).</span>
+          )}
         </p>
       </div>
-      <Input placeholder="Filter Swimmers" value={swimmerFilter}
-             onChange={(e) => setSwimmerFilter(e.target.value)}
-      />
-      <div className="max-h-64 overflow-y-auto border border-gray-300 rounded-md">
-        {swimmers.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
-            No swimmers available
-          </div>
-        ) : (
-          <>
+    </div>
+  );
 
-            <div className="divide-y divide-gray-200">
-              {swimmers
-                .filter((swimmer) => {
-                  const fullName = `${swimmer.firstName} ${swimmer.lastName}`.toLowerCase();
-                  return fullName.includes(swimmerFilter.toLowerCase());
-                })
-                .map((swimmer) => (
-                <div key={swimmer.id} className="p-3 hover:bg-gray-50">
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={associatedSwimmers.includes(swimmer.id)}
-                      onChange={() => handleSwimmerToggle(swimmer.id)}
-                      className="rounded"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        {swimmer.firstName} {swimmer.lastName}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {swimmer.gender} • Age Group: {swimmer.ageGroup} •
-                        Born: {new Date(swimmer.dateOfBirth).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              ))}
+  return (
+    <Modal title={`Manage Swimmers for ${user.firstName} ${user.lastName}`} onClose={onClose} footer={footer} size="md">
+      {loading ? (
+        <div className="text-center py-8">
+          <div className="text-lg">Loading associations...</div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {error && (
+            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
             </div>
-          </>
-        )}
-      </div>
-      </div>
-
-      <div className="shrink-0 px-6 py-4 border-t space-y-3">
-        <div className="flex space-x-3">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Associations'}
-          </button>
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </div>
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-700">
-            <strong>Note:</strong> Family accounts can only access event selection for their associated swimmers.
-            {associatedSwimmers.length > 0 && (
-              <span> Currently selected: {associatedSwimmers.length} swimmer(s).</span>
-            )}
+          )}
+          <p className="text-sm text-gray-600">
+            Select which swimmers this family account can manage:
           </p>
+          <Input placeholder="Filter Swimmers" value={swimmerFilter}
+                 onChange={(e) => setSwimmerFilter(e.target.value)}
+          />
+          <div className="max-h-64 overflow-y-auto border border-gray-300 rounded-md">
+            {swimmers.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                No swimmers available
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {swimmers
+                  .filter((swimmer) => {
+                    const fullName = `${swimmer.firstName} ${swimmer.lastName}`.toLowerCase();
+                    return fullName.includes(swimmerFilter.toLowerCase());
+                  })
+                  .map((swimmer) => (
+                  <div key={swimmer.id} className="p-3 hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={associatedSwimmers.includes(swimmer.id)}
+                        onChange={() => handleSwimmerToggle(swimmer.id)}
+                        className="rounded"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">
+                          {swimmer.firstName} {swimmer.lastName}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {swimmer.gender} • Age Group: {swimmer.ageGroup} •
+                          Born: {new Date(swimmer.dateOfBirth).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </>
+      )}
+    </Modal>
   );
 }

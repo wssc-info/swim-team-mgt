@@ -3,7 +3,6 @@
 import {useState, useEffect} from 'react';
 import {fetchSwimmers, fetchTimeRecords, deleteTimeRecordApi, fetchAllEvents} from '@/lib/api';
 import TimeRecordForm from '@/components/TimeRecordForm';
-import Modal from '@/components/Modal';
 import {Swimmer, TimeRecord, SwimEvent} from '@/lib/types';
 import {useAuth} from '@/lib/auth-context';
 import {getClubId} from '@/lib/utils';
@@ -402,13 +401,11 @@ export default function TimesPage() {
 
       {/* Time Record Form Modal */}
       {showForm && (
-        <Modal size="md">
-          <TimeRecordForm
-            record={editingRecord}
-            swimmers={swimmers}
-            onClose={handleFormClose}
-          />
-        </Modal>
+        <TimeRecordForm
+          record={editingRecord}
+          swimmers={swimmers}
+          onClose={handleFormClose}
+        />
       )}
 
       {/* Time Records List */}

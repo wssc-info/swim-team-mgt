@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createTimeRecord, updateTimeRecordApi, fetchAllEvents } from '@/lib/api';
+import Modal from '@/components/Modal';
 import { Swimmer, TimeRecord, SwimEvent } from '@/lib/types';
 
 interface TimeRecordFormProps {
@@ -134,30 +135,35 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
     ? allEvents.filter(event => event.ageGroups.includes(selectedSwimmer.ageGroup))
     : allEvents;
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center p-8">
-        <div className="text-lg">Loading events...</div>
-      </div>
-    );
-  }
+  const footer = (
+    <div className="flex space-x-3">
+      <button
+        type="submit"
+        form="time-record-form"
+        disabled={saving}
+        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+      >
+        {saving ? 'Saving...' : (record ? 'Update Record' : 'Add Record')}
+      </button>
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={saving}
+        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+      >
+        Cancel
+      </button>
+    </div>
+  );
 
   return (
-    <>
-      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
-        <h2 className="text-xl font-bold">
-          {record ? 'Edit Time Record' : 'Add Time Record'}
-        </h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          ✕
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+    <Modal title={record ? 'Edit Time Record' : 'Add Time Record'} onClose={onClose} footer={footer} size="md">
+      {loading ? (
+        <div className="flex justify-center items-center p-8">
+          <div className="text-lg">Loading events...</div>
+        </div>
+      ) : (
+      <form id="time-record-form" onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="swimmerId" className="block text-sm font-medium text-gray-700 mb-1">
             Swimmer *
@@ -269,26 +275,8 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
             <p className="text-red-500 text-sm mt-1">{errors.meetDate}</p>
           )}
         </div>
-
-        </div>
-        <div className="shrink-0 px-6 py-4 border-t flex space-x-3">
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : (record ? 'Update Record' : 'Add Record')}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </div>
       </form>
-    </>
+      )}
+    </Modal>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User } from '@/lib/types';
+import Modal from '@/components/Modal';
 import {authenticatedFetch} from "@/lib/api";
 import { Combobox } from '@/components/ui/combobox';
 
@@ -117,22 +118,30 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  return (
-    <>
-      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
-        <h2 className="text-xl font-bold">
-          {user ? 'Edit User' : 'Add New User'}
-        </h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          ✕
-        </button>
-      </div>
+  const footer = (
+    <div className="flex space-x-3">
+      <button
+        type="submit"
+        form="user-form"
+        disabled={loading}
+        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+      >
+        {loading ? 'Saving...' : (user ? 'Update User' : 'Create User')}
+      </button>
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={loading}
+        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+      >
+        Cancel
+      </button>
+    </div>
+  );
 
-      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+  return (
+    <Modal title={user ? 'Edit User' : 'Add New User'} onClose={onClose} footer={footer} size="md">
+      <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
@@ -278,25 +287,7 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
           </div>
         )}
 
-        </div>
-        <div className="shrink-0 px-6 py-4 border-t flex space-x-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : (user ? 'Update User' : 'Create User')}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </div>
       </form>
-    </>
+    </Modal>
   );
 }

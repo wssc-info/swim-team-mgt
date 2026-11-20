@@ -3,7 +3,6 @@
 import {useEffect, useState} from 'react';
 import {SwimEvent} from '@/lib/types';
 import EventForm from '@/components/EventForm';
-import Modal from '@/components/Modal';
 import {authenticatedFetch, seedEventsApi} from "@/lib/api";
 import {DataTable} from "@/components/datatable/dataTable";
 import {getColumns} from "@/app/admin/events/columns";
@@ -243,13 +242,11 @@ export default function AdminEventsPage() {
       )}
 
       {showForm && (
-        <Modal size="2xl">
-          <EventForm
-            event={editingEvent}
-            onClose={handleFormClose}
-            onSuccess={handleFormSuccess}
-          />
-        </Modal>
+        <EventForm
+          event={editingEvent}
+          onClose={handleFormClose}
+          onSuccess={handleFormSuccess}
+        />
       )}
 
       <DataTable columns={getColumns(handleEdit, handleDelete)} data={events} />

@@ -3,7 +3,6 @@
 import {useState, useEffect} from 'react';
 import {fetchMeets, deleteMeetApi, activateMeet, fetchAllEvents, fetchClubs, fetchClub} from '@/lib/api';
 import MeetForm from '@/components/MeetForm';
-import Modal from '@/components/Modal';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {SwimClub, SwimEvent} from "@/lib/types";
 import {Meet} from "@/lib/types";
@@ -164,12 +163,10 @@ export default function MeetsPage() {
       </div>
 
       {showForm && (
-        <Modal size="4xl">
-          <MeetForm
-            meet={editingMeet}
-            onClose={handleFormClose}
-          />
-        </Modal>
+        <MeetForm
+          meet={editingMeet}
+          onClose={handleFormClose}
+        />
       )}
 
       {/* Active Meet Section */}
