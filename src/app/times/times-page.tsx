@@ -31,7 +31,8 @@ export default function TimesPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const clubId = getClubId(user);
+        let clubId: string | undefined;
+        try { clubId = getClubId(user); } catch { /* family users have no clubId */ }
         const [swimmerData, recordData, eventsData] = await Promise.all([
           fetchSwimmers(clubId),
           fetchTimeRecords(),
