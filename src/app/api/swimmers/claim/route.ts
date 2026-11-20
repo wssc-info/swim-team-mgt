@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
         id: uuidv4(),
         firstName,
         lastName,
+        middleInitial: '',
         dateOfBirth,
         gender,
         ageGroup: calculateAgeGroup(dateOfBirth),
