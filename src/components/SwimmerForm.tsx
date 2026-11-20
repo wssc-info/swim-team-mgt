@@ -206,7 +206,36 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
   return (
     <Modal title={swimmer ? 'Edit Swimmer' : 'Add New Swimmer'} onClose={onClose} footer={footer} size="2xl">
       <form id="swimmer-form" onSubmit={handleSubmit} className="space-y-4">
-        {/* Row 1: First name · MI · Last name */}
+        {/* Row 1: Active · Club */}
+        <div className="grid grid-cols-[auto_1fr] gap-3 items-start">
+          <div className="flex flex-col items-center pt-1">
+            <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-1">Active</label>
+            <Switch
+              id="active"
+              checked={formData.active}
+              onCheckedChange={val => setFormData(prev => ({ ...prev, active: val }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Club</label>
+            {loadingClubs ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">Loading clubs...</div>
+            ) : (
+              <Combobox
+                options={(currentUser?.role === 'admin' || currentUser?.role === 'leagueAdmin'
+                  ? clubs
+                  : clubs.filter(club => club.id === currentUser?.clubId)
+                ).map(club => ({ value: club.id, label: `${club.name} (${club.abbreviation})` }))}
+                value={formData.clubId}
+                onChange={val => setFormData(prev => ({ ...prev, clubId: val }))}
+                disabled={currentUser?.role !== 'admin' && currentUser?.role !== 'leagueAdmin'}
+                emptyLabel="No Club"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: First name · MI · Last name */}
         <div className="grid grid-cols-[1fr_5rem_1fr] gap-3">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
@@ -249,7 +278,7 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
           </div>
         </div>
 
-        {/* Row 2: DOB · Gender */}
+        {/* Row 3: DOB · Gender */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
@@ -279,54 +308,27 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
           </div>
         </div>
 
-        {/* Row 3: External ID · Active · Club */}
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-start">
-          <div>
-            <label htmlFor="externalId" className="block text-sm font-medium text-gray-700 mb-1">
-              External ID{' '}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SquarePenIcon onClick={generateExternalId} className="inline cursor-pointer" />
-                </TooltipTrigger>
-                <TooltipContent><p>Generate a unique ID</p></TooltipContent>
-              </Tooltip>
-            </label>
-            <input
-              type="text"
-              id="externalId"
-              name="externalId"
-              value={formData.externalId}
-              onChange={handleInputChange}
-              maxLength={12}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="USA Swimming ID, etc."
-            />
-          </div>
-          <div className="flex flex-col items-center pt-6">
-            <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-1">Active</label>
-            <Switch
-              id="active"
-              checked={formData.active}
-              onCheckedChange={val => setFormData(prev => ({ ...prev, active: val }))}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Club</label>
-            {loadingClubs ? (
-              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">Loading clubs...</div>
-            ) : (
-              <Combobox
-                options={(currentUser?.role === 'admin' || currentUser?.role === 'leagueAdmin'
-                  ? clubs
-                  : clubs.filter(club => club.id === currentUser?.clubId)
-                ).map(club => ({ value: club.id, label: `${club.name} (${club.abbreviation})` }))}
-                value={formData.clubId}
-                onChange={val => setFormData(prev => ({ ...prev, clubId: val }))}
-                disabled={currentUser?.role !== 'admin' && currentUser?.role !== 'leagueAdmin'}
-                emptyLabel="No Club"
-              />
-            )}
-          </div>
+        {/* Row 4: External ID */}
+        <div>
+          <label htmlFor="externalId" className="block text-sm font-medium text-gray-700 mb-1">
+            External ID{' '}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SquarePenIcon onClick={generateExternalId} className="inline cursor-pointer" />
+              </TooltipTrigger>
+              <TooltipContent><p>Generate a unique ID</p></TooltipContent>
+            </Tooltip>
+          </label>
+          <input
+            type="text"
+            id="externalId"
+            name="externalId"
+            value={formData.externalId}
+            onChange={handleInputChange}
+            maxLength={12}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="USA Swimming ID, etc."
+          />
         </div>
       </form>
 
