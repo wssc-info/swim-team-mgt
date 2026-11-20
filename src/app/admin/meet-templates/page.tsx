@@ -8,6 +8,7 @@ import {
 import type { MeetTemplate, League, SwimClub, SwimEvent, MeetEvent } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import Modal from '@/components/Modal';
 
 type TemplateFormData = {
   name: string;
@@ -280,8 +281,7 @@ function MeetTemplatesContent() {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+        <Modal size="3xl">
             <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
               <h2 className="text-xl font-bold">{editing ? 'Edit Template' : 'New Meet Template'}</h2>
               <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
@@ -526,8 +526,7 @@ function MeetTemplatesContent() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

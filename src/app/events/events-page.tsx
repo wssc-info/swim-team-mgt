@@ -4,6 +4,7 @@ import {useState, useEffect, useCallback} from 'react';
 import { fetchSwimmers, fetchMeets, fetchAssociatedSwimmers, fetchSwimmerMeetEvents, fetchAllEvents, fetchClub, updateSwimmerMeetEvents, fetchRelayTeams } from '@/lib/api';
 import {Meet, RelayTeam, SwimClub, SwimEvent, Swimmer, SwimmerWithEvents} from '@/lib/types';
 import EventSelection from '@/components/EventSelection';
+import Modal from '@/components/Modal';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
 import { DataTable } from "@/components/datatable/dataTable";
@@ -451,18 +452,16 @@ export function EventsPage() {
 
       {/* Event Selection Modal */}
       {selectedSwimmer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full mx-4 flex flex-col max-h-[90vh]">
-            <EventSelection
-              swimmer={selectedSwimmer}
-              meet={activeMeet}
-              availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup, selectedSwimmer.gender)}
-              allEvents={allEvents}
-              maxEventsPerSwimmer={canFamilySelfSelect ? maxEventsPerSwimmer : undefined}
-              onClose={handleEventSelectionClose}
-            />
-          </div>
-        </div>
+        <Modal size="4xl">
+          <EventSelection
+            swimmer={selectedSwimmer}
+            meet={activeMeet}
+            availableEvents={getAvailableEventsForSwimmer(selectedSwimmer.ageGroup, selectedSwimmer.gender)}
+            allEvents={allEvents}
+            maxEventsPerSwimmer={canFamilySelfSelect ? maxEventsPerSwimmer : undefined}
+            onClose={handleEventSelectionClose}
+          />
+        </Modal>
       )}
 
       {/* Tabs */}

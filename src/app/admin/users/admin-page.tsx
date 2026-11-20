@@ -3,6 +3,7 @@
 import {useState, useEffect} from 'react';
 import UserForm from '@/components/UserForm';
 import FamilyAssociationForm from '@/components/FamilyAssociationForm';
+import Modal from '@/components/Modal';
 import {User, Swimmer} from '@/lib/types';
 import {authenticatedFetch, fetchSwimmers} from '@/lib/api';
 import {getClubId} from '@/lib/utils';
@@ -368,28 +369,24 @@ export default function AdminPage() {
 
         {/* User Form Modal */}
         {showUserForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-md flex flex-col max-h-[90vh]">
-              <UserForm
-                user={editingUser}
-                onClose={handleUserFormClose}
-                currentUserRole={currentUser?.role}
-                currentUserClubId={currentUser?.clubId}
-              />
-            </div>
-          </div>
+          <Modal size="md">
+            <UserForm
+              user={editingUser}
+              onClose={handleUserFormClose}
+              currentUserRole={currentUser?.role}
+              currentUserClubId={currentUser?.clubId}
+            />
+          </Modal>
         )}
 
         {/* Family Association Form Modal */}
         {showAssociationForm && selectedFamilyUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-md flex flex-col max-h-[90vh]">
-              <FamilyAssociationForm
-                user={selectedFamilyUser}
-                onClose={handleAssociationFormClose}
-              />
-            </div>
-          </div>
+          <Modal size="md">
+            <FamilyAssociationForm
+              user={selectedFamilyUser}
+              onClose={handleAssociationFormClose}
+            />
+          </Modal>
         )}
       </div>
     </div>

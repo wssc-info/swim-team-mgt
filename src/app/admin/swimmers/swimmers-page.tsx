@@ -3,6 +3,7 @@
 import {useEffect, useState} from 'react';
 import {authenticatedFetch, deleteSwimmerApi, fetchClubs, fetchSwimmers} from '@/lib/api';
 import SwimmerForm from '@/components/SwimmerForm';
+import Modal from '@/components/Modal';
 import {SwimClub, Swimmer} from '@/lib/types';
 import {Spinner} from "@/components/ui/shadcn-io/spinner";
 import {DataTable} from "@/components/datatable/dataTable";
@@ -579,20 +580,17 @@ export default function SwimmersPage() {
 
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-lg w-full mx-4 flex flex-col max-h-[90vh]">
-            <SwimmerForm
-              swimmer={editingSwimmer}
-              onClose={handleFormClose}
-            />
-          </div>
-        </div>
+        <Modal>
+          <SwimmerForm
+            swimmer={editingSwimmer}
+            onClose={handleFormClose}
+          />
+        </Modal>
       )}
 
       {/* Seed Times Modal */}
       {seedTimesSwimmer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+        <Modal size="2xl" maxHeight="max-h-[80vh]">
             <div className="flex justify-between items-center p-6 border-b">
               <div>
                 <h2 className="text-xl font-bold">Seed Times — {seedTimesSwimmer.firstName} {seedTimesSwimmer.lastName}</h2>
@@ -646,8 +644,7 @@ export default function SwimmersPage() {
             <div className="p-4 border-t text-right">
               <button onClick={() => setSeedTimesSwimmer(null)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm">Close</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Pending Associations */}

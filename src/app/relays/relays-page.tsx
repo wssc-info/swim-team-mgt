@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Modal from '@/components/Modal';
 import {
   fetchSwimmers,
   fetchMeets,
@@ -273,17 +274,15 @@ export default function RelaysPage() {
 
       {/* Relay Team Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full mx-4 flex flex-col max-h-[90vh]">
-            <RelayTeamForm
-              team={selectedTeam}
-              swimmers={swimmers}
-              availableEvents={relayEvents}
-              meetId={activeMeet.id}
-              onClose={handleFormClose}
-            />
-          </div>
-        </div>
+        <Modal size="4xl">
+          <RelayTeamForm
+            team={selectedTeam}
+            swimmers={swimmers}
+            availableEvents={relayEvents}
+            meetId={activeMeet.id}
+            onClose={handleFormClose}
+          />
+        </Modal>
       )}
 
       {/* Relay Teams — meet-driven hierarchy: Event → Age Group → Gender */}
