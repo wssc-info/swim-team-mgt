@@ -118,8 +118,8 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <>
+      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
         <h2 className="text-xl font-bold">
           {user ? 'Edit User' : 'Add New User'}
         </h2>
@@ -131,13 +131,13 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
         </button>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+        {error && (
+          <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
             First Name *
@@ -278,7 +278,8 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
           </div>
         )}
 
-        <div className="flex space-x-3 pt-4">
+        </div>
+        <div className="shrink-0 px-6 py-4 border-t flex space-x-3">
           <button
             type="submit"
             disabled={loading}
@@ -296,6 +297,6 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
           </button>
         </div>
       </form>
-    </div>
+    </>
   );
 }

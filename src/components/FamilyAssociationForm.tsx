@@ -102,8 +102,8 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <>
+      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
         <h2 className="text-xl font-bold">
           Manage Swimmers for {user.firstName} {user.lastName}
         </h2>
@@ -115,13 +115,14 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
         </button>
       </div>
 
+      <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
       {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
         </div>
       )}
 
-      <div className="mb-4">
+      <div>
         <p className="text-sm text-gray-600">
           Select which swimmers this family account can manage:
         </p>
@@ -168,32 +169,34 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
           </>
         )}
       </div>
-
-      <div className="flex space-x-3 pt-6">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
-          {saving ? 'Saving...' : 'Save Associations'}
-        </button>
-        <button
-          onClick={onClose}
-          disabled={saving}
-          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-        >
-          Cancel
-        </button>
       </div>
 
-      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-        <p className="text-sm text-blue-700">
-          <strong>Note:</strong> Family accounts can only access event selection for their associated swimmers.
-          {associatedSwimmers.length > 0 && (
-            <span> Currently selected: {associatedSwimmers.length} swimmer(s).</span>
-          )}
-        </p>
+      <div className="shrink-0 px-6 py-4 border-t space-y-3">
+        <div className="flex space-x-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save Associations'}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+        <div className="p-3 bg-blue-50 rounded-lg">
+          <p className="text-sm text-blue-700">
+            <strong>Note:</strong> Family accounts can only access event selection for their associated swimmers.
+            {associatedSwimmers.length > 0 && (
+              <span> Currently selected: {associatedSwimmers.length} swimmer(s).</span>
+            )}
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

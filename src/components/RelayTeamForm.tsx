@@ -153,8 +153,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
   }, [formData.swimmers, selectedSwimmers]);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <>
+      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
         <h2 className="text-2xl font-bold">
           {team ? 'Edit Relay Team' : 'Create Relay Team'}
         </h2>
@@ -166,7 +166,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
         {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -369,8 +370,8 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
           </div>
         </div>
 
-        {/* Form Actions */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        </div>
+        <div className="shrink-0 px-6 py-4 border-t flex justify-end space-x-3">
           <button
             type="button"
             onClick={onClose}
@@ -387,6 +388,6 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
           </button>
         </div>
       </form>
-    </div>
+    </>
   );
 }

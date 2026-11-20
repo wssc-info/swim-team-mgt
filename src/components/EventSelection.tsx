@@ -219,8 +219,8 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
     filteredEvents.every(event => selectedEvents.includes(event.id));
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <>
+      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
         <div>
           <h2 className="text-xl font-bold">
             Event Selection - {swimmer.firstName} {swimmer.lastName}
@@ -244,8 +244,9 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
         </button>
       </div>
 
+      <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
       {/* Event Filters */}
-      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+      <div className="p-4 bg-gray-50 rounded-lg">
         <h4 className="text-sm font-medium text-gray-700 mb-2">Filter Events:</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -373,33 +374,36 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex space-x-3 pt-6">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
-          {saving ? 'Saving...' : 'Save Event Selection'}
-        </button>
-        <button
-          onClick={onClose}
-          disabled={saving}
-          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-        >
-          Cancel
-        </button>
       </div>
 
-      {/* Help Text */}
-      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-        <p className="text-sm text-blue-700">
-          <strong>Tips:</strong> Select the events you want to swim in this meet. 
-          Your best times from previous meets are automatically shown as seed times. 
-          "NT" means No Time (no previous record for this event). 
-          Relay events will be organized by your coach.
-        </p>
+      <div className="shrink-0 px-6 py-4 border-t space-y-3">
+        {/* Action Buttons */}
+        <div className="flex space-x-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save Event Selection'}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+        {/* Help Text */}
+        <div className="p-3 bg-blue-50 rounded-lg">
+          <p className="text-sm text-blue-700">
+            <strong>Tips:</strong> Select the events you want to swim in this meet.
+            Your best times from previous meets are automatically shown as seed times.
+            "NT" means No Time (no previous record for this event).
+            Relay events will be organized by your coach.
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

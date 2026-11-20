@@ -143,8 +143,8 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <>
+      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
         <h2 className="text-xl font-bold">
           {record ? 'Edit Time Record' : 'Add Time Record'}
         </h2>
@@ -156,7 +156,8 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
         <div>
           <label htmlFor="swimmerId" className="block text-sm font-medium text-gray-700 mb-1">
             Swimmer *
@@ -269,7 +270,8 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
           )}
         </div>
 
-        <div className="flex space-x-3 pt-4">
+        </div>
+        <div className="shrink-0 px-6 py-4 border-t flex space-x-3">
           <button
             type="submit"
             disabled={saving}
@@ -287,6 +289,6 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
           </button>
         </div>
       </form>
-    </div>
+    </>
   );
 }

@@ -151,8 +151,8 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <>
+      <div className="flex justify-between items-center px-6 py-4 border-b shrink-0">
         <h2 className="text-xl font-bold">
           {swimmer ? 'Edit Swimmer' : 'Add New Swimmer'}
         </h2>
@@ -164,7 +164,8 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
             First Name *
@@ -325,7 +326,8 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
             )}
           </div>
         </div>
-        <div className="flex space-x-3 pt-4">
+        </div>
+        <div className="shrink-0 px-6 py-4 border-t flex space-x-3">
           <button
             type="submit"
             className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -341,6 +343,6 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
           </button>
         </div>
       </form>
-    </div>
+    </>
   );
 }

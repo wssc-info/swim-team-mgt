@@ -85,8 +85,8 @@ export default function EventForm({ event, onClose, onSuccess }: EventFormProps)
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <>
+      <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
         <h2 className="text-2xl font-bold">
           {event ? 'Edit Event' : 'Add New Event'}
         </h2>
@@ -98,13 +98,13 @@ export default function EventForm({ event, onClose, onSuccess }: EventFormProps)
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Event Name
@@ -207,7 +207,8 @@ export default function EventForm({ event, onClose, onSuccess }: EventFormProps)
           </label>
         </div>
 
-        <div className="flex space-x-4 pt-4">
+        </div>
+        <div className="shrink-0 px-6 py-4 border-t flex space-x-4">
           <button
             type="submit"
             disabled={loading}
@@ -224,6 +225,6 @@ export default function EventForm({ event, onClose, onSuccess }: EventFormProps)
           </button>
         </div>
       </form>
-    </div>
+    </>
   );
 }
