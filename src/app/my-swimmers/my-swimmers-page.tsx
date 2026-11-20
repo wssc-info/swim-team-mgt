@@ -10,6 +10,14 @@ import {getAllEvents} from "@/lib/events";
 
 interface SwimmerWithTimes extends Swimmer {
   timeRecords: TimeRecord[];
+  associationStatus?: string;
+}
+
+interface ClaimForm {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'M' | 'F' | '';
 }
 
 export default function MySwimmersPage() {
@@ -19,6 +27,10 @@ export default function MySwimmersPage() {
   const [loading, setLoading] = useState(true);
   const [showPersonalBestsOnly, setShowPersonalBestsOnly] = useState(false);
   const [expandedSwimmers, setExpandedSwimmers] = useState<Set<string>>(new Set());
+  const [showClaimForm, setShowClaimForm] = useState(false);
+  const [claimForm, setClaimForm] = useState<ClaimForm>({ firstName: '', lastName: '', dateOfBirth: '', gender: '' });
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimMessage, setClaimMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
 
 
@@ -67,6 +79,47 @@ export default function MySwimmersPage() {
     fetchAllEvents().then(r => setEvents(r));
   }, []);
 
+  const handleClaim = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!claimForm.gender) return;
+    setClaimLoading(true);
+    setClaimMessage(null);
+    try {
+      const res = await authenticatedFetch('/api/swimmers/claim', {
+        method: 'POST',
+        body: JSON.stringify(claimForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setClaimMessage({ type: 'error', text: data.error || 'Failed to submit' });
+      } else {
+        const msg = data.matched
+          ? 'Your swimmer was found! Your request is pending coach approval.'
+          : 'No exact match found — a new swimmer record was created and is pending coach approval.';
+        setClaimMessage({ type: 'success', text: msg });
+        setClaimForm({ firstName: '', lastName: '', dateOfBirth: '', gender: '' });
+        setShowClaimForm(false);
+        // Reload swimmers to show pending
+        const swimmersResponse = await authenticatedFetch('/api/family/swimmers');
+        if (swimmersResponse.ok) {
+          const swimmersData = await swimmersResponse.json();
+          const swimmersWithTimes = await Promise.all(
+            swimmersData.map(async (swimmer: Swimmer) => {
+              const timesResponse = await authenticatedFetch(`/api/times?swimmerId=${swimmer.id}`);
+              const timeRecords = timesResponse.ok ? await timesResponse.json() : [];
+              return { ...swimmer, timeRecords };
+            })
+          );
+          setSwimmers(swimmersWithTimes);
+        }
+      }
+    } catch {
+      setClaimMessage({ type: 'error', text: 'Network error — please try again.' });
+    } finally {
+      setClaimLoading(false);
+    }
+  };
+
   const toggleSwimmerExpansion = (swimmerId: string) => {
     const newExpanded = new Set(expandedSwimmers);
     if (newExpanded.has(swimmerId)) {
@@ -94,16 +147,63 @@ export default function MySwimmersPage() {
     );
   }
 
-  if (swimmers.length === 0) {
+  const claimFormPanel = showClaimForm && (
+    <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 className="text-lg font-semibold mb-4">Add a Swimmer</h2>
+      <form onSubmit={handleClaim} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+          <input required className="w-full border rounded px-3 py-2 text-sm"
+            value={claimForm.firstName} onChange={e => setClaimForm(f => ({ ...f, firstName: e.target.value }))} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+          <input required className="w-full border rounded px-3 py-2 text-sm"
+            value={claimForm.lastName} onChange={e => setClaimForm(f => ({ ...f, lastName: e.target.value }))} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+          <input required type="date" className="w-full border rounded px-3 py-2 text-sm"
+            value={claimForm.dateOfBirth} onChange={e => setClaimForm(f => ({ ...f, dateOfBirth: e.target.value }))} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+          <select required className="w-full border rounded px-3 py-2 text-sm"
+            value={claimForm.gender} onChange={e => setClaimForm(f => ({ ...f, gender: e.target.value as 'M' | 'F' }))}>
+            <option value="">Select...</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+        <div className="sm:col-span-2 flex gap-3">
+          <button type="submit" disabled={claimLoading}
+            className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+            {claimLoading ? 'Submitting...' : 'Submit Request'}
+          </button>
+          <button type="button" onClick={() => { setShowClaimForm(false); setClaimMessage(null); }}
+            className="border px-4 py-2 rounded text-sm hover:bg-gray-50">Cancel</button>
+        </div>
+      </form>
+    </div>
+  );
+
+  if (swimmers.length === 0 && !showClaimForm) {
     return (
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">My Swimmers</h1>
+        {claimMessage && (
+          <div className={`mb-4 p-4 rounded ${claimMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+            {claimMessage.text}
+          </div>
+        )}
         <div className="bg-white rounded-lg shadow p-8 text-center">
           <p className="text-gray-500 mb-4">No swimmers are associated with your account.</p>
-          <p className="text-sm text-gray-400">
-            Contact your coach or administrator to associate swimmers with your family account.
-          </p>
+          <button onClick={() => setShowClaimForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Add a Swimmer
+          </button>
         </div>
+        {claimFormPanel}
       </div>
     );
   }
@@ -112,7 +212,7 @@ export default function MySwimmersPage() {
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">My Swimmers</h1>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
@@ -122,8 +222,18 @@ export default function MySwimmersPage() {
             />
             <span className="text-sm font-medium">Show Personal Bests Only</span>
           </label>
+          <button onClick={() => { setShowClaimForm(v => !v); setClaimMessage(null); }}
+            className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">
+            + Add a Swimmer
+          </button>
         </div>
       </div>
+      {claimMessage && (
+        <div className={`mb-4 p-4 rounded ${claimMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+          {claimMessage.text}
+        </div>
+      )}
+      {claimFormPanel}
 
       <div className="space-y-6">
         {swimmers.map((swimmer) => {
@@ -141,8 +251,13 @@ export default function MySwimmersPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div>
-                      <h2 className="text-xl font-semibold">
+                      <h2 className="text-xl font-semibold flex items-center gap-2">
                         {swimmer.firstName} {swimmer.lastName}
+                        {swimmer.associationStatus === 'pending' && (
+                          <span className="text-xs font-normal bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full">
+                            Pending Approval
+                          </span>
+                        )}
                       </h2>
                       <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                         <span>Age Group: {swimmer.ageGroup}</span>

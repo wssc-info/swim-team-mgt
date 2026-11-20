@@ -474,15 +474,17 @@ interface FamilySwimmerAssociationAttributes {
   id: string;
   userId: string;
   swimmerId: string;
+  status: 'approved' | 'pending' | 'denied';
 }
 
-type FamilySwimmerAssociationCreationAttributes = Optional<FamilySwimmerAssociationAttributes, 'id'>
+type FamilySwimmerAssociationCreationAttributes = Optional<FamilySwimmerAssociationAttributes, 'id' | 'status'>
 
-export class FamilySwimmerAssociationModel extends Model<FamilySwimmerAssociationAttributes, FamilySwimmerAssociationCreationAttributes> 
+export class FamilySwimmerAssociationModel extends Model<FamilySwimmerAssociationAttributes, FamilySwimmerAssociationCreationAttributes>
   implements FamilySwimmerAssociationAttributes {
   declare id: string;
   declare userId: string;
   declare swimmerId: string;
+  declare status: 'approved' | 'pending' | 'denied';
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -501,6 +503,11 @@ FamilySwimmerAssociationModel.init(
     swimmerId: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM('approved', 'pending', 'denied'),
+      allowNull: false,
+      defaultValue: 'approved',
     },
   },
   {

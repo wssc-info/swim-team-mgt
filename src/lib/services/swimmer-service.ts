@@ -57,40 +57,35 @@ export class SwimmerService {
     }
   }
 
-  public async getAssociatedSwimmers(userId: string): Promise<Swimmer[]> {
+  public async getAssociatedSwimmers(userId: string, includeStatuses: string[] = ['approved']): Promise<(Swimmer & { associationStatus: string })[]> {
     await this.ensureInitialized();
     try {
-      // Get all associations for this user
       const associations = await FamilySwimmerAssociationModel.findAll({
-        where: {userId}
+        where: { userId, status: includeStatuses as any },
       });
 
-      if (associations.length === 0) {
-        return [];
-      }
+      if (associations.length === 0) return [];
 
-      // Get swimmer IDs from associations
-      const swimmerIds = associations.map(assoc => assoc.swimmerId);
-
-      // Fetch the actual swimmer records
       const swimmers = await SwimmerModel.findAll({
-        where: {
-          id: swimmerIds
-        }
+        where: { id: associations.map(a => a.swimmerId) },
       });
 
-      return swimmers.map(swimmer => ({
-        id: swimmer.id,
-        firstName: swimmer.firstName,
-        middleInitial: swimmer.middleInitial,
-        lastName: swimmer.lastName,
-        dateOfBirth: swimmer.dateOfBirth,
-        gender: swimmer.gender,
-        ageGroup: swimmer.ageGroup,
-        clubId: swimmer.clubId,
-        externalId: swimmer.externalId,
-        active: swimmer.active
-      }));
+      return swimmers.map(swimmer => {
+        const assoc = associations.find(a => a.swimmerId === swimmer.id)!;
+        return {
+          id: swimmer.id,
+          firstName: swimmer.firstName,
+          middleInitial: swimmer.middleInitial,
+          lastName: swimmer.lastName,
+          dateOfBirth: swimmer.dateOfBirth,
+          gender: swimmer.gender,
+          ageGroup: swimmer.ageGroup,
+          clubId: swimmer.clubId,
+          externalId: swimmer.externalId,
+          active: swimmer.active,
+          associationStatus: assoc.status,
+        };
+      });
     } catch (error) {
       console.error('Error fetching associated swimmers:', error);
       return [];

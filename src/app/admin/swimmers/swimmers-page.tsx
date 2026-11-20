@@ -72,6 +72,17 @@ export default function SwimmersPage() {
   const [seedTimes, setSeedTimes] = useState<Record<string, string> | null>(null);
   const [loadingSeedTimes, setLoadingSeedTimes] = useState(false);
 
+  // Pending associations
+  const [pendingAssociations, setPendingAssociations] = useState<any[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+
+  // Merge UI
+  const [showMerge, setShowMerge] = useState(false);
+  const [mergeSource, setMergeSource] = useState('');
+  const [mergeTarget, setMergeTarget] = useState('');
+  const [mergeLoading, setMergeLoading] = useState(false);
+  const [mergeMessage, setMergeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -90,7 +101,62 @@ export default function SwimmersPage() {
       }
     };
     loadData();
+    loadPending();
   }, []);
+
+  const loadPending = async () => {
+    setPendingLoading(true);
+    try {
+      const res = await authenticatedFetch('/api/admin/associations?status=pending');
+      if (res.ok) setPendingAssociations(await res.json());
+    } catch (e) {
+      console.error('Error loading pending associations:', e);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  const handleAssociation = async (id: string, action: 'approve' | 'deny') => {
+    try {
+      const res = await authenticatedFetch(`/api/admin/associations/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        await loadPending();
+        const updatedSwimmers = await fetchSwimmers(undefined, true);
+        setSwimmers(updatedSwimmers);
+      }
+    } catch (e) {
+      console.error('Error updating association:', e);
+    }
+  };
+
+  const handleMerge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMergeLoading(true);
+    setMergeMessage(null);
+    try {
+      const res = await authenticatedFetch('/api/admin/swimmers/merge', {
+        method: 'POST',
+        body: JSON.stringify({ sourceId: mergeSource, targetId: mergeTarget }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMergeMessage({ type: 'error', text: data.error || 'Merge failed' });
+      } else {
+        setMergeMessage({ type: 'success', text: `Merge complete. ${data.movedTimes} time records moved.` });
+        setMergeSource('');
+        setMergeTarget('');
+        const updatedSwimmers = await fetchSwimmers(undefined, true);
+        setSwimmers(updatedSwimmers);
+      }
+    } catch {
+      setMergeMessage({ type: 'error', text: 'Network error' });
+    } finally {
+      setMergeLoading(false);
+    }
+  };
 
   const handleAddSwimmer = () => {
     setEditingSwimmer(null);
@@ -583,6 +649,119 @@ export default function SwimmersPage() {
           </div>
         </div>
       )}
+
+      {/* Pending Associations */}
+      {(pendingLoading || pendingAssociations.length > 0) && (
+        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-yellow-800 mb-3">
+            Pending Swimmer Requests
+            {pendingAssociations.length > 0 && (
+              <span className="ml-2 bg-yellow-200 text-yellow-800 text-sm font-normal px-2 py-0.5 rounded-full">
+                {pendingAssociations.length}
+              </span>
+            )}
+          </h3>
+          {pendingLoading ? (
+            <p className="text-yellow-700 text-sm">Loading...</p>
+          ) : (
+            <div className="space-y-3">
+              {pendingAssociations.map((assoc: any) => (
+                <div key={assoc.id} className="flex items-center justify-between bg-white rounded border border-yellow-100 px-4 py-3">
+                  <div>
+                    <p className="font-medium text-sm">
+                      {assoc.swimmer?.firstName} {assoc.swimmer?.lastName}
+                      <span className="ml-2 text-xs text-gray-500">
+                        DOB: {assoc.swimmer?.dateOfBirth ? new Date(assoc.swimmer.dateOfBirth).toLocaleDateString() : '—'} · {assoc.swimmer?.gender}
+                      </span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Requested by: {assoc.familyUser?.firstName} {assoc.familyUser?.lastName} ({assoc.familyUser?.email})
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAssociation(assoc.id, 'approve')}
+                      className="bg-green-600 text-white text-xs px-3 py-1.5 rounded hover:bg-green-700"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleAssociation(assoc.id, 'deny')}
+                      className="bg-red-600 text-white text-xs px-3 py-1.5 rounded hover:bg-red-700"
+                    >
+                      Deny
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Merge Swimmers */}
+      <div className="mb-6">
+        <button
+          onClick={() => { setShowMerge(v => !v); setMergeMessage(null); }}
+          className="text-sm text-gray-600 hover:text-gray-800 underline"
+        >
+          {showMerge ? 'Hide Merge Tool' : 'Merge Swimmers'}
+        </button>
+        {showMerge && (
+          <div className="mt-3 bg-white border rounded-lg p-4">
+            <h3 className="text-base font-semibold mb-1">Merge Swimmers</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              All times and associations from the source swimmer will be moved to the target swimmer. The source swimmer will be deleted.
+            </p>
+            <form onSubmit={handleMerge} className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-48">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Source swimmer (will be deleted)</label>
+                <select
+                  required
+                  value={mergeSource}
+                  onChange={e => setMergeSource(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                >
+                  <option value="">Select source...</option>
+                  {swimmers.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.lastName}, {s.firstName} ({s.gender}, {s.ageGroup})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-48">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Target swimmer (keep this one)</label>
+                <select
+                  required
+                  value={mergeTarget}
+                  onChange={e => setMergeTarget(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                >
+                  <option value="">Select target...</option>
+                  {swimmers.filter(s => s.id !== mergeSource).map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.lastName}, {s.firstName} ({s.gender}, {s.ageGroup})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="submit"
+                disabled={mergeLoading || !mergeSource || !mergeTarget}
+                className="bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700 disabled:opacity-50"
+              >
+                {mergeLoading ? 'Merging...' : 'Merge'}
+              </button>
+            </form>
+            {mergeMessage && (
+              <p className={`mt-3 text-sm ${mergeMessage.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                {mergeMessage.text}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       <DataTable
         columns={getColumns(handleEditSwimmer, handleDeleteSwimmer, swimmers, clubs, user?.role === 'admin', handleViewSeedTimes)}

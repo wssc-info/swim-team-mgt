@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Family users always see only their associated swimmers, regardless of params
     if (user.role === 'family') {
-      const swimmers = await swimmerService.getAssociatedSwimmers(user.id);
+      const swimmers = await swimmerService.getAssociatedSwimmers(user.id, ['approved', 'pending']);
       return NextResponse.json(swimmers);
     }
 

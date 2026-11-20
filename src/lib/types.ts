@@ -83,6 +83,7 @@ export interface FamilySwimmerAssociation {
   id: string;
   userId: string;
   swimmerId: string;
+  status: 'approved' | 'pending' | 'denied';
   createdAt: string;
 }
 

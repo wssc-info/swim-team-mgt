@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const swimmers = await swimmerService.getAssociatedSwimmers(user.id);
+    const swimmers = await swimmerService.getAssociatedSwimmers(user.id, ['approved', 'pending']);
 
     return NextResponse.json(swimmers);
   } catch (error) {
