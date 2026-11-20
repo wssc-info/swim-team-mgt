@@ -188,7 +188,7 @@ export default function SwimmersPage() {
     setSeedTimes(null);
     setLoadingSeedTimes(true);
     try {
-      const res = await fetch(`/api/swimmers/${swimmer.id}/best-times`);
+      const res = await authenticatedFetch(`/api/swimmers/${swimmer.id}/best-times`);
       if (res.ok) setSeedTimes(await res.json());
     } catch (e) {
       console.error('Error loading seed times:', e);

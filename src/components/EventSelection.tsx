@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {Meet, SwimEvent, SwimmerWithEvents} from '@/lib/types';
 import Modal from '@/components/Modal';
-import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets } from '@/lib/api';
+import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets, authenticatedFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
 interface Swimmer {
@@ -95,7 +95,7 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
         setSelectedEvents(eventIds);
         
         // Load best times from API for events not already selected
-        const response = await fetch(`/api/swimmers/${swimmer.id}/best-times`);
+        const response = await authenticatedFetch(`/api/swimmers/${swimmer.id}/best-times`);
 
         if (response.ok) {
           const bestTimes = await response.json();
