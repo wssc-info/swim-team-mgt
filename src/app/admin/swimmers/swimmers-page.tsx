@@ -672,6 +672,17 @@ export default function SwimmersPage() {
                     </p>
                   </div>
                   <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        const full = swimmers.find(s => s.id === assoc.swimmer?.id);
+                        if (full) handleEditSwimmer(full);
+                      }}
+                    >
+                      Edit
+                    </Button>
                     <Button size="sm" onClick={() => handleAssociation(assoc.id, 'approve')} className="bg-green-600 hover:bg-green-700 text-xs h-7">
                       Approve
                     </Button>
