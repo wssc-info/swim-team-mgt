@@ -11,6 +11,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {Checkbox} from "@/components/ui/checkbox";
 import { Combobox } from '@/components/ui/combobox';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 
 interface SwimClub {
   id: string;
@@ -303,13 +304,10 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
           </div>
           <div className="flex flex-col items-center pt-6">
             <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-1">Active</label>
-            <input
-              type="checkbox"
+            <Switch
               id="active"
-              name="active"
               checked={formData.active}
-              onChange={handleInputChange}
-              className="mt-1"
+              onCheckedChange={val => setFormData(prev => ({ ...prev, active: val }))}
             />
           </div>
           <div>
