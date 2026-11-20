@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       }
       matched = true;
     } else {
-      // No match — create a new swimmer record (unassigned to a club)
+      // No match — create a new swimmer record assigned to the family's club
       swimmer = await SwimmerModel.create({
         id: uuidv4(),
         firstName,
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
         gender,
         ageGroup: calculateAgeGroup(dateOfBirth),
         active: false,
+        clubId: user.clubId || undefined,
       });
     }
 

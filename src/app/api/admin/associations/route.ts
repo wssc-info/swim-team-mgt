@@ -29,10 +29,10 @@ export async function GET(request: NextRequest) {
         const swimmer = await SwimmerModel.findByPk(assoc.swimmerId);
         const familyUser = await UserModel.findByPk(assoc.userId);
 
-        // Filter to coach's club
-        if (user.role === 'coach' && swimmer?.clubId !== user.clubId) return null;
+        // Filter to coach's club; unassigned swimmers (no clubId) are shown to all coaches
+        if (user.role === 'coach' && swimmer?.clubId && swimmer.clubId !== user.clubId) return null;
 
-        // For leagueAdmin with a clubId param or selected club
+        // For leagueAdmin with a clubId param or selected club; unassigned swimmers pass through
         const paramClubId = request.nextUrl.searchParams.get('clubId');
         const effectiveClubId = user.clubId || paramClubId;
         if (effectiveClubId && swimmer?.clubId && swimmer.clubId !== effectiveClubId) return null;
