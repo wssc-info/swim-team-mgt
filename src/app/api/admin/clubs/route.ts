@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
     const user = await AuthService.getInstance().getUser(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin' && user.role !== 'leagueAdmin') {
+    if (user.role !== 'admin' && user.role !== 'leagueAdmin' && user.role !== 'coach') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
