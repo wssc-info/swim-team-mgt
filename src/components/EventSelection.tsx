@@ -331,52 +331,54 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
               const isSelected = selectedEvents.includes(event.id);
               const seedTime = seedTimes[event.id];
 
+              const isDisabled = loading || (!isSelected && !!maxEventsPerSwimmer && maxEventsPerSwimmer > 0 && selectedEvents.length >= maxEventsPerSwimmer);
+
               return (
-                <div key={event.id} className="p-4 hover:bg-gray-50">
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => handleEventToggle(event.id)}
-                      className="rounded"
-                      disabled={loading || (!isSelected && !!maxEventsPerSwimmer && maxEventsPerSwimmer > 0 && selectedEvents.length >= maxEventsPerSwimmer)}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className={`font-medium ${event.isRelay ? 'text-purple-700' : 'text-gray-900'}`}>
-                            {event.name}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {event.distance} {event.stroke.replace('-', ' ')} • {event.course}
-                            {event.isRelay && ' • Relay Event'}
-                          </p>
-                        </div>
-                        {!event.isRelay && (
-                          <div className="ml-4 text-right">
-                            <label className="block text-xs text-gray-600 mb-1">
-                              Seed Time
-                              {convertedEventIds.has(event.id) && (
-                                <span className="ml-1 text-orange-500 font-medium" title={`Converted from ${(() => { const src = allEvents?.find(e => Object.keys(seedTimes ?? {}).includes(e.id) && e.distance === event.distance && e.stroke === event.stroke && e.course !== event.course); return src?.course ?? ''; })()}`}>
-                                  (conv.)
-                                </span>
-                              )}
-                            </label>
-                            <input
-                              type="text"
-                              value={seedTime || 'NT'}
-                              onChange={(e) => setSeedTimes(prev => ({
-                                ...prev,
-                                [event.id]: e.target.value
-                              }))}
-                              placeholder="MM:SS.ss or NT"
-                              className="w-24 px-2 py-1 text-sm border border-gray-300 rounded text-center"
-                              disabled={true}
-                            />
-                          </div>
-                        )}
-                      </div>
+                <div
+                  key={event.id}
+                  onClick={() => !isDisabled && handleEventToggle(event.id)}
+                  className={`p-4 flex items-center space-x-4 transition-colors ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-50'} ${isSelected ? 'bg-blue-50' : ''}`}
+                >
+                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
+                    {isSelected && (
+                      <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 flex items-center justify-between">
+                    <div>
+                      <h4 className={`font-medium ${event.isRelay ? 'text-purple-700' : 'text-gray-900'}`}>
+                        {event.name}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {event.distance} {event.stroke.replace('-', ' ')} • {event.course}
+                        {event.isRelay && ' • Relay Event'}
+                      </p>
                     </div>
+                    {!event.isRelay && (
+                      <div className="ml-4 text-right" onClick={e => e.stopPropagation()}>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Seed Time
+                          {convertedEventIds.has(event.id) && (
+                            <span className="ml-1 text-orange-500 font-medium" title={`Converted from ${(() => { const src = allEvents?.find(e => Object.keys(seedTimes ?? {}).includes(e.id) && e.distance === event.distance && e.stroke === event.stroke && e.course !== event.course); return src?.course ?? ''; })()}`}>
+                              (conv.)
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="text"
+                          value={seedTime || 'NT'}
+                          onChange={(e) => setSeedTimes(prev => ({
+                            ...prev,
+                            [event.id]: e.target.value
+                          }))}
+                          placeholder="MM:SS.ss or NT"
+                          className="w-24 px-2 py-1 text-sm border border-gray-300 rounded text-center"
+                          disabled={true}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               );
