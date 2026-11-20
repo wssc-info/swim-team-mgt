@@ -15,6 +15,7 @@ import {Meet, RelayTeam, SwimClub, SwimEvent, Swimmer} from '@/lib/types';
 import RelayTeamForm from '@/components/RelayTeamForm';
 import { useAuth } from '@/lib/auth-context';
 import {getClubId} from "@/lib/utils";
+import { Button } from '@/components/ui/button';
 
 
 export default function RelaysPage() {
@@ -220,18 +221,8 @@ export default function RelaysPage() {
         </div>
       </div>
       <div className="flex space-x-2 ml-4">
-        <button
-          onClick={() => handleEditTeam(team)}
-          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => handleDeleteTeam(team.id)}
-          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-        >
-          Delete
-        </button>
+        <Button size="sm" onClick={() => handleEditTeam(team)} className="bg-green-600 hover:bg-green-700">Edit</Button>
+        <Button size="sm" variant="destructive" onClick={() => handleDeleteTeam(team.id)}>Delete</Button>
       </div>
     </div>
   );
@@ -240,13 +231,7 @@ export default function RelaysPage() {
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Relay Teams</h1>
-        <button
-          onClick={handleCreateTeam}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          disabled={relayEvents.length === 0}
-        >
-          Create Relay Team
-        </button>
+        <Button onClick={handleCreateTeam} disabled={relayEvents.length === 0}>Create Relay Team</Button>
       </div>
 
       {/* Active Meet Info */}
@@ -286,9 +271,7 @@ export default function RelaysPage() {
       {relayMeetEventCount === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
           <p className="text-gray-600 mb-4">No relay event slots configured for this meet.</p>
-          <button onClick={handleCreateTeam} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Create Your First Relay Team
-          </button>
+          <Button onClick={handleCreateTeam}>Create Your First Relay Team</Button>
         </div>
       ) : (
         <div className="space-y-6">

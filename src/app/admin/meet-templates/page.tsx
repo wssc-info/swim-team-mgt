@@ -9,6 +9,7 @@ import type { MeetTemplate, League, SwimClub, SwimEvent, MeetEvent } from '@/lib
 import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Modal from '@/components/Modal';
+import { Button } from '@/components/ui/button';
 
 type TemplateFormData = {
   name: string;
@@ -220,12 +221,7 @@ function MeetTemplatesContent() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Meet Templates</h1>
-        <button
-          onClick={openCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
-          + New Template
-        </button>
+        <Button onClick={openCreate}>+ New Template</Button>
       </div>
 
       {error && !showForm && (
@@ -249,26 +245,11 @@ function MeetTemplatesContent() {
                   </div>
                 </div>
                 <div className="flex gap-1 ml-2">
-                  <button
-                    onClick={() => openClone(t)}
-                    className="text-green-600 hover:text-green-800 text-sm px-2 py-1 rounded hover:bg-green-50"
-                  >
-                    Clone
-                  </button>
+                  <Button variant="ghost" size="sm" onClick={() => openClone(t)} className="text-green-600 hover:text-green-800 hover:bg-green-50">Clone</Button>
                   {(isAdmin || t.scope !== 'league') && (
                     <>
-                      <button
-                        onClick={() => openEdit(t)}
-                        className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(t)}
-                        className="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(t)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50">Edit</Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(t)} className="text-red-600 hover:text-red-800 hover:bg-red-50">Delete</Button>
                     </>
                   )}
                 </div>
@@ -286,21 +267,12 @@ function MeetTemplatesContent() {
           onClose={() => setShowForm(false)}
           footer={
             <div className="flex gap-3">
-              <button
-                type="submit"
-                form="template-form"
-                disabled={saving}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
+              <Button type="submit" form="template-form" disabled={saving} className="flex-1">
                 {saving ? 'Saving…' : editing ? 'Update Template' : 'Create Template'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300"
-              >
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setShowForm(false)} className="flex-1">
                 Cancel
-              </button>
+              </Button>
             </div>
           }
           size="3xl"
@@ -434,13 +406,7 @@ function MeetTemplatesContent() {
                                 <span className={ev?.isRelay ? 'text-purple-700' : ''}>{ev?.name ?? 'Unknown'}</span>
                               </td>
                               <td className="px-3 py-1.5 text-right">
-                                <button
-                                  type="button"
-                                  onClick={() => removeEvent(me.eventId, me.ageGroup, me.gender)}
-                                  className="text-red-500 hover:text-red-700 text-xs"
-                                >
-                                  Remove
-                                </button>
+                                <Button type="button" variant="ghost" size="sm" onClick={() => removeEvent(me.eventId, me.ageGroup, me.gender)} className="text-red-500 hover:text-red-700 h-auto py-0.5 text-xs">Remove</Button>
                               </td>
                             </tr>
                           );

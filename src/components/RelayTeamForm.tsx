@@ -7,6 +7,7 @@ import {AGE_GROUPS} from "@/lib/constants";
 import {Swimmer, SwimEvent, RelayTeam} from "@/lib/types";
 import {useAuth} from "@/lib/auth-context";
 import {getClubId} from "@/lib/utils";
+import { Button } from '@/components/ui/button';
 
 interface RelayTeamFormProps {
   team?: RelayTeam | null;
@@ -155,21 +156,10 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
 
   const footer = (
     <div className="flex justify-end space-x-3">
-      <button
-        type="button"
-        onClick={onClose}
-        className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
-      >
-        Cancel
-      </button>
-      <button
-        type="submit"
-        form="relay-team-form"
-        disabled={saving || formData.swimmers.length === 0}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-      >
+      <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+      <Button type="submit" form="relay-team-form" disabled={saving || formData.swimmers.length === 0}>
         {saving ? 'Saving...' : team ? 'Update Team' : 'Create Team'}
-      </button>
+      </Button>
     </div>
   );
 
@@ -279,29 +269,9 @@ export default function RelayTeamForm({ team, swimmers, availableEvents, meetId,
                       </div>
                     </div>
                     <div className="flex space-x-1">
-                      <button
-                        type="button"
-                        onClick={() => moveSwimmerUp(index)}
-                        disabled={index === 0}
-                        className="p-1 text-blue-600 hover:text-blue-800 disabled:text-gray-400"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveSwimmerDown(index)}
-                        disabled={index === formData.swimmers.length - 1}
-                        className="p-1 text-blue-600 hover:text-blue-800 disabled:text-gray-400"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeSwimmer(swimmerId)}
-                        className="p-1 text-red-600 hover:text-red-800"
-                      >
-                        ✕
-                      </button>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => moveSwimmerUp(index)} disabled={index === 0} className="h-7 w-7 text-blue-600 disabled:text-gray-400">↑</Button>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => moveSwimmerDown(index)} disabled={index === formData.swimmers.length - 1} className="h-7 w-7 text-blue-600 disabled:text-gray-400">↓</Button>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeSwimmer(swimmerId)} className="h-7 w-7 text-red-600 hover:text-red-800">✕</Button>
                     </div>
                   </div>
                 );

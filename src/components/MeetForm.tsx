@@ -9,6 +9,7 @@ import { getClubId } from '@/lib/utils';
 import { DataTable } from "@/components/datatable/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Combobox } from '@/components/ui/combobox';
+import { Button } from '@/components/ui/button';
 
 interface MeetFormProps {
   meet?: Partial<Meet> | null;
@@ -323,13 +324,9 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={() => removeMeetEvent(row.original.eventId, row.original.ageGroup, row.original.gender)}
-          className="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50"
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={() => removeMeetEvent(row.original.eventId, row.original.ageGroup, row.original.gender)} className="text-red-600 hover:text-red-800 hover:bg-red-50">
           Remove
-        </button>
+        </Button>
       ),
     },
   ];
@@ -354,20 +351,12 @@ export default function MeetForm({ meet, onClose }: MeetFormProps) {
 
   const footer = (
     <div className="flex space-x-3">
-      <button
-        type="submit"
-        form="meet-form"
-        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
+      <Button type="submit" form="meet-form" className="flex-1">
         {meet ? 'Update Meet' : 'Create Meet'}
-      </button>
-      <button
-        type="button"
-        onClick={onClose}
-        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-      >
+      </Button>
+      <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
         Cancel
-      </button>
+      </Button>
     </div>
   );
 

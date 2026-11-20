@@ -5,6 +5,7 @@ import { User } from '@/lib/types';
 import Modal from '@/components/Modal';
 import {authenticatedFetch} from "@/lib/api";
 import { Combobox } from '@/components/ui/combobox';
+import { Button } from '@/components/ui/button';
 
 interface SwimClub {
   id: string;
@@ -120,22 +121,12 @@ export default function UserForm({ user, onClose, currentUserRole, currentUserCl
 
   const footer = (
     <div className="flex space-x-3">
-      <button
-        type="submit"
-        form="user-form"
-        disabled={loading}
-        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-      >
+      <Button type="submit" form="user-form" disabled={loading} className="flex-1">
         {loading ? 'Saving...' : (user ? 'Update User' : 'Create User')}
-      </button>
-      <button
-        type="button"
-        onClick={onClose}
-        disabled={loading}
-        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-      >
+      </Button>
+      <Button type="button" variant="secondary" onClick={onClose} disabled={loading} className="flex-1">
         Cancel
-      </button>
+      </Button>
     </div>
   );
 

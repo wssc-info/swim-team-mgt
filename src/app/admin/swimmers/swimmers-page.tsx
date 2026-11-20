@@ -495,12 +495,9 @@ export default function SwimmersPage() {
               className="hidden"
             />
           </label>
-          <button
-            onClick={handleAddSwimmer}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
+          <Button onClick={handleAddSwimmer}>
             Add New Swimmer
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -569,12 +566,9 @@ export default function SwimmersPage() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => setUploadResults(null)}
-            className="mt-3 text-sm text-gray-600 hover:text-gray-800"
-          >
+          <Button variant="link" size="sm" onClick={() => setUploadResults(null)} className="mt-3 h-auto p-0">
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
 
@@ -598,7 +592,7 @@ export default function SwimmersPage() {
           onClose={() => setSeedTimesSwimmer(null)}
           footer={
             <div className="text-right">
-              <button onClick={() => setSeedTimesSwimmer(null)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm">Close</button>
+              <Button variant="secondary" size="sm" onClick={() => setSeedTimesSwimmer(null)}>Close</Button>
             </div>
           }
           size="2xl"
@@ -677,18 +671,12 @@ export default function SwimmersPage() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleAssociation(assoc.id, 'approve')}
-                      className="bg-green-600 text-white text-xs px-3 py-1.5 rounded hover:bg-green-700"
-                    >
+                    <Button size="sm" onClick={() => handleAssociation(assoc.id, 'approve')} className="bg-green-600 hover:bg-green-700 text-xs h-7">
                       Approve
-                    </button>
-                    <button
-                      onClick={() => handleAssociation(assoc.id, 'deny')}
-                      className="bg-red-600 text-white text-xs px-3 py-1.5 rounded hover:bg-red-700"
-                    >
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleAssociation(assoc.id, 'deny')} className="text-xs h-7">
                       Deny
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -699,12 +687,9 @@ export default function SwimmersPage() {
 
       {/* Merge Swimmers */}
       <div className="mb-6">
-        <button
-          onClick={() => { setShowMerge(v => !v); setMergeMessage(null); }}
-          className="text-sm text-gray-600 hover:text-gray-800 underline"
-        >
+        <Button variant="link" size="sm" onClick={() => { setShowMerge(v => !v); setMergeMessage(null); }} className="h-auto p-0 text-gray-600">
           {showMerge ? 'Hide Merge Tool' : 'Merge Swimmers'}
-        </button>
+        </Button>
         {showMerge && (
           <div className="mt-3 bg-white border rounded-lg p-4">
             <h3 className="text-base font-semibold mb-1">Merge Swimmers</h3>
@@ -744,13 +729,9 @@ export default function SwimmersPage() {
                   ))}
                 </select>
               </div>
-              <button
-                type="submit"
-                disabled={mergeLoading || !mergeSource || !mergeTarget}
-                className="bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700 disabled:opacity-50"
-              >
+              <Button type="submit" disabled={mergeLoading || !mergeSource || !mergeTarget} className="bg-orange-600 hover:bg-orange-700">
                 {mergeLoading ? 'Merging...' : 'Merge'}
-              </button>
+              </Button>
             </form>
             {mergeMessage && (
               <p className={`mt-3 text-sm ${mergeMessage.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>

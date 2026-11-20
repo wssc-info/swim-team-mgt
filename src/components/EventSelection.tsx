@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import {Meet, SwimEvent, SwimmerWithEvents} from '@/lib/types';
 import Modal from '@/components/Modal';
 import { fetchSwimmerMeetEvents, updateSwimmerMeetEvents, fetchMeets } from '@/lib/api';
+import { Button } from '@/components/ui/button';
 
 interface Swimmer {
   id: string;
@@ -238,20 +239,12 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
   const footer = (
     <div className="space-y-3">
       <div className="flex space-x-3">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
+        <Button onClick={handleSave} disabled={saving} className="flex-1">
           {saving ? 'Saving...' : 'Save Event Selection'}
-        </button>
-        <button
-          onClick={onClose}
-          disabled={saving}
-          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-        >
+        </Button>
+        <Button variant="secondary" onClick={onClose} disabled={saving} className="flex-1">
           Cancel
-        </button>
+        </Button>
       </div>
       <div className="p-3 bg-blue-50 rounded-lg">
         <p className="text-sm text-blue-700">
@@ -316,13 +309,9 @@ export default function EventSelection({ swimmer, meet, availableEvents, allEven
         </div>
         
         <div className="mt-3">
-          <button
-            type="button"
-            onClick={handleSelectAllFiltered}
-            className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={handleSelectAllFiltered} className="bg-blue-100 text-blue-700 hover:bg-blue-200">
             {allFilteredSelected ? 'Deselect All Filtered' : 'Select All Filtered'} ({filteredEvents.length})
-          </button>
+          </Button>
         </div>
       </div>
 

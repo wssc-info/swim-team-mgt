@@ -10,6 +10,7 @@ import {SquarePenIcon} from "lucide-react";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {Checkbox} from "@/components/ui/checkbox";
 import { Combobox } from '@/components/ui/combobox';
+import { Button } from '@/components/ui/button';
 
 interface SwimClub {
   id: string;
@@ -153,20 +154,12 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
 
   const footer = (
     <div className="flex space-x-3">
-      <button
-        type="submit"
-        form="swimmer-form"
-        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
+      <Button type="submit" form="swimmer-form" className="flex-1">
         {swimmer ? 'Update Swimmer' : 'Add Swimmer'}
-      </button>
-      <button
-        type="button"
-        onClick={onClose}
-        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-      >
+      </Button>
+      <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
         Cancel
-      </button>
+      </Button>
     </div>
   );
 

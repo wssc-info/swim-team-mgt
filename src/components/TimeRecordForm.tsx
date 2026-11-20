@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createTimeRecord, updateTimeRecordApi, fetchAllEvents } from '@/lib/api';
 import Modal from '@/components/Modal';
 import { Swimmer, TimeRecord, SwimEvent } from '@/lib/types';
+import { Button } from '@/components/ui/button';
 
 interface TimeRecordFormProps {
   record?: TimeRecord | null;
@@ -137,22 +138,12 @@ export default function TimeRecordForm({ record, swimmers, onClose }: TimeRecord
 
   const footer = (
     <div className="flex space-x-3">
-      <button
-        type="submit"
-        form="time-record-form"
-        disabled={saving}
-        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-      >
+      <Button type="submit" form="time-record-form" disabled={saving} className="flex-1">
         {saving ? 'Saving...' : (record ? 'Update Record' : 'Add Record')}
-      </button>
-      <button
-        type="button"
-        onClick={onClose}
-        disabled={saving}
-        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-      >
+      </Button>
+      <Button type="button" variant="secondary" onClick={onClose} disabled={saving} className="flex-1">
         Cancel
-      </button>
+      </Button>
     </div>
   );
 

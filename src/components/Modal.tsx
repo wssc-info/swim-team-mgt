@@ -1,4 +1,5 @@
 import {Button} from "@/components/ui/button";
+import {SquareX, X} from "lucide-react";
 
 interface ModalProps {
   title: React.ReactNode;
@@ -24,8 +25,9 @@ export default function Modal({ title, onClose, children, footer, size = 'lg', m
       <div className={`bg-white rounded-lg w-full ${sizeClasses[size]} flex flex-col ${maxHeight}`}>
         <div className="shrink-0 flex justify-between items-center px-6 py-4 border-b">
           <div className="text-xl font-bold">{title}</div>
-          <Button >x</Button>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl leading-none">✕</button>
+          <Button onClick={onClose} variant="ghost" className="rounded-full">
+            <X className="size-6"></X>
+          </Button>
         </div>
         <div className="overflow-y-auto flex-1 px-6 py-4">
           {children}

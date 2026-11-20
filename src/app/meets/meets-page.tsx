@@ -10,6 +10,7 @@ import {useAuth} from '@/lib/auth-context';
 import {getClubId} from '@/lib/utils';
 import {DataTable} from "@/components/datatable/dataTable";
 import {createMeetsColumns} from "@/app/meets/meets-columns";
+import { Button } from '@/components/ui/button';
 
 export default function MeetsPage() {
   const { user } = useAuth();
@@ -154,12 +155,7 @@ export default function MeetsPage() {
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Manage Meets</h1>
-        <button
-          onClick={handleAddMeet}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Create New Meet
-        </button>
+        <Button onClick={handleAddMeet}>Create New Meet</Button>
       </div>
 
       {showForm && (
@@ -204,20 +200,10 @@ export default function MeetsPage() {
                 </div>
               </div>
               <div className="flex space-x-2 ml-4 flex-wrap gap-2">
-                <button
-                  onClick={() => handleEditMeet(activeMeet)}
-                  className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleToggleFamilySignup(activeMeet)}
-                  className={`px-3 py-1 rounded text-sm border ${activeMeet.familySignupOpen
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}`}
-                >
+                <Button size="sm" onClick={() => handleEditMeet(activeMeet)} className="bg-green-600 hover:bg-green-700">Edit</Button>
+                <Button size="sm" variant={activeMeet.familySignupOpen ? 'default' : 'outline'} onClick={() => handleToggleFamilySignup(activeMeet)}>
                   {activeMeet.familySignupOpen ? 'Close Family Signup' : 'Open Family Signup'}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -240,12 +226,7 @@ export default function MeetsPage() {
         {upcomingMeets.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-lg">
             <p className="text-gray-500 mb-4">No upcoming meets scheduled.</p>
-            <button
-              onClick={handleAddMeet}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Create New Meet
-            </button>
+            <Button onClick={handleAddMeet}>Create New Meet</Button>
           </div>
         ) : (
           <div className="space-y-4">

@@ -5,6 +5,7 @@ import {User, Swimmer} from '@/lib/types';
 import Modal from '@/components/Modal';
 import {fetchSwimmers} from "@/lib/api";
 import {Input} from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
 
 interface FamilyAssociationFormProps {
   user: User;
@@ -97,20 +98,12 @@ export default function FamilyAssociationForm({user, onClose}: FamilyAssociation
   const footer = (
     <div className="space-y-3">
       <div className="flex space-x-3">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
+        <Button onClick={handleSave} disabled={saving} className="flex-1">
           {saving ? 'Saving...' : 'Save Associations'}
-        </button>
-        <button
-          onClick={onClose}
-          disabled={saving}
-          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-        >
+        </Button>
+        <Button variant="secondary" onClick={onClose} disabled={saving} className="flex-1">
           Cancel
-        </button>
+        </Button>
       </div>
       <div className="p-3 bg-blue-50 rounded-lg">
         <p className="text-sm text-blue-700">
