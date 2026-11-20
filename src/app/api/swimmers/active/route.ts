@@ -7,6 +7,11 @@ const swimmerService = SwimmerService.getInstance();
 
 export async function POST(request: NextRequest) {
   try {
+    const user: UserModel | null = await AuthService.getInstance().getUser(request);
+    if (!user || (user.role !== 'admin' && user.role !== 'leagueAdmin')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { swimmerIds, activeFlag } = body;
     

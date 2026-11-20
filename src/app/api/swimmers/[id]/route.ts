@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SwimmerService } from '@/lib/services/swimmer-service';
-import { FamilySwimmerAssociationModel, initializeDatabase } from '@/lib/models';
+import { FamilySwimmerAssociationModel, SwimmerModel, initializeDatabase } from '@/lib/models';
+import { AuthService } from '@/lib/services/auth-service';
 import {Swimmer} from "@/lib/types";
 import {generateSwimmerExternalId} from "@/lib/utils";
 
@@ -12,6 +13,20 @@ export async function PUT(
 ) {
   const {id} = await params;
   try {
+    const user = await AuthService.getInstance().getUser(request);
+    if (!user || (user.role !== 'admin' && user.role !== 'leagueAdmin' && user.role !== 'coach')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Non-admins can only edit swimmers belonging to their club
+    if (user.role !== 'admin' && user.role !== 'leagueAdmin') {
+      await initializeDatabase();
+      const swimmer = await SwimmerModel.findByPk(id);
+      if (!swimmer || swimmer.clubId !== user.clubId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     const body: Partial<Swimmer> = await request.json();
     if (!body.externalId) {
       body.externalId = generateSwimmerExternalId(body)
@@ -29,6 +44,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await AuthService.getInstance().getUser(request);
+    if (!user || (user.role !== 'admin' && user.role !== 'leagueAdmin')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     await initializeDatabase();
     const associations = await FamilySwimmerAssociationModel.findAll({ where: { swimmerId: id } });
