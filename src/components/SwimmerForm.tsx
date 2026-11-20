@@ -203,154 +203,119 @@ export default function SwimmerForm({ swimmer, onClose }: SwimmerFormProps) {
   );
 
   return (
-    <Modal title={swimmer ? 'Edit Swimmer' : 'Add New Swimmer'} onClose={onClose} footer={footer}>
+    <Modal title={swimmer ? 'Edit Swimmer' : 'Add New Swimmer'} onClose={onClose} footer={footer} size="2xl">
       <form id="swimmer-form" onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-            First Name *
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.firstName ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="Enter first name"
-          />
-          {errors.firstName && (
-            <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="middleInitial" className="block text-sm font-medium text-gray-700 mb-1">
-            Middle Initial
-          </label>
-          <input
-            type="text"
-            id="middleInitial"
-            name="middleInitial"
-            value={formData.middleInitial}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.middleInitial ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="Enter middle initial"
-          />
-          {errors.middleInitial && (
-            <p className="text-red-500 text-sm mt-1">{errors.middleInitial}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-            Last Name *
-          </label>
-          <input
-            type="text"
-            id="lastName"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.lastName ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="Enter last name"
-          />
-          {errors.lastName && (
-            <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
-            Date of Birth *
-          </label>
-          <input
-            type="date"
-            id="dateOfBirth"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.dateOfBirth && (
-            <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>
-          )}
-          {predictedAgeGroup && (
-            <p className="text-sm text-gray-600 mt-1">
-              Age Group: {predictedAgeGroup}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
-            Gender *
-          </label>
-          <select
-            id="gender"
-            name="gender"
-            value={formData.gender}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="M">Male</option>
-            <option value="F">Female</option>
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="externalId" className="block text-sm font-medium text-gray-700 mb-1">
-            External ID <Tooltip>
-              <TooltipTrigger asChild>
-                <SquarePenIcon onClick={generateExternalId} className="inline"/>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Generate a unique ID</p>
-              </TooltipContent>
-            </Tooltip>
-
-          </label>
-          <input
-            type="text"
-            id="externalId"
-            name="externalId"
-            value={formData.externalId}
-            onChange={handleInputChange}
-            maxLength={12}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., USA Swimming ID, Team Manager ID"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Identifier from external systems (USA Swimming, Team Manager, etc.)
-          </p>
-        </div>
-
-        <div className="flex space-x-6">
-          <div className="text-center items-center">
-            <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-1">
-              Active
-            </label>
-            <input type="checkbox"
-                   id="active"
-                   name="active"
-                   checked={formData.active}
-                   onChange={handleInputChange}
+        {/* Row 1: First name · MI · Last name */}
+        <div className="grid grid-cols-[1fr_5rem_1fr] gap-3">
+          <div>
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="First name"
+            />
+            {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+          </div>
+          <div>
+            <label htmlFor="middleInitial" className="block text-sm font-medium text-gray-700 mb-1">MI</label>
+            <input
+              type="text"
+              id="middleInitial"
+              name="middleInitial"
+              value={formData.middleInitial}
+              onChange={handleInputChange}
+              maxLength={1}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+              placeholder="—"
             />
           </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Club
+          <div>
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="Last name"
+            />
+            {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+          </div>
+        </div>
+
+        {/* Row 2: DOB · Gender */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
+            <input
+              type="date"
+              id="dateOfBirth"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>}
+            {predictedAgeGroup && <p className="text-sm text-gray-600 mt-1">Age Group: {predictedAgeGroup}</p>}
+          </div>
+          <div>
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+            <select
+              id="gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Row 3: External ID · Active · Club */}
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-start">
+          <div>
+            <label htmlFor="externalId" className="block text-sm font-medium text-gray-700 mb-1">
+              External ID{' '}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SquarePenIcon onClick={generateExternalId} className="inline cursor-pointer" />
+                </TooltipTrigger>
+                <TooltipContent><p>Generate a unique ID</p></TooltipContent>
+              </Tooltip>
             </label>
+            <input
+              type="text"
+              id="externalId"
+              name="externalId"
+              value={formData.externalId}
+              onChange={handleInputChange}
+              maxLength={12}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="USA Swimming ID, etc."
+            />
+          </div>
+          <div className="flex flex-col items-center pt-6">
+            <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-1">Active</label>
+            <input
+              type="checkbox"
+              id="active"
+              name="active"
+              checked={formData.active}
+              onChange={handleInputChange}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Club</label>
             {loadingClubs ? (
-              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
-                Loading clubs...
-              </div>
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">Loading clubs...</div>
             ) : (
               <Combobox
                 options={(currentUser?.role === 'admin' || currentUser?.role === 'leagueAdmin'
